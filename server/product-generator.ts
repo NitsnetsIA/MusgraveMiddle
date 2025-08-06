@@ -261,8 +261,13 @@ export function generateRandomProduct(timestampOffset: string): {
   // Generate price within range
   const price = Number((Math.random() * (category.priceRange.max - category.priceRange.min) + category.priceRange.min).toFixed(2));
   
-  // Generate EAN code (simplified, starts with 841471 for Spanish products)
-  const ean = `841471${Math.floor(Math.random() * 1000000).toString().padStart(6, '0')}`;
+  // Generate EAN code with maximum uniqueness (starts with 841471 for Spanish products)
+  // Use high-resolution timestamp + counter + random for uniqueness
+  const now = Date.now();
+  const microseconds = (performance.now() * 1000) % 1000; // Get microsecond precision
+  const timestampPart = (now % 100000).toString().padStart(5, '0'); // Last 5 digits
+  const microPart = Math.floor(microseconds).toString().padStart(1, '0'); // 1 digit
+  const ean = `84147${timestampPart.slice(0,4)}${microPart}${timestampPart.slice(4,5)}`;
   
   // Generate product reference
   const ref = `${brand.toUpperCase().replace(/\s/g, '').substring(0, 4)}${Math.floor(Math.random() * 9999).toString().padStart(4, '0')}`;
@@ -299,28 +304,4 @@ export function generateRandomProduct(timestampOffset: string): {
     created_at,
     updated_at
   };
-}
-
-export function generateRandomProducts(count: number, timestampOffset: string) {
-  const products = [];
-  const usedEans = new Set<string>();
-  
-  for (let i = 0; i < count; i++) {
-    let product;
-    let attempts = 0;
-    
-    // Ensure unique EAN codes
-    do {
-      product = generateRandomProduct(timestampOffset);
-      attempts++;
-      if (attempts > 100) {
-        throw new Error("Unable to generate unique EAN codes after 100 attempts");
-      }
-    } while (usedEans.has(product.ean));
-    
-    usedEans.add(product.ean);
-    products.push(product);
-  }
-  
-  return products;
 }

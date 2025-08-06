@@ -1,7 +1,7 @@
 import { products, taxes, type Product, type InsertProduct, type Tax, type InsertTax } from "@shared/schema";
 import { db } from "./db";
 import { eq, gte, desc, sql } from "drizzle-orm";
-import { generateRandomProducts } from "./product-generator.js";
+import { generateRandomProduct } from "./product-generator.js";
 
 export interface ProductConnection {
   products: Product[];
@@ -169,20 +169,57 @@ export class DatabaseStorage implements IStorage {
         };
       }
 
-      // Generate random products
-      const randomProducts = generateRandomProducts(count, finalTimestamp);
+      // Generate random products (simplified approach)
+      const randomProducts = [];
       
-      // Insert into database
-      const insertedProducts = await db
-        .insert(products)
-        .values(randomProducts)
-        .returning();
+      for (let i = 0; i < count; i++) {
+        const product = generateRandomProduct(finalTimestamp);
+        randomProducts.push(product);
+      }
+
+      if (randomProducts.length === 0) {
+        return {
+          success: false,
+          createdCount: 0,
+          products: [],
+          message: "No products could be generated"
+        };
+      }
+      
+      // Insert into database with conflict handling
+      let insertedProducts: Product[] = [];
+      try {
+        insertedProducts = await db
+          .insert(products)
+          .values(randomProducts)
+          .returning();
+      } catch (error: any) {
+        // If there are EAN conflicts, try inserting one by one and skip duplicates
+        if (error.code === '23505') {
+          for (const product of randomProducts) {
+            try {
+              const result = await db
+                .insert(products)
+                .values([product])
+                .returning();
+              insertedProducts.push(...result);
+            } catch (insertError: any) {
+              // Skip duplicate EANs silently
+              if (insertError.code !== '23505') {
+                throw insertError;
+              }
+            }
+          }
+        } else {
+          throw error;
+        }
+      }
 
       return {
         success: true,
         createdCount: insertedProducts.length,
         products: insertedProducts,
-        message: `Successfully generated ${insertedProducts.length} random products`
+        message: `Successfully generated ${insertedProducts.length} random products${insertedProducts.length < count ? ` (${count - insertedProducts.length} skipped due to EAN conflicts)` : ''}`
       };
     } catch (error) {
       console.error("Error generating random products:", error);
