@@ -1,0 +1,91 @@
+    -- Tabla de Puntos de Entrega
+    CREATE TABLE delivery_centers (
+       code TEXT PRIMARY KEY,
+       name TEXT NOT NULL
+    );
+
+
+    -- Tabla de Tiendas
+    CREATE TABLE stores (
+       code TEXT PRIMARY KEY,
+       name TEXT NOT NULL,
+       responsible_email TEXT,
+       delivery_center_code TEXT NOT NULL,
+       is_active INTEGER NOT NULL DEFAULT 1,
+       CONSTRAINT fk_delivery_center FOREIGN KEY(delivery_center_code) REFERENCES delivery_centers(code)
+    );
+
+
+    -- Tabla de Usuarios
+    CREATE TABLE users (
+       email TEXT PRIMARY KEY,
+       store_id TEXT NOT NULL,
+       name TEXT,
+       password_hash TEXT NOT NULL,
+       is_active INTEGER NOT NULL DEFAULT 1,
+       CONSTRAINT fk_store FOREIGN KEY(store_id) REFERENCES stores(code)
+    );
+
+
+    -- Tabla de Órdenes de Compra
+    CREATE TABLE purchase_orders (
+       purchase_order_id TEXT PRIMARY KEY,
+       user_email TEXT NOT NULL,
+       store_id TEXT NOT NULL,
+       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+       status TEXT NOT NULL,
+       subtotal REAL NOT NULL,
+       tax_total REAL NOT NULL,
+       final_total REAL NOT NULL,
+       CONSTRAINT fk_user FOREIGN KEY(user_email) REFERENCES users(email),
+       CONSTRAINT fk_store FOREIGN KEY(store_id) REFERENCES stores(code)
+    );
+
+
+    -- Tabla de Líneas de Órdenes de Compra
+    CREATE TABLE purchase_order_items (
+       item_id INTEGER PRIMARY KEY AUTOINCREMENT,
+       purchase_order_id TEXT NOT NULL,
+       item_ean TEXT NOT NULL,
+       item_title TEXT,
+       item_description TEXT,
+       unit_of_measure TEXT,
+       quantity_measure REAL,
+       image_url TEXT,
+       quantity REAL NOT NULL,
+       base_price_at_order REAL NOT NULL,
+       tax_rate_at_order REAL NOT NULL,
+       CONSTRAINT fk_purchase_order FOREIGN KEY(purchase_order_id) REFERENCES purchase_orders(purchase_order_id)
+    );
+
+
+    -- Tabla de Pedidos (Finales)
+    CREATE TABLE orders (
+       order_id TEXT PRIMARY KEY,
+       source_purchase_order_id TEXT NOT NULL UNIQUE,
+       user_email TEXT NOT NULL,
+       store_id TEXT NOT NULL,
+       created_at TEXT NOT NULL,
+       observations TEXT,
+       subtotal REAL NOT NULL,
+       tax_total REAL NOT NULL,
+       final_total REAL NOT NULL,
+       CONSTRAINT fk_source_purchase_order FOREIGN KEY(source_purchase_order_id) REFERENCES purchase_orders(purchase_order_id)
+    );
+
+
+    -- Tabla de Líneas de Pedido (Finales)
+    CREATE TABLE order_items (
+       item_id INTEGER PRIMARY KEY AUTOINCREMENT,
+       order_id TEXT NOT NULL,
+       item_ean TEXT NOT NULL,
+       item_title TEXT,
+       item_description TEXT,
+       unit_of_measure TEXT,
+       quantity_measure REAL,
+       image_url TEXT,
+       quantity REAL NOT NULL,
+       base_price_at_order REAL NOT NULL,
+       tax_rate_at_order REAL NOT NULL,
+       CONSTRAINT fk_order FOREIGN KEY(order_id) REFERENCES orders(order_id)
+    );
