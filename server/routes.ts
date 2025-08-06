@@ -61,7 +61,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         },
       });
       graphqlUrl = url;
-      console.log(`🚀 GraphQL Server ready at ${url} with GraphQL Playground`);
+      console.log(`🚀 GraphQL Server ready at ${url} (internal only)`);
     } catch (graphqlError) {
       console.error("Failed to start GraphQL server:", graphqlError);
     }
@@ -72,14 +72,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: "ok", 
         service: "grocery-pim-graphql",
         graphql_endpoint: "/graphql",
-        graphql_playground: graphqlUrl,
         timestamp: new Date().toISOString()
       });
-    });
-
-    // Redirect /playground to the actual GraphQL playground
-    app.get("/playground", (req, res) => {
-      res.redirect(graphqlUrl);
     });
 
     // Direct GraphQL endpoint using Apollo server resolvers (no proxy)
@@ -130,7 +124,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(200).end();
     });
 
-    console.log(`🚀 Public GraphQL endpoint ready at /graphql`);
+    console.log(`🚀 Headless GraphQL API ready at /graphql`);
 
     // Ensure our routes are registered with high priority
     app._router.stack.unshift(...app._router.stack.splice(-10));
