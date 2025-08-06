@@ -9,6 +9,8 @@ This is a headless GraphQL microservice for managing grocery products and Spanis
 - Implemented GraphQL proxy for production deployment compatibility  
 - Fixed public endpoint accessibility for Replit deployments
 - Products now include category-appropriate placeholder images with EAN codes
+- Added GraphQL Playground at `/playground` endpoint for interactive queries in production
+- Created API info page at `/graphql-info` with documentation and examples
 
 ## User Preferences
 

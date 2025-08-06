@@ -6,6 +6,7 @@ import { startStandaloneServer } from "@apollo/server/standalone";
 import { typeDefs } from "./graphql/schema";
 import { resolvers } from "./graphql/resolvers";
 import { seedDatabase } from "./seed.js";
+import expressPlayground from "graphql-playground-middleware-express";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
@@ -123,6 +124,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
 
     console.log(`🚀 Public GraphQL endpoint ready at /graphql`);
+
+    // GraphQL Playground - disponible en desarrollo y producción
+    app.get('/playground', expressPlayground({ 
+      endpoint: '/graphql',
+      settings: {
+        'editor.theme': 'dark',
+        'editor.cursorShape': 'line',
+        'editor.reuseHeaders': true,
+        'tracing.hideTracingResponse': true,
+        'request.credentials': 'include',
+      }
+    }));
+
+    // También crear una página simple de info con links
+    app.get('/graphql-info', (req, res) => {
+      const host = req.get('host');
+      const protocol = req.get('x-forwarded-proto') || 'http';
+      const baseUrl = `${protocol}://${host}`;
+      
+      res.send(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>GraphQL API - Grocery PIM</title>
+          <style>
+            body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+            .endpoint { background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 10px 0; }
+            .button { display: inline-block; background: #007cba; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin: 5px; }
+            .example { background: #e8f4ff; padding: 15px; border-left: 4px solid #007cba; margin: 10px 0; }
+          </style>
+        </head>
+        <body>
+          <h1>🛒 Grocery PIM - GraphQL API</h1>
+          
+          <div class="endpoint">
+            <h3>🚀 Endpoints Disponibles:</h3>
+            <p><strong>GraphQL API:</strong> <code>${baseUrl}/graphql</code></p>
+            <p><strong>GraphQL Playground:</strong> <code>${baseUrl}/playground</code></p>
+            <p><strong>Health Check:</strong> <code>${baseUrl}/api/health</code></p>
+          </div>
+
+          <a href="/playground" class="button">🎮 Abrir GraphQL Playground</a>
+          <a href="/api/health" class="button">❤️ Health Check</a>
+
+          <div class="example">
+            <h3>📝 Ejemplo de consulta:</h3>
+            <pre>query GetProducts {
+  products(limit: 5) {
+    products {
+      ean
+      title
+      base_price
+      image_url
+      tax {
+        name
+        tax_rate
+      }
+    }
+    total
+  }
+}</pre>
+          </div>
+
+          <div class="example">
+            <h3>🔄 Generar productos de ejemplo:</h3>
+            <pre>mutation GenerateProducts {
+  generateRandomProducts(count: 10) {
+    success
+    createdCount
+    message
+  }
+}</pre>
+          </div>
+
+        </body>
+        </html>
+      `);
+    });
+
+    console.log(`🎮 GraphQL Playground disponible en /playground`);
+    console.log(`📋 Información de la API en /graphql-info`);
 
     console.log("Server routes registered successfully");
     console.log("Routes registered:");
