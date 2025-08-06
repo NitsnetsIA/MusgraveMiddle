@@ -18,6 +18,7 @@ interface Product {
   tax_code: string;
   unit_of_measure: string;
   quantity_measure: number;
+  image_url: string | null;
   is_active: boolean;
   tax?: {
     name: string;
@@ -47,6 +48,7 @@ async function fetchProducts(): Promise<ProductsResponse> {
           tax_code
           unit_of_measure
           quantity_measure
+          image_url
           is_active
           tax {
             name
@@ -159,7 +161,18 @@ function ProductCard({ product }: { product: Product }) {
   const totalPrice = product.base_price * (1 + (product.tax?.tax_rate || 0));
   
   return (
-    <Card className="h-full" data-testid={`card-product-${product.ean}`}>
+    <Card className="h-full overflow-hidden" data-testid={`card-product-${product.ean}`}>
+      {product.image_url && (
+        <div className="aspect-square w-full overflow-hidden">
+          <img 
+            src={product.image_url} 
+            alt={product.title}
+            className="w-full h-full object-cover"
+            data-testid={`img-product-${product.ean}`}
+            loading="lazy"
+          />
+        </div>
+      )}
       <CardHeader>
         <div className="flex justify-between items-start">
           <CardTitle className="text-lg leading-tight" data-testid={`text-title-${product.ean}`}>

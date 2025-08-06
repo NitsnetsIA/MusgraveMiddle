@@ -7,6 +7,7 @@ export interface ProductCategory {
   units: { measure: string; quantities: number[] }[];
   taxCode: string;
   priceRange: { min: number; max: number };
+  imageKeyword: string; // For generating appropriate images
 }
 
 export const SPANISH_GROCERY_CATEGORIES: ProductCategory[] = [
@@ -19,7 +20,8 @@ export const SPANISH_GROCERY_CATEGORIES: ProductCategory[] = [
       { measure: "ml", quantities: [250, 500, 1000] }
     ],
     taxCode: "IVA_SUPERREDUCIDO",
-    priceRange: { min: 0.89, max: 3.50 }
+    priceRange: { min: 0.89, max: 3.50 },
+    imageKeyword: "milk"
   },
   {
     name: "Yogures y Postres",
@@ -30,7 +32,8 @@ export const SPANISH_GROCERY_CATEGORIES: ProductCategory[] = [
       { measure: "unidades", quantities: [4, 6, 8, 12] }
     ],
     taxCode: "IVA_SUPERREDUCIDO",
-    priceRange: { min: 0.65, max: 4.99 }
+    priceRange: { min: 0.65, max: 4.99 },
+    imageKeyword: "yogurt"
   },
   {
     name: "Quesos",
@@ -41,7 +44,8 @@ export const SPANISH_GROCERY_CATEGORIES: ProductCategory[] = [
       { measure: "kg", quantities: [1] }
     ],
     taxCode: "IVA_SUPERREDUCIDO",
-    priceRange: { min: 2.50, max: 25.00 }
+    priceRange: { min: 2.50, max: 25.00 },
+    imageKeyword: "cheese"
   },
   {
     name: "Carnes Frescas",
@@ -52,7 +56,8 @@ export const SPANISH_GROCERY_CATEGORIES: ProductCategory[] = [
       { measure: "g", quantities: [300, 500, 750, 1000] }
     ],
     taxCode: "IVA_SUPERREDUCIDO",
-    priceRange: { min: 3.99, max: 18.99 }
+    priceRange: { min: 3.99, max: 18.99 },
+    imageKeyword: "meat"
   },
   {
     name: "Embutidos",
@@ -63,7 +68,8 @@ export const SPANISH_GROCERY_CATEGORIES: ProductCategory[] = [
       { measure: "lonchas", quantities: [6, 8, 10, 12] }
     ],
     taxCode: "IVA_SUPERREDUCIDO",
-    priceRange: { min: 1.99, max: 15.99 }
+    priceRange: { min: 1.99, max: 15.99 },
+    imageKeyword: "ham"
   },
   {
     name: "Pescados y Mariscos",
@@ -75,7 +81,8 @@ export const SPANISH_GROCERY_CATEGORIES: ProductCategory[] = [
       { measure: "lata", quantities: [1, 2, 3] }
     ],
     taxCode: "IVA_SUPERREDUCIDO",
-    priceRange: { min: 1.89, max: 22.99 }
+    priceRange: { min: 1.89, max: 22.99 },
+    imageKeyword: "fish"
   },
   {
     name: "Frutas",
@@ -86,7 +93,8 @@ export const SPANISH_GROCERY_CATEGORIES: ProductCategory[] = [
       { measure: "unidades", quantities: [4, 6, 8, 10, 12] }
     ],
     taxCode: "IVA_SUPERREDUCIDO",
-    priceRange: { min: 0.99, max: 6.99 }
+    priceRange: { min: 0.99, max: 6.99 },
+    imageKeyword: "fruit"
   },
   {
     name: "Verduras y Hortalizas",
@@ -97,7 +105,8 @@ export const SPANISH_GROCERY_CATEGORIES: ProductCategory[] = [
       { measure: "unidades", quantities: [1, 2, 3, 4, 6] }
     ],
     taxCode: "IVA_SUPERREDUCIDO",
-    priceRange: { min: 0.79, max: 4.99 }
+    priceRange: { min: 0.79, max: 4.99 },
+    imageKeyword: "vegetables"
   },
   {
     name: "Pan y Bollería",
@@ -108,7 +117,8 @@ export const SPANISH_GROCERY_CATEGORIES: ProductCategory[] = [
       { measure: "unidades", quantities: [4, 6, 8, 10, 12] }
     ],
     taxCode: "IVA_SUPERREDUCIDO",
-    priceRange: { min: 0.89, max: 4.99 }
+    priceRange: { min: 0.89, max: 4.99 },
+    imageKeyword: "bread"
   },
   {
     name: "Cereales y Legumbres",
@@ -119,7 +129,8 @@ export const SPANISH_GROCERY_CATEGORIES: ProductCategory[] = [
       { measure: "g", quantities: [250, 500, 750, 1000] }
     ],
     taxCode: "IVA_SUPERREDUCIDO",
-    priceRange: { min: 0.99, max: 8.99 }
+    priceRange: { min: 0.99, max: 8.99 },
+    imageKeyword: "rice"
   },
   {
     name: "Aceites y Vinagres",
@@ -130,7 +141,8 @@ export const SPANISH_GROCERY_CATEGORIES: ProductCategory[] = [
       { measure: "ml", quantities: [250, 500, 750, 1000] }
     ],
     taxCode: "IVA_GENERAL",
-    priceRange: { min: 1.99, max: 15.99 }
+    priceRange: { min: 1.99, max: 15.99 },
+    imageKeyword: "oil"
   },
   {
     name: "Conservas",
@@ -141,7 +153,8 @@ export const SPANISH_GROCERY_CATEGORIES: ProductCategory[] = [
       { measure: "ml", quantities: [350, 400, 500, 720] }
     ],
     taxCode: "IVA_SUPERREDUCIDO",
-    priceRange: { min: 0.89, max: 8.99 }
+    priceRange: { min: 0.89, max: 8.99 },
+    imageKeyword: "canned"
   },
   {
     name: "Bebidas Refrescantes",
@@ -152,7 +165,8 @@ export const SPANISH_GROCERY_CATEGORIES: ProductCategory[] = [
       { measure: "ml", quantities: [250, 330, 500, 1000] }
     ],
     taxCode: "IVA_GENERAL",
-    priceRange: { min: 0.65, max: 3.99 }
+    priceRange: { min: 0.65, max: 3.99 },
+    imageKeyword: "drinks"
   },
   {
     name: "Vinos",
@@ -163,7 +177,8 @@ export const SPANISH_GROCERY_CATEGORIES: ProductCategory[] = [
       { measure: "L", quantities: [1] }
     ],
     taxCode: "IVA_GENERAL",
-    priceRange: { min: 3.99, max: 49.99 }
+    priceRange: { min: 3.99, max: 49.99 },
+    imageKeyword: "wine"
   },
   {
     name: "Cervezas",
@@ -175,7 +190,8 @@ export const SPANISH_GROCERY_CATEGORIES: ProductCategory[] = [
       { measure: "pack", quantities: [6, 12, 24] }
     ],
     taxCode: "IVA_GENERAL",
-    priceRange: { min: 0.79, max: 15.99 }
+    priceRange: { min: 0.79, max: 15.99 },
+    imageKeyword: "beer"
   },
   {
     name: "Snacks y Aperitivos",
@@ -186,7 +202,8 @@ export const SPANISH_GROCERY_CATEGORIES: ProductCategory[] = [
       { measure: "unidades", quantities: [1] }
     ],
     taxCode: "IVA_GENERAL",
-    priceRange: { min: 0.99, max: 4.99 }
+    priceRange: { min: 0.99, max: 4.99 },
+    imageKeyword: "snacks"
   },
   {
     name: "Dulces y Chocolate",
@@ -197,7 +214,8 @@ export const SPANISH_GROCERY_CATEGORIES: ProductCategory[] = [
       { measure: "unidades", quantities: [1] }
     ],
     taxCode: "IVA_GENERAL",
-    priceRange: { min: 0.89, max: 12.99 }
+    priceRange: { min: 0.89, max: 12.99 },
+    imageKeyword: "chocolate"
   },
   {
     name: "Productos de Limpieza",
@@ -208,7 +226,8 @@ export const SPANISH_GROCERY_CATEGORIES: ProductCategory[] = [
       { measure: "ml", quantities: [500, 750, 1000, 1500] }
     ],
     taxCode: "IVA_GENERAL",
-    priceRange: { min: 1.99, max: 12.99 }
+    priceRange: { min: 1.99, max: 12.99 },
+    imageKeyword: "cleaning"
   },
   {
     name: "Higiene Personal",
@@ -219,7 +238,8 @@ export const SPANISH_GROCERY_CATEGORIES: ProductCategory[] = [
       { measure: "g", quantities: [75, 100, 150] }
     ],
     taxCode: "IVA_GENERAL",
-    priceRange: { min: 1.49, max: 8.99 }
+    priceRange: { min: 1.49, max: 8.99 },
+    imageKeyword: "cosmetics"
   },
   {
     name: "Productos para Bebés",
@@ -231,7 +251,8 @@ export const SPANISH_GROCERY_CATEGORIES: ProductCategory[] = [
       { measure: "L", quantities: [1] }
     ],
     taxCode: "IVA_SUPERREDUCIDO",
-    priceRange: { min: 2.99, max: 19.99 }
+    priceRange: { min: 2.99, max: 19.99 },
+    imageKeyword: "baby"
   }
 ];
 
@@ -244,7 +265,7 @@ export function generateRandomProduct(timestampOffset: string): {
   tax_code: string;
   unit_of_measure: string;
   quantity_measure: number;
-  image_url: null;
+  image_url: string;
   is_active: boolean;
   created_at: Date;
   updated_at: Date;
@@ -285,6 +306,9 @@ export function generateRandomProduct(timestampOffset: string): {
   ];
   const description = descriptions[Math.floor(Math.random() * descriptions.length)];
   
+  // Generate image URL using LoremFlickr service (300x300 size)
+  const imageUrl = `https://loremflickr.com/300/300/${category.imageKeyword}?random=${Math.floor(Math.random() * 10000)}`;
+  
   // Calculate timestamps
   const offsetDate = new Date(timestampOffset);
   const created_at = new Date(offsetDate);
@@ -299,7 +323,7 @@ export function generateRandomProduct(timestampOffset: string): {
     tax_code: category.taxCode,
     unit_of_measure: unitType.measure,
     quantity_measure: quantity,
-    image_url: null,
+    image_url: imageUrl,
     is_active: Math.random() > 0.1, // 90% active products
     created_at,
     updated_at
