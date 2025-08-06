@@ -36,7 +36,8 @@ Preferred communication style: Simple, everyday language.
 - **GraphQL schema** with queries for products and taxes, including timestamp-based filtering
 - **Mutations** for complete CRUD operations on both products and taxes  
 - **Timestamp synchronization** supporting UTC timestamps for data change tracking
-- **Spanish VAT tax codes** including General (21%), Alimentación (4%), Reducido (10%), Superreducido (4%), and Exento (0%)
+- **Spanish VAT tax codes** including General (21%), Reducido (10%), Superreducido (4% for food), and Exento (0%)
+- **Pagination support** with configurable limits (default 100) for handling large datasets
 - **Type-safe resolvers** with database relation queries
 - **Error handling** with formatted GraphQL errors and comprehensive logging
 

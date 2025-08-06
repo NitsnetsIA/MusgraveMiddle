@@ -4,49 +4,64 @@ This headless microservice provides a GraphQL API at `http://localhost:4000/` fo
 
 ## Query Examples
 
-### Get all products
+### Get all products (with pagination)
 ```graphql
 query {
   products {
-    ean
-    title
-    description
-    base_price
-    tax_code
-    unit_of_measure
-    quantity_measure
-    is_active
-    created_at
-    updated_at
-    tax {
-      name
-      tax_rate
+    products {
+      ean
+      title
+      description
+      base_price
+      tax_code
+      unit_of_measure
+      quantity_measure
+      is_active
+      created_at
+      updated_at
+      tax {
+        name
+        tax_rate
+      }
     }
+    total
+    limit
+    offset
   }
 }
 ```
 
-### Get products with timestamp filtering (for sync)
+### Get products with pagination and timestamp filtering
 ```graphql
 query {
-  products(timestamp: "2025-08-06T09:00:00.000Z") {
-    ean
-    title
-    base_price
-    updated_at
+  products(limit: 10, offset: 0, timestamp: "2025-08-06T09:00:00.000Z") {
+    products {
+      ean
+      title
+      base_price
+      updated_at
+    }
+    total
+    limit
+    offset
   }
 }
 ```
 
-### Get all taxes
+### Get all taxes (with pagination)
 ```graphql
 query {
   taxes {
-    code
-    name
-    tax_rate
-    created_at
-    updated_at
+    taxes {
+      code
+      name
+      tax_rate
+      created_at
+      updated_at
+    }
+    total
+    limit
+    offset
   }
 }
 ```
@@ -77,7 +92,7 @@ mutation {
     title: "Manzanas Golden 1kg"
     description: "Manzanas Golden de temporada"
     base_price: 2.90
-    tax_code: "IVA_ALIMENTACION"
+    tax_code: "IVA_SUPERREDUCIDO"
     unit_of_measure: "kg"
     quantity_measure: 1.0
     is_active: true
@@ -133,10 +148,30 @@ mutation {
 The system includes the following Spanish VAT tax rates:
 
 - `IVA_GENERAL` - IVA General (21%)
-- `IVA_ALIMENTACION` - IVA Alimentación (4%)
 - `IVA_REDUCIDO` - IVA Reducido (10%)
-- `IVA_SUPERREDUCIDO` - IVA Superreducido (4%)
+- `IVA_SUPERREDUCIDO` - IVA Superreducido (4%) - Used for food products
 - `IVA_EXENTO` - IVA Exento (0%)
+
+## Pagination Support
+
+All list queries support pagination parameters:
+
+- `limit`: Number of records to return (default: 100, max recommended for performance)
+- `offset`: Number of records to skip (default: 0)
+- Response includes `total`, `limit`, and `offset` for navigation
+
+### Pagination Examples
+
+```graphql
+# First page (10 products)
+query { products(limit: 10, offset: 0) { products { ean title } total limit offset } }
+
+# Second page (next 10 products)
+query { products(limit: 10, offset: 10) { products { ean title } total limit offset } }
+
+# All products (default 100 limit)
+query { products { products { ean title } total limit offset } }
+```
 
 ## Timestamp Synchronization
 

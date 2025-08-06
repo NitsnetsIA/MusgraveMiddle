@@ -1,17 +1,31 @@
 import { products, taxes, type Product, type InsertProduct, type Tax, type InsertTax } from "@shared/schema";
 import { db } from "./db";
-import { eq, gte, desc } from "drizzle-orm";
+import { eq, gte, desc, sql } from "drizzle-orm";
+
+export interface ProductConnection {
+  products: Product[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface TaxConnection {
+  taxes: Tax[];
+  total: number;
+  limit: number;
+  offset: number;
+}
 
 export interface IStorage {
   // Product methods
-  getProducts(timestamp?: string): Promise<Product[]>;
+  getProducts(timestamp?: string, limit?: number, offset?: number): Promise<ProductConnection>;
   getProduct(ean: string): Promise<Product | undefined>;
   createProduct(product: InsertProduct): Promise<Product>;
   updateProduct(ean: string, product: Partial<InsertProduct>): Promise<Product>;
   deleteProduct(ean: string): Promise<boolean>;
   
   // Tax methods
-  getTaxes(timestamp?: string): Promise<Tax[]>;
+  getTaxes(timestamp?: string, limit?: number, offset?: number): Promise<TaxConnection>;
   getTax(code: string): Promise<Tax | undefined>;
   createTax(tax: InsertTax): Promise<Tax>;
   updateTax(code: string, tax: Partial<InsertTax>): Promise<Tax>;
@@ -19,15 +33,36 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
-  async getProducts(timestamp?: string): Promise<Product[]> {
-    let query = db.select().from(products);
-    
+  async getProducts(timestamp?: string, limit: number = 100, offset: number = 0): Promise<ProductConnection> {
+    let whereClause;
     if (timestamp) {
       const timestampDate = new Date(timestamp);
-      query = query.where(gte(products.updated_at, timestampDate));
+      whereClause = gte(products.updated_at, timestampDate);
     }
+
+    // Get the total count
+    const countResult = await db
+      .select({ count: sql<number>`COUNT(*)`.as('count') })
+      .from(products)
+      .where(whereClause || sql`TRUE`);
     
-    return await query.orderBy(desc(products.updated_at));
+    const total = countResult[0]?.count || 0;
+
+    // Get the paginated results
+    const productsList = await db
+      .select()
+      .from(products)
+      .where(whereClause || sql`TRUE`)
+      .orderBy(desc(products.updated_at))
+      .limit(limit)
+      .offset(offset);
+
+    return {
+      products: productsList,
+      total,
+      limit,
+      offset
+    };
   }
 
   async getProduct(ean: string): Promise<Product | undefined> {
@@ -64,15 +99,36 @@ export class DatabaseStorage implements IStorage {
     return result.rowCount! > 0;
   }
 
-  async getTaxes(timestamp?: string): Promise<Tax[]> {
-    let query = db.select().from(taxes);
-    
+  async getTaxes(timestamp?: string, limit: number = 100, offset: number = 0): Promise<TaxConnection> {
+    let whereClause;
     if (timestamp) {
       const timestampDate = new Date(timestamp);
-      query = query.where(gte(taxes.updated_at, timestampDate));
+      whereClause = gte(taxes.updated_at, timestampDate);
     }
+
+    // Get the total count
+    const countResult = await db
+      .select({ count: sql<number>`COUNT(*)`.as('count') })
+      .from(taxes)
+      .where(whereClause || sql`TRUE`);
     
-    return await query.orderBy(desc(taxes.updated_at));
+    const total = countResult[0]?.count || 0;
+
+    // Get the paginated results
+    const taxesList = await db
+      .select()
+      .from(taxes)
+      .where(whereClause || sql`TRUE`)
+      .orderBy(desc(taxes.updated_at))
+      .limit(limit)
+      .offset(offset);
+
+    return {
+      taxes: taxesList,
+      total,
+      limit,
+      offset
+    };
   }
 
   async getTax(code: string): Promise<Tax | undefined> {

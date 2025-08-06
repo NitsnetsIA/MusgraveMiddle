@@ -5,16 +5,16 @@ import { eq } from "drizzle-orm";
 
 export const resolvers = {
   Query: {
-    products: async (_: any, { timestamp }: { timestamp?: string }) => {
-      return await storage.getProducts(timestamp);
+    products: async (_: any, { timestamp, limit = 100, offset = 0 }: { timestamp?: string; limit?: number; offset?: number }) => {
+      return await storage.getProducts(timestamp, limit, offset);
     },
     
     product: async (_: any, { ean }: { ean: string }) => {
       return await storage.getProduct(ean);
     },
     
-    taxes: async (_: any, { timestamp }: { timestamp?: string }) => {
-      return await storage.getTaxes(timestamp);
+    taxes: async (_: any, { timestamp, limit = 100, offset = 0 }: { timestamp?: string; limit?: number; offset?: number }) => {
+      return await storage.getTaxes(timestamp, limit, offset);
     },
     
     tax: async (_: any, { code }: { code: string }) => {

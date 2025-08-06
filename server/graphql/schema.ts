@@ -62,10 +62,24 @@ export const typeDefs = `#graphql
   }
 
   type Query {
-    products(timestamp: String): [Product!]!
+    products(timestamp: String, limit: Int, offset: Int): ProductConnection!
     product(ean: String!): Product
-    taxes(timestamp: String): [Tax!]!
+    taxes(timestamp: String, limit: Int, offset: Int): TaxConnection!
     tax(code: String!): Tax
+  }
+
+  type ProductConnection {
+    products: [Product!]!
+    total: Int!
+    limit: Int!
+    offset: Int!
+  }
+
+  type TaxConnection {
+    taxes: [Tax!]!
+    total: Int!
+    limit: Int!
+    offset: Int!
   }
 
   type Mutation {
