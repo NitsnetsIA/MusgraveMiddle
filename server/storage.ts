@@ -637,7 +637,8 @@ export class DatabaseStorage implements IStorage {
       { table: products, name: 'products' },
       { table: stores, name: 'stores' },
       { table: deliveryCenters, name: 'delivery_centers' },
-      { table: purchaseOrders, name: 'purchase_orders' }
+      { table: purchaseOrders, name: 'purchase_orders' },
+      { table: taxes, name: 'taxes' }
     ];
 
     const results = await Promise.all(
