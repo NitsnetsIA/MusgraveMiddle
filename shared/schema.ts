@@ -1,5 +1,5 @@
 import { sql, relations } from "drizzle-orm";
-import { pgTable, text, real, integer, timestamp, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, real, integer, serial, timestamp, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -78,7 +78,7 @@ export const purchaseOrders = pgTable("purchase_orders", {
 
 // Tabla de Líneas de Órdenes de Compra
 export const purchaseOrderItems = pgTable("purchase_order_items", {
-  item_id: integer("item_id").primaryKey(),
+  item_id: integer("item_id").primaryKey().generatedAlwaysAsIdentity(),
   purchase_order_id: text("purchase_order_id").notNull().references(() => purchaseOrders.purchase_order_id),
   item_ean: text("item_ean").notNull(),
   item_title: text("item_title"),
@@ -109,7 +109,7 @@ export const orders = pgTable("orders", {
 
 // Tabla de Líneas de Pedido (Finales)
 export const orderItems = pgTable("order_items", {
-  item_id: integer("item_id").primaryKey(),
+  item_id: integer("item_id").primaryKey().generatedAlwaysAsIdentity(),
   order_id: text("order_id").notNull().references(() => orders.order_id),
   item_ean: text("item_ean").notNull(),
   item_title: text("item_title"),

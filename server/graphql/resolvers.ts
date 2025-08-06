@@ -1,6 +1,8 @@
 import { storage } from "../storage";
 import { db } from "../db";
-import { products, taxes } from "@shared/schema";
+import { 
+  products, taxes, deliveryCenters, stores, users, purchaseOrders, purchaseOrderItems, orders, orderItems 
+} from "@shared/schema";
 import { eq } from "drizzle-orm";
 
 export const resolvers = {
@@ -19,6 +21,69 @@ export const resolvers = {
     
     tax: async (_: any, { code }: { code: string }) => {
       return await storage.getTax(code);
+    },
+
+    // Delivery Centers queries
+    deliveryCenters: async () => {
+      return await storage.getDeliveryCenters();
+    },
+    
+    deliveryCenter: async (_: any, { code }: { code: string }) => {
+      return await storage.getDeliveryCenter(code);
+    },
+
+    // Stores queries
+    stores: async () => {
+      return await storage.getStores();
+    },
+    
+    store: async (_: any, { code }: { code: string }) => {
+      return await storage.getStore(code);
+    },
+
+    // Users queries
+    users: async () => {
+      return await storage.getUsers();
+    },
+    
+    user: async (_: any, { email }: { email: string }) => {
+      return await storage.getUser(email);
+    },
+
+    // Purchase Orders queries
+    purchaseOrders: async () => {
+      return await storage.getPurchaseOrders();
+    },
+    
+    purchaseOrder: async (_: any, { purchase_order_id }: { purchase_order_id: string }) => {
+      return await storage.getPurchaseOrder(purchase_order_id);
+    },
+
+    // Purchase Order Items queries
+    purchaseOrderItems: async () => {
+      return await storage.getPurchaseOrderItems();
+    },
+    
+    purchaseOrderItem: async (_: any, { item_id }: { item_id: number }) => {
+      return await storage.getPurchaseOrderItem(item_id);
+    },
+
+    // Orders queries
+    orders: async () => {
+      return await storage.getOrders();
+    },
+    
+    order: async (_: any, { order_id }: { order_id: string }) => {
+      return await storage.getOrder(order_id);
+    },
+
+    // Order Items queries
+    orderItems: async () => {
+      return await storage.getOrderItems();
+    },
+    
+    orderItem: async (_: any, { item_id }: { item_id: number }) => {
+      return await storage.getOrderItem(item_id);
     },
   },
 
@@ -54,6 +119,97 @@ export const resolvers = {
     deleteTax: async (_: any, { code }: { code: string }) => {
       return await storage.deleteTax(code);
     },
+
+    // Delivery Centers mutations
+    createDeliveryCenter: async (_: any, { input }: { input: any }) => {
+      return await storage.createDeliveryCenter(input);
+    },
+    
+    updateDeliveryCenter: async (_: any, { code, input }: { code: string; input: any }) => {
+      return await storage.updateDeliveryCenter(code, input);
+    },
+    
+    deleteDeliveryCenter: async (_: any, { code }: { code: string }) => {
+      return await storage.deleteDeliveryCenter(code);
+    },
+
+    // Stores mutations
+    createStore: async (_: any, { input }: { input: any }) => {
+      return await storage.createStore(input);
+    },
+    
+    updateStore: async (_: any, { code, input }: { code: string; input: any }) => {
+      return await storage.updateStore(code, input);
+    },
+    
+    deleteStore: async (_: any, { code }: { code: string }) => {
+      return await storage.deleteStore(code);
+    },
+
+    // Users mutations
+    createUser: async (_: any, { input }: { input: any }) => {
+      return await storage.createUser(input);
+    },
+    
+    updateUser: async (_: any, { email, input }: { email: string; input: any }) => {
+      return await storage.updateUser(email, input);
+    },
+    
+    deleteUser: async (_: any, { email }: { email: string }) => {
+      return await storage.deleteUser(email);
+    },
+
+    // Purchase Orders mutations
+    createPurchaseOrder: async (_: any, { input }: { input: any }) => {
+      return await storage.createPurchaseOrder(input);
+    },
+    
+    updatePurchaseOrder: async (_: any, { purchase_order_id, input }: { purchase_order_id: string; input: any }) => {
+      return await storage.updatePurchaseOrder(purchase_order_id, input);
+    },
+    
+    deletePurchaseOrder: async (_: any, { purchase_order_id }: { purchase_order_id: string }) => {
+      return await storage.deletePurchaseOrder(purchase_order_id);
+    },
+
+    // Purchase Order Items mutations
+    createPurchaseOrderItem: async (_: any, { input }: { input: any }) => {
+      return await storage.createPurchaseOrderItem(input);
+    },
+    
+    updatePurchaseOrderItem: async (_: any, { item_id, input }: { item_id: number; input: any }) => {
+      return await storage.updatePurchaseOrderItem(item_id, input);
+    },
+    
+    deletePurchaseOrderItem: async (_: any, { item_id }: { item_id: number }) => {
+      return await storage.deletePurchaseOrderItem(item_id);
+    },
+
+    // Orders mutations
+    createOrder: async (_: any, { input }: { input: any }) => {
+      return await storage.createOrder(input);
+    },
+    
+    updateOrder: async (_: any, { order_id, input }: { order_id: string; input: any }) => {
+      return await storage.updateOrder(order_id, input);
+    },
+    
+    deleteOrder: async (_: any, { order_id }: { order_id: string }) => {
+      return await storage.deleteOrder(order_id);
+    },
+
+    // Order Items mutations
+    createOrderItem: async (_: any, { input }: { input: any }) => {
+      return await storage.createOrderItem(input);
+    },
+    
+    updateOrderItem: async (_: any, { item_id, input }: { item_id: number; input: any }) => {
+      return await storage.updateOrderItem(item_id, input);
+    },
+    
+    deleteOrderItem: async (_: any, { item_id }: { item_id: number }) => {
+      return await storage.deleteOrderItem(item_id);
+    },
   },
 
   Product: {
@@ -63,6 +219,152 @@ export const resolvers = {
         .from(taxes)
         .where(eq(taxes.code, parent.tax_code));
       return tax;
+    },
+  },
+
+  // Delivery Center resolvers
+  DeliveryCenter: {
+    stores: async (parent: any) => {
+      return await db
+        .select()
+        .from(stores)
+        .where(eq(stores.delivery_center_code, parent.code));
+    },
+  },
+
+  // Store resolvers
+  Store: {
+    deliveryCenter: async (parent: any) => {
+      const [deliveryCenter] = await db
+        .select()
+        .from(deliveryCenters)
+        .where(eq(deliveryCenters.code, parent.delivery_center_code));
+      return deliveryCenter;
+    },
+    users: async (parent: any) => {
+      return await db
+        .select()
+        .from(users)
+        .where(eq(users.store_id, parent.code));
+    },
+    purchaseOrders: async (parent: any) => {
+      return await db
+        .select()
+        .from(purchaseOrders)
+        .where(eq(purchaseOrders.store_id, parent.code));
+    },
+    orders: async (parent: any) => {
+      return await db
+        .select()
+        .from(orders)
+        .where(eq(orders.store_id, parent.code));
+    },
+  },
+
+  // User resolvers
+  User: {
+    store: async (parent: any) => {
+      const [store] = await db
+        .select()
+        .from(stores)
+        .where(eq(stores.code, parent.store_id));
+      return store;
+    },
+    purchaseOrders: async (parent: any) => {
+      return await db
+        .select()
+        .from(purchaseOrders)
+        .where(eq(purchaseOrders.user_email, parent.email));
+    },
+    orders: async (parent: any) => {
+      return await db
+        .select()
+        .from(orders)
+        .where(eq(orders.user_email, parent.email));
+    },
+  },
+
+  // Purchase Order resolvers
+  PurchaseOrder: {
+    user: async (parent: any) => {
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.email, parent.user_email));
+      return user;
+    },
+    store: async (parent: any) => {
+      const [store] = await db
+        .select()
+        .from(stores)
+        .where(eq(stores.code, parent.store_id));
+      return store;
+    },
+    items: async (parent: any) => {
+      return await db
+        .select()
+        .from(purchaseOrderItems)
+        .where(eq(purchaseOrderItems.purchase_order_id, parent.purchase_order_id));
+    },
+    order: async (parent: any) => {
+      const [order] = await db
+        .select()
+        .from(orders)
+        .where(eq(orders.source_purchase_order_id, parent.purchase_order_id));
+      return order;
+    },
+  },
+
+  // Purchase Order Item resolvers
+  PurchaseOrderItem: {
+    purchaseOrder: async (parent: any) => {
+      const [purchaseOrder] = await db
+        .select()
+        .from(purchaseOrders)
+        .where(eq(purchaseOrders.purchase_order_id, parent.purchase_order_id));
+      return purchaseOrder;
+    },
+  },
+
+  // Order resolvers
+  Order: {
+    sourcePurchaseOrder: async (parent: any) => {
+      const [purchaseOrder] = await db
+        .select()
+        .from(purchaseOrders)
+        .where(eq(purchaseOrders.purchase_order_id, parent.source_purchase_order_id));
+      return purchaseOrder;
+    },
+    user: async (parent: any) => {
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.email, parent.user_email));
+      return user;
+    },
+    store: async (parent: any) => {
+      const [store] = await db
+        .select()
+        .from(stores)
+        .where(eq(stores.code, parent.store_id));
+      return store;
+    },
+    items: async (parent: any) => {
+      return await db
+        .select()
+        .from(orderItems)
+        .where(eq(orderItems.order_id, parent.order_id));
+    },
+  },
+
+  // Order Item resolvers
+  OrderItem: {
+    order: async (parent: any) => {
+      const [order] = await db
+        .select()
+        .from(orders)
+        .where(eq(orders.order_id, parent.order_id));
+      return order;
     },
   },
 };
