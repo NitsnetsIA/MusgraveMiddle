@@ -33,7 +33,7 @@ interface ProductsResponse {
   offset: number;
 }
 
-const GRAPHQL_ENDPOINT = "http://localhost:4000/";
+const GRAPHQL_ENDPOINT = "/graphql";
 
 async function fetchProducts(): Promise<ProductsResponse> {
   const query = `

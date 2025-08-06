@@ -35,7 +35,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     // Create Apollo Server instance
-    const server = new ApolloServer({
+    const apolloServer = new ApolloServer({
       typeDefs,
       resolvers,
       formatError: (formattedError) => {
@@ -52,7 +52,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // Start the GraphQL server on a separate port with error handling
     let graphqlUrl = "http://localhost:4000/";
     try {
-      const { url } = await startStandaloneServer(server, {
+      const { url } = await startStandaloneServer(apolloServer, {
         listen: { port: 4000 },
         context: async ({ req }) => {
           return {
@@ -78,8 +78,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
 
     // Proxy GraphQL requests to the standalone server
-    app.use("/graphql", (req, res) => {
-      res.redirect(graphqlUrl);
+    app.all("/graphql", async (req, res) => {
+      try {
+        const headers: Record<string, string> = {
+          'Content-Type': 'application/json',
+          'Apollo-Require-Preflight': 'true',
+        };
+        
+        // Add selected headers from the original request
+        if (req.headers.authorization) {
+          headers.authorization = req.headers.authorization;
+        }
+        
+        const response = await fetch(graphqlUrl, {
+          method: req.method,
+          headers,
+          body: req.method !== 'GET' ? JSON.stringify(req.body) : undefined,
+        });
+        
+        const data = await response.json();
+        res.status(response.status).json(data);
+      } catch (error) {
+        console.error('GraphQL proxy error:', error);
+        res.status(500).json({ 
+          errors: [{ message: 'GraphQL server unavailable' }] 
+        });
+      }
     });
 
     console.log("Server routes registered successfully");
