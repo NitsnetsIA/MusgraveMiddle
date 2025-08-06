@@ -4,6 +4,12 @@ import { eq } from "drizzle-orm";
 
 export async function seedDatabase() {
   try {
+    console.log("Checking database connection and existing data...");
+    
+    // Test database connection first
+    await db.select().from(taxes).limit(1);
+    console.log("Database connection successful");
+
     // Check if data already exists
     const existingTaxes = await db.select().from(taxes).limit(1);
     if (existingTaxes.length > 0) {
