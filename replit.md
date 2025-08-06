@@ -4,6 +4,12 @@
 
 This is a headless GraphQL microservice for managing grocery products and Spanish VAT taxes with timestamp-based synchronization. The system provides a complete CRUD API for grocery products and tax information via GraphQL, specifically designed to serve as a backend for frontend applications requiring product and tax data synchronization. The system uses PostgreSQL for persistence and includes timezone-aware timestamps for efficient data synchronization.
 
+**Recent Updates (January 2025):**
+- Added automatic product image generation using Placehold.co service
+- Implemented GraphQL proxy for production deployment compatibility  
+- Fixed public endpoint accessibility for Replit deployments
+- Products now include category-appropriate placeholder images with EAN codes
+
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.

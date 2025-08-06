@@ -78,32 +78,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
 
     // Proxy GraphQL requests to the standalone server
-    app.all("/graphql", async (req, res) => {
+    app.post("/graphql", async (req, res) => {
       try {
-        const headers: Record<string, string> = {
-          'Content-Type': 'application/json',
-          'Apollo-Require-Preflight': 'true',
-        };
+        console.log('Proxying GraphQL request:', req.body);
         
-        // Add selected headers from the original request
-        if (req.headers.authorization) {
-          headers.authorization = req.headers.authorization;
-        }
-        
-        const response = await fetch(graphqlUrl, {
-          method: req.method,
-          headers,
-          body: req.method !== 'GET' ? JSON.stringify(req.body) : undefined,
+        const response = await fetch('http://localhost:4000/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Apollo-Require-Preflight': 'true',
+          },
+          body: JSON.stringify(req.body),
         });
         
+        if (!response.ok) {
+          throw new Error(`GraphQL server responded with status: ${response.status}`);
+        }
+        
         const data = await response.json();
-        res.status(response.status).json(data);
+        console.log('GraphQL response:', data);
+        res.json(data);
       } catch (error) {
         console.error('GraphQL proxy error:', error);
         res.status(500).json({ 
-          errors: [{ message: 'GraphQL server unavailable' }] 
+          errors: [{ message: 'GraphQL server unavailable', details: error instanceof Error ? error.message : 'Unknown error' }] 
         });
       }
+    });
+
+    // Handle GET requests to GraphQL endpoint (for GraphQL Playground, introspection, etc.)
+    app.get("/graphql", (req, res) => {
+      res.json({
+        message: "GraphQL endpoint is available. Send POST requests with GraphQL queries.",
+        endpoint: "/graphql",
+        example: {
+          query: "{ products(limit: 5) { products { ean title } } }"
+        }
+      });
     });
 
     console.log("Server routes registered successfully");
