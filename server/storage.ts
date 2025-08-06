@@ -1,4 +1,11 @@
-import { products, taxes, type Product, type InsertProduct, type Tax, type InsertTax } from "@shared/schema";
+import { 
+  products, taxes, deliveryCenters, stores, users, purchaseOrders, purchaseOrderItems, orders, orderItems,
+  type Product, type InsertProduct, type Tax, type InsertTax,
+  type DeliveryCenter, type InsertDeliveryCenter, type Store, type InsertStore,
+  type User, type InsertUser, type PurchaseOrder, type InsertPurchaseOrder,
+  type PurchaseOrderItem, type InsertPurchaseOrderItem, type Order, type InsertOrder,
+  type OrderItem, type InsertOrderItem
+} from "@shared/schema";
 import { db } from "./db";
 import { eq, gte, desc, sql } from "drizzle-orm";
 import { generateRandomProduct } from "./product-generator.js";
@@ -46,6 +53,26 @@ export interface IStorage {
   createTax(tax: InsertTax): Promise<Tax>;
   updateTax(code: string, tax: Partial<InsertTax>): Promise<Tax>;
   deleteTax(code: string): Promise<boolean>;
+
+  // Delivery Centers methods (placeholder - empty for now)
+  getDeliveryCenters(): Promise<DeliveryCenter[]>;
+  createDeliveryCenter(deliveryCenter: InsertDeliveryCenter): Promise<DeliveryCenter>;
+
+  // Stores methods (placeholder - empty for now)
+  getStores(): Promise<Store[]>;
+  createStore(store: InsertStore): Promise<Store>;
+
+  // Users methods (placeholder - empty for now)
+  getUsers(): Promise<User[]>;
+  createUser(user: InsertUser): Promise<User>;
+
+  // Purchase Orders methods (placeholder - empty for now)
+  getPurchaseOrders(): Promise<PurchaseOrder[]>;
+  createPurchaseOrder(order: InsertPurchaseOrder): Promise<PurchaseOrder>;
+
+  // Orders methods (placeholder - empty for now)
+  getOrders(): Promise<Order[]>;
+  createOrder(order: InsertOrder): Promise<Order>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -296,6 +323,87 @@ export class DatabaseStorage implements IStorage {
   async deleteTax(code: string): Promise<boolean> {
     const result = await db.delete(taxes).where(eq(taxes.code, code));
     return result.rowCount! > 0;
+  }
+
+  // Placeholder implementations for new entities (empty for now)
+  async getDeliveryCenters(): Promise<DeliveryCenter[]> {
+    return await db.select().from(deliveryCenters);
+  }
+
+  async createDeliveryCenter(deliveryCenter: InsertDeliveryCenter): Promise<DeliveryCenter> {
+    const [created] = await db
+      .insert(deliveryCenters)
+      .values({
+        ...deliveryCenter,
+        created_at: new Date(),
+        updated_at: new Date(),
+      })
+      .returning();
+    return created;
+  }
+
+  async getStores(): Promise<Store[]> {
+    return await db.select().from(stores);
+  }
+
+  async createStore(store: InsertStore): Promise<Store> {
+    const [created] = await db
+      .insert(stores)
+      .values({
+        ...store,
+        created_at: new Date(),
+        updated_at: new Date(),
+      })
+      .returning();
+    return created;
+  }
+
+  async getUsers(): Promise<User[]> {
+    return await db.select().from(users);
+  }
+
+  async createUser(user: InsertUser): Promise<User> {
+    const [created] = await db
+      .insert(users)
+      .values({
+        ...user,
+        created_at: new Date(),
+        updated_at: new Date(),
+      })
+      .returning();
+    return created;
+  }
+
+  async getPurchaseOrders(): Promise<PurchaseOrder[]> {
+    return await db.select().from(purchaseOrders);
+  }
+
+  async createPurchaseOrder(order: InsertPurchaseOrder): Promise<PurchaseOrder> {
+    const [created] = await db
+      .insert(purchaseOrders)
+      .values({
+        ...order,
+        created_at: new Date(),
+        updated_at: new Date(),
+      })
+      .returning();
+    return created;
+  }
+
+  async getOrders(): Promise<Order[]> {
+    return await db.select().from(orders);
+  }
+
+  async createOrder(order: InsertOrder): Promise<Order> {
+    const [created] = await db
+      .insert(orders)
+      .values({
+        ...order,
+        created_at: new Date(),
+        updated_at: new Date(),
+      })
+      .returning();
+    return created;
   }
 }
 

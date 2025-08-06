@@ -37,8 +37,15 @@ Preferred communication style: Simple, everyday language.
 ### Database Design
 - **Products table**: Stores grocery items with EAN codes, pricing, descriptions, and tax associations
 - **Taxes table**: Manages Spanish VAT tax rates (General, Reducido, Superreducido, Alimentación, Exento)
-- **Foreign key relationships**: Products reference taxes through tax_code
-- **Timestamps**: Automatic created_at and updated_at tracking for audit trails
+- **Delivery Centers table**: Manages distribution centers for order fulfillment
+- **Stores table**: Individual store locations linked to delivery centers
+- **Users table**: Store personnel with authentication and role management
+- **Purchase Orders table**: Customer orders before processing and confirmation
+- **Purchase Order Items table**: Individual line items within purchase orders
+- **Orders table**: Final processed orders derived from purchase orders
+- **Order Items table**: Line items for final processed orders
+- **Foreign key relationships**: Complete referential integrity across all entities
+- **Timestamps**: Automatic created_at and updated_at tracking for all entities
 
 ### API Architecture
 - **GraphQL schema** with queries for products and taxes, including timestamp-based filtering
