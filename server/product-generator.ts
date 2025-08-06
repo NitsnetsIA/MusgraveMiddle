@@ -306,8 +306,9 @@ export function generateRandomProduct(timestampOffset: string): {
   ];
   const description = descriptions[Math.floor(Math.random() * descriptions.length)];
   
-  // Generate image URL using LoremFlickr service (300x300 size)
-  const imageUrl = `https://loremflickr.com/300/300/${category.imageKeyword}?random=${Math.floor(Math.random() * 10000)}`;
+  // Generate image URL using Placehold.co service (300x300 size)
+  const categoryText = category.name.toUpperCase().replace(/\s+/g, '+');
+  const imageUrl = `https://placehold.co/300x300/e6e6e6/black?text=${categoryText}+${ean}`;
   
   // Calculate timestamps
   const offsetDate = new Date(timestampOffset);
