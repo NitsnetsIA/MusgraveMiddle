@@ -46,6 +46,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           path: formattedError.path,
         };
       },
+      csrfPrevention: false,
     });
 
     // Start the GraphQL server on a separate port with error handling

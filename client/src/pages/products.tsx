@@ -1,9 +1,12 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ShoppingCart, Package, Euro } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
+import { ShoppingCart, Package, Trash2, Plus, RefreshCw } from "lucide-react";
 import { useState } from "react";
 
 interface Product {
@@ -78,6 +81,80 @@ async function fetchProducts(): Promise<ProductsResponse> {
   return result.data.products;
 }
 
+async function deleteAllProducts() {
+  const mutation = `
+    mutation DeleteAllProducts {
+      deleteAllProducts {
+        success
+        deletedCount
+        message
+      }
+    }
+  `;
+
+  const response = await fetch(GRAPHQL_ENDPOINT, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ query: mutation }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const result = await response.json();
+  
+  if (result.errors) {
+    throw new Error(result.errors[0]?.message || "GraphQL error");
+  }
+
+  return result.data.deleteAllProducts;
+}
+
+async function generateRandomProducts(count: number, timestampOffset: string) {
+  const mutation = `
+    mutation GenerateRandomProducts($count: Int!, $timestampOffset: String!) {
+      generateRandomProducts(count: $count, timestampOffset: $timestampOffset) {
+        success
+        createdCount
+        message
+        products {
+          ean
+          ref
+          title
+          base_price
+          tax_code
+        }
+      }
+    }
+  `;
+
+  const response = await fetch(GRAPHQL_ENDPOINT, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ 
+      query: mutation,
+      variables: { count, timestampOffset }
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const result = await response.json();
+  
+  if (result.errors) {
+    throw new Error(result.errors[0]?.message || "GraphQL error");
+  }
+
+  return result.data.generateRandomProducts;
+}
+
 function ProductCard({ product }: { product: Product }) {
   const totalPrice = product.base_price * (1 + (product.tax?.tax_rate || 0));
   
@@ -142,10 +219,81 @@ function ProductCard({ product }: { product: Product }) {
 }
 
 export default function Products() {
+  const [productCount, setProductCount] = useState(10);
+  const [timestampOffset, setTimestampOffset] = useState(new Date().toISOString());
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
   const { data, isLoading, error } = useQuery({
     queryKey: ["products"],
     queryFn: fetchProducts,
   });
+
+  const deleteAllMutation = useMutation({
+    mutationFn: deleteAllProducts,
+    onSuccess: (result) => {
+      toast({
+        title: "Productos eliminados",
+        description: result.message,
+      });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Error al eliminar productos",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const generateMutation = useMutation({
+    mutationFn: ({ count, timestamp }: { count: number; timestamp: string }) => 
+      generateRandomProducts(count, timestamp),
+    onSuccess: (result) => {
+      toast({
+        title: "Productos generados",
+        description: result.message,
+      });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Error al generar productos",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleDeleteAll = () => {
+    if (confirm("¿Estás seguro de que quieres eliminar TODOS los productos? Esta acción no se puede deshacer.")) {
+      deleteAllMutation.mutate();
+    }
+  };
+
+  const handleGenerateProducts = () => {
+    if (productCount <= 0 || productCount > 1000) {
+      toast({
+        title: "Error",
+        description: "El número de productos debe estar entre 1 y 1000",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const timestamp = new Date(timestampOffset);
+    if (isNaN(timestamp.getTime())) {
+      toast({
+        title: "Error",
+        description: "Formato de fecha inválido",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    generateMutation.mutate({ count: productCount, timestamp: timestampOffset });
+  };
 
   if (error) {
     return (
@@ -165,17 +313,113 @@ export default function Products() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="flex items-center gap-3 mb-8">
-        <Package className="h-8 w-8 text-primary" />
-        <div>
-          <h1 className="text-3xl font-bold" data-testid="text-page-title">
-            Catálogo de Productos
-          </h1>
-          <p className="text-muted-foreground">
-            Sistema de gestión de productos de alimentación con IVA español
-          </p>
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-3">
+          <Package className="h-8 w-8 text-primary" />
+          <div>
+            <h1 className="text-3xl font-bold" data-testid="text-page-title">
+              Catálogo de Productos
+            </h1>
+            <p className="text-muted-foreground">
+              Sistema de gestión de productos de alimentación con IVA español
+            </p>
+          </div>
+        </div>
+        
+        <div className="flex gap-2">
+          <Button
+            onClick={() => queryClient.invalidateQueries({ queryKey: ["products"] })}
+            variant="outline"
+            data-testid="button-refresh"
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Actualizar
+          </Button>
         </div>
       </div>
+
+      {/* Admin Controls */}
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle>Herramientas de Administración</CardTitle>
+          <CardDescription>
+            Gestiona el catálogo de productos con operaciones masivas
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Delete All Products */}
+          <div className="flex items-center justify-between p-4 border rounded-lg">
+            <div>
+              <h3 className="font-medium">Eliminar todos los productos</h3>
+              <p className="text-sm text-muted-foreground">
+                Elimina permanentemente todos los productos del catálogo
+              </p>
+            </div>
+            <Button
+              onClick={handleDeleteAll}
+              variant="destructive"
+              disabled={deleteAllMutation.isPending}
+              data-testid="button-delete-all"
+            >
+              {deleteAllMutation.isPending ? (
+                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Trash2 className="h-4 w-4 mr-2" />
+              )}
+              Eliminar Todo
+            </Button>
+          </div>
+
+          {/* Generate Random Products */}
+          <div className="p-4 border rounded-lg space-y-4">
+            <div>
+              <h3 className="font-medium">Generar productos aleatorios</h3>
+              <p className="text-sm text-muted-foreground">
+                Crea productos españoles realistas con categorías y marcas auténticas
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="product-count">Número de productos (1-1000)</Label>
+                <Input
+                  id="product-count"
+                  type="number"
+                  min="1"
+                  max="1000"
+                  value={productCount}
+                  onChange={(e) => setProductCount(parseInt(e.target.value) || 0)}
+                  data-testid="input-product-count"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="timestamp-offset">Fecha/Hora de creación</Label>
+                <Input
+                  id="timestamp-offset"
+                  type="datetime-local"
+                  value={timestampOffset.slice(0, 16)}
+                  onChange={(e) => setTimestampOffset(new Date(e.target.value).toISOString())}
+                  data-testid="input-timestamp"
+                />
+              </div>
+            </div>
+            
+            <Button
+              onClick={handleGenerateProducts}
+              disabled={generateMutation.isPending}
+              data-testid="button-generate"
+            >
+              {generateMutation.isPending ? (
+                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Plus className="h-4 w-4 mr-2" />
+              )}
+              Generar Productos
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

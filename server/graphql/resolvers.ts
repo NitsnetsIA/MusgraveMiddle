@@ -34,6 +34,14 @@ export const resolvers = {
     deleteProduct: async (_: any, { ean }: { ean: string }) => {
       return await storage.deleteProduct(ean);
     },
+
+    deleteAllProducts: async () => {
+      return await storage.deleteAllProducts();
+    },
+
+    generateRandomProducts: async (_: any, { count, timestampOffset }: { count: number; timestampOffset: string }) => {
+      return await storage.generateRandomProducts(count, timestampOffset);
+    },
     
     createTax: async (_: any, { input }: { input: any }) => {
       return await storage.createTax(input);
