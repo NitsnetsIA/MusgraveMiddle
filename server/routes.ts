@@ -6,7 +6,7 @@ import { startStandaloneServer } from "@apollo/server/standalone";
 import { typeDefs } from "./graphql/schema";
 import { resolvers } from "./graphql/resolvers";
 import { seedDatabase } from "./seed.js";
-import expressPlayground from "graphql-playground-middleware-express";
+// Note: GraphQL Playground will use custom implementation due to ES module compatibility
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
@@ -125,17 +125,146 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     console.log(`🚀 Public GraphQL endpoint ready at /graphql`);
 
-    // GraphQL Playground - disponible en desarrollo y producción
-    app.get('/playground', expressPlayground({ 
-      endpoint: '/graphql',
-      settings: {
-        'editor.theme': 'dark',
-        'editor.cursorShape': 'line',
-        'editor.reuseHeaders': true,
-        'tracing.hideTracingResponse': true,
-        'request.credentials': 'include',
+    // GraphQL Playground simple - funciona tanto en desarrollo como producción
+      app.get('/playground', (req, res) => {
+        const host = req.get('host');
+        const protocol = req.get('x-forwarded-proto') || 'http';
+        const baseUrl = `${protocol}://${host}`;
+        
+        res.send(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>GraphQL Playground - Grocery PIM</title>
+            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/graphql-playground-react/build/static/css/index.css" />
+            <style>
+              body { margin: 0; font-family: Arial, sans-serif; }
+              .header { background: #1f2937; color: white; padding: 20px; text-align: center; }
+              .content { padding: 20px; max-width: 800px; margin: 0 auto; }
+              .query-box { width: 100%; height: 200px; font-family: monospace; padding: 10px; border: 1px solid #ccc; }
+              .button { background: #3b82f6; color: white; padding: 10px 20px; border: none; cursor: pointer; margin: 10px 5px; }
+              .result { background: #f8f9fa; padding: 15px; border-left: 4px solid #28a745; margin-top: 20px; }
+              .examples { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; }
+              .example { background: #f8f9fa; padding: 15px; border-radius: 5px; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <h1>🛒 GraphQL Playground - Grocery PIM</h1>
+              <p>Endpoint: ${baseUrl}/graphql</p>
+            </div>
+            
+            <div class="content">
+              <div>
+                <textarea id="query" class="query-box" placeholder="Escribe tu consulta GraphQL aquí...">query GetProducts {
+  products(limit: 5) {
+    products {
+      ean
+      title
+      base_price
+      image_url
+      tax {
+        name
+        tax_rate
       }
-    }));
+    }
+    total
+  }
+}</textarea>
+                <br>
+                <button class="button" onclick="executeQuery()">🚀 Ejecutar Consulta</button>
+                <button class="button" onclick="loadExample('products')">📦 Ejemplo: Productos</button>
+                <button class="button" onclick="loadExample('generate')">🔄 Ejemplo: Generar Productos</button>
+              </div>
+              
+              <div id="result" class="result" style="display: none;">
+                <h3>Resultado:</h3>
+                <pre id="resultContent"></pre>
+              </div>
+
+              <div class="examples">
+                <div class="example">
+                  <h4>📋 Consultas Disponibles:</h4>
+                  <ul>
+                    <li>products - Obtener productos</li>
+                    <li>taxes - Obtener impuestos</li>
+                    <li>productsByDateRange - Productos por fecha</li>
+                  </ul>
+                </div>
+                <div class="example">
+                  <h4>🔄 Mutaciones Disponibles:</h4>
+                  <ul>
+                    <li>generateRandomProducts - Generar productos</li>
+                    <li>deleteAllProducts - Eliminar todos los productos</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <script>
+              function loadExample(type) {
+                const query = document.getElementById('query');
+                if (type === 'products') {
+                  query.value = \`query GetProducts {
+  products(limit: 5) {
+    products {
+      ean
+      title
+      base_price
+      image_url
+      tax {
+        name
+        tax_rate
+      }
+    }
+    total
+  }
+}\`;
+                } else if (type === 'generate') {
+                  query.value = \`mutation GenerateProducts {
+  generateRandomProducts(count: 10) {
+    success
+    createdCount
+    message
+    products {
+      ean
+      title
+      base_price
+    }
+  }
+}\`;
+                }
+              }
+
+              async function executeQuery() {
+                const query = document.getElementById('query').value;
+                const resultDiv = document.getElementById('result');
+                const resultContent = document.getElementById('resultContent');
+                
+                try {
+                  const response = await fetch('${baseUrl}/graphql', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'Apollo-Require-Preflight': 'true'
+                    },
+                    body: JSON.stringify({ query })
+                  });
+                  
+                  const result = await response.json();
+                  resultDiv.style.display = 'block';
+                  resultContent.textContent = JSON.stringify(result, null, 2);
+                } catch (error) {
+                  resultDiv.style.display = 'block';
+                  resultContent.textContent = 'Error: ' + error.message;
+                }
+              }
+            </script>
+          </body>
+          </html>
+        `);
+      });
+      console.log('🎮 GraphQL Playground simple disponible en /playground');
 
     // También crear una página simple de info con links
     app.get('/graphql-info', (req, res) => {
@@ -203,14 +332,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       `);
     });
 
-    console.log(`🎮 GraphQL Playground disponible en /playground`);
     console.log(`📋 Información de la API en /graphql-info`);
 
+    // Ensure our routes are registered with high priority
+    app._router.stack.unshift(...app._router.stack.splice(-10));
+
     console.log("Server routes registered successfully");
+    console.log("Environment:", process.env.NODE_ENV);
     console.log("Routes registered:");
-    app._router.stack.forEach((layer: any) => {
+    app._router.stack.forEach((layer: any, index: number) => {
       if (layer.route) {
-        console.log(`  ${Object.keys(layer.route.methods)} ${layer.route.path}`);
+        console.log(`  [${index}] ${Object.keys(layer.route.methods)} ${layer.route.path}`);
+      } else if (layer.name) {
+        console.log(`  [${index}] middleware: ${layer.name}`);
       }
     });
     return httpServer;
