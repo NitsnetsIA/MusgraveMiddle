@@ -113,9 +113,9 @@ async function deleteAllProducts() {
   return result.data.deleteAllProducts;
 }
 
-async function generateRandomProducts(count: number, timestampOffset: string) {
+async function generateRandomProducts(count: number, timestampOffset?: string) {
   const mutation = `
-    mutation GenerateRandomProducts($count: Int!, $timestampOffset: String!) {
+    mutation GenerateRandomProducts($count: Int!, $timestampOffset: String) {
       generateRandomProducts(count: $count, timestampOffset: $timestampOffset) {
         success
         createdCount
@@ -138,7 +138,7 @@ async function generateRandomProducts(count: number, timestampOffset: string) {
     },
     body: JSON.stringify({ 
       query: mutation,
-      variables: { count, timestampOffset }
+      variables: { count, timestampOffset: timestampOffset || null }
     }),
   });
 
@@ -220,7 +220,7 @@ function ProductCard({ product }: { product: Product }) {
 
 export default function Products() {
   const [productCount, setProductCount] = useState(10);
-  const [timestampOffset, setTimestampOffset] = useState(new Date().toISOString());
+  const [timestampOffset, setTimestampOffset] = useState('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -248,7 +248,7 @@ export default function Products() {
   });
 
   const generateMutation = useMutation({
-    mutationFn: ({ count, timestamp }: { count: number; timestamp: string }) => 
+    mutationFn: ({ count, timestamp }: { count: number; timestamp?: string }) => 
       generateRandomProducts(count, timestamp),
     onSuccess: (result) => {
       toast({
@@ -282,17 +282,22 @@ export default function Products() {
       return;
     }
 
-    const timestamp = new Date(timestampOffset);
-    if (isNaN(timestamp.getTime())) {
-      toast({
-        title: "Error",
-        description: "Formato de fecha inválido",
-        variant: "destructive",
-      });
-      return;
+    // Only validate timestamp if provided
+    let finalTimestamp = undefined;
+    if (timestampOffset && timestampOffset.trim()) {
+      const timestamp = new Date(timestampOffset);
+      if (isNaN(timestamp.getTime())) {
+        toast({
+          title: "Error",
+          description: "Formato de fecha inválido",
+          variant: "destructive",
+        });
+        return;
+      }
+      finalTimestamp = timestampOffset;
     }
 
-    generateMutation.mutate({ count: productCount, timestamp: timestampOffset });
+    generateMutation.mutate({ count: productCount, timestamp: finalTimestamp });
   };
 
   if (error) {
@@ -394,12 +399,13 @@ export default function Products() {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="timestamp-offset">Fecha/Hora de creación</Label>
+                <Label htmlFor="timestamp-offset">Fecha/Hora de creación (opcional)</Label>
                 <Input
                   id="timestamp-offset"
                   type="datetime-local"
-                  value={timestampOffset.slice(0, 16)}
-                  onChange={(e) => setTimestampOffset(new Date(e.target.value).toISOString())}
+                  value={timestampOffset ? timestampOffset.slice(0, 16) : ''}
+                  onChange={(e) => setTimestampOffset(e.target.value ? new Date(e.target.value).toISOString() : '')}
+                  placeholder="Usa el momento actual si se deja vacío"
                   data-testid="input-timestamp"
                 />
               </div>

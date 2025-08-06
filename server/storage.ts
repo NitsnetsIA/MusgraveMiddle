@@ -38,7 +38,7 @@ export interface IStorage {
   updateProduct(ean: string, product: Partial<InsertProduct>): Promise<Product>;
   deleteProduct(ean: string): Promise<boolean>;
   deleteAllProducts(): Promise<DeleteAllProductsResult>;
-  generateRandomProducts(count: number, timestampOffset: string): Promise<GenerateProductsResult>;
+  generateRandomProducts(count: number, timestampOffset?: string): Promise<GenerateProductsResult>;
   
   // Tax methods
   getTaxes(timestamp?: string, limit?: number, offset?: number): Promise<TaxConnection>;
@@ -135,7 +135,7 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async generateRandomProducts(count: number, timestampOffset: string): Promise<GenerateProductsResult> {
+  async generateRandomProducts(count: number, timestampOffset?: string): Promise<GenerateProductsResult> {
     try {
       if (count <= 0) {
         return {
@@ -155,8 +155,11 @@ export class DatabaseStorage implements IStorage {
         };
       }
 
-      // Validate timestamp
-      const offsetDate = new Date(timestampOffset);
+      // Use current time if no timestamp provided
+      const finalTimestamp = timestampOffset || new Date().toISOString();
+      
+      // Validate timestamp if provided
+      const offsetDate = new Date(finalTimestamp);
       if (isNaN(offsetDate.getTime())) {
         return {
           success: false,
@@ -167,7 +170,7 @@ export class DatabaseStorage implements IStorage {
       }
 
       // Generate random products
-      const randomProducts = generateRandomProducts(count, timestampOffset);
+      const randomProducts = generateRandomProducts(count, finalTimestamp);
       
       // Insert into database
       const insertedProducts = await db

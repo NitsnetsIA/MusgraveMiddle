@@ -87,7 +87,7 @@ export const typeDefs = `#graphql
     updateProduct(ean: String!, input: UpdateProductInput!): Product!
     deleteProduct(ean: String!): Boolean!
     deleteAllProducts: DeleteAllProductsResult!
-    generateRandomProducts(count: Int!, timestampOffset: String!): GenerateProductsResult!
+    generateRandomProducts(count: Int!, timestampOffset: String): GenerateProductsResult!
     
     createTax(input: TaxInput!): Tax!
     updateTax(code: String!, input: UpdateTaxInput!): Tax!

@@ -39,7 +39,7 @@ export const resolvers = {
       return await storage.deleteAllProducts();
     },
 
-    generateRandomProducts: async (_: any, { count, timestampOffset }: { count: number; timestampOffset: string }) => {
+    generateRandomProducts: async (_: any, { count, timestampOffset }: { count: number; timestampOffset?: string }) => {
       return await storage.generateRandomProducts(count, timestampOffset);
     },
     
