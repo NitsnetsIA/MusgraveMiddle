@@ -35,7 +35,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     }
 
-    // Create Apollo Server instance
+    // Create Apollo Server instance with introspection enabled
     const apolloServer = new ApolloServer({
       typeDefs,
       resolvers,
@@ -48,19 +48,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         };
       },
       csrfPrevention: false,
+      introspection: true, // Enable introspection for schema exploration
     });
 
-    // Start the standalone Apollo Server on port 4000 (for internal communication)
+    // Start the standalone Apollo Server with GraphQL Playground enabled
     let graphqlUrl = "http://localhost:4000/";
     try {
       const { url } = await startStandaloneServer(apolloServer, {
-        listen: { port: 4000, host: "127.0.0.1" }, // Only bind to localhost
+        listen: { port: 4000, host: "127.0.0.1" },
         context: async ({ req }) => {
           return {};
         },
       });
       graphqlUrl = url;
-      console.log(`🚀 GraphQL Server ready at ${url} (internal only)`);
+      console.log(`🚀 GraphQL Server ready at ${url} with GraphQL Playground`);
     } catch (graphqlError) {
       console.error("Failed to start GraphQL server:", graphqlError);
     }
@@ -71,8 +72,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: "ok", 
         service: "grocery-pim-graphql",
         graphql_endpoint: "/graphql",
+        graphql_playground: graphqlUrl,
         timestamp: new Date().toISOString()
       });
+    });
+
+    // Redirect /playground to the actual GraphQL playground
+    app.get("/playground", (req, res) => {
+      res.redirect(graphqlUrl);
     });
 
     // Direct GraphQL endpoint using Apollo server resolvers (no proxy)
@@ -124,215 +131,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
 
     console.log(`🚀 Public GraphQL endpoint ready at /graphql`);
-
-    // GraphQL Playground simple - funciona tanto en desarrollo como producción
-      app.get('/playground', (req, res) => {
-        const host = req.get('host');
-        const protocol = req.get('x-forwarded-proto') || 'http';
-        const baseUrl = `${protocol}://${host}`;
-        
-        res.send(`
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <title>GraphQL Playground - Grocery PIM</title>
-            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/graphql-playground-react/build/static/css/index.css" />
-            <style>
-              body { margin: 0; font-family: Arial, sans-serif; }
-              .header { background: #1f2937; color: white; padding: 20px; text-align: center; }
-              .content { padding: 20px; max-width: 800px; margin: 0 auto; }
-              .query-box { width: 100%; height: 200px; font-family: monospace; padding: 10px; border: 1px solid #ccc; }
-              .button { background: #3b82f6; color: white; padding: 10px 20px; border: none; cursor: pointer; margin: 10px 5px; }
-              .result { background: #f8f9fa; padding: 15px; border-left: 4px solid #28a745; margin-top: 20px; }
-              .examples { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; }
-              .example { background: #f8f9fa; padding: 15px; border-radius: 5px; }
-            </style>
-          </head>
-          <body>
-            <div class="header">
-              <h1>🛒 GraphQL Playground - Grocery PIM</h1>
-              <p>Endpoint: ${baseUrl}/graphql</p>
-            </div>
-            
-            <div class="content">
-              <div>
-                <textarea id="query" class="query-box" placeholder="Escribe tu consulta GraphQL aquí...">query GetProducts {
-  products(limit: 5) {
-    products {
-      ean
-      title
-      base_price
-      image_url
-      tax {
-        name
-        tax_rate
-      }
-    }
-    total
-  }
-}</textarea>
-                <br>
-                <button class="button" onclick="executeQuery()">🚀 Ejecutar Consulta</button>
-                <button class="button" onclick="loadExample('products')">📦 Ejemplo: Productos</button>
-                <button class="button" onclick="loadExample('generate')">🔄 Ejemplo: Generar Productos</button>
-              </div>
-              
-              <div id="result" class="result" style="display: none;">
-                <h3>Resultado:</h3>
-                <pre id="resultContent"></pre>
-              </div>
-
-              <div class="examples">
-                <div class="example">
-                  <h4>📋 Consultas Disponibles:</h4>
-                  <ul>
-                    <li>products - Obtener productos</li>
-                    <li>taxes - Obtener impuestos</li>
-                    <li>productsByDateRange - Productos por fecha</li>
-                  </ul>
-                </div>
-                <div class="example">
-                  <h4>🔄 Mutaciones Disponibles:</h4>
-                  <ul>
-                    <li>generateRandomProducts - Generar productos</li>
-                    <li>deleteAllProducts - Eliminar todos los productos</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-
-            <script>
-              function loadExample(type) {
-                const query = document.getElementById('query');
-                if (type === 'products') {
-                  query.value = \`query GetProducts {
-  products(limit: 5) {
-    products {
-      ean
-      title
-      base_price
-      image_url
-      tax {
-        name
-        tax_rate
-      }
-    }
-    total
-  }
-}\`;
-                } else if (type === 'generate') {
-                  query.value = \`mutation GenerateProducts {
-  generateRandomProducts(count: 10) {
-    success
-    createdCount
-    message
-    products {
-      ean
-      title
-      base_price
-    }
-  }
-}\`;
-                }
-              }
-
-              async function executeQuery() {
-                const query = document.getElementById('query').value;
-                const resultDiv = document.getElementById('result');
-                const resultContent = document.getElementById('resultContent');
-                
-                try {
-                  const response = await fetch('${baseUrl}/graphql', {
-                    method: 'POST',
-                    headers: {
-                      'Content-Type': 'application/json',
-                      'Apollo-Require-Preflight': 'true'
-                    },
-                    body: JSON.stringify({ query })
-                  });
-                  
-                  const result = await response.json();
-                  resultDiv.style.display = 'block';
-                  resultContent.textContent = JSON.stringify(result, null, 2);
-                } catch (error) {
-                  resultDiv.style.display = 'block';
-                  resultContent.textContent = 'Error: ' + error.message;
-                }
-              }
-            </script>
-          </body>
-          </html>
-        `);
-      });
-      console.log('🎮 GraphQL Playground simple disponible en /playground');
-
-    // También crear una página simple de info con links
-    app.get('/graphql-info', (req, res) => {
-      const host = req.get('host');
-      const protocol = req.get('x-forwarded-proto') || 'http';
-      const baseUrl = `${protocol}://${host}`;
-      
-      res.send(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>GraphQL API - Grocery PIM</title>
-          <style>
-            body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
-            .endpoint { background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 10px 0; }
-            .button { display: inline-block; background: #007cba; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin: 5px; }
-            .example { background: #e8f4ff; padding: 15px; border-left: 4px solid #007cba; margin: 10px 0; }
-          </style>
-        </head>
-        <body>
-          <h1>🛒 Grocery PIM - GraphQL API</h1>
-          
-          <div class="endpoint">
-            <h3>🚀 Endpoints Disponibles:</h3>
-            <p><strong>GraphQL API:</strong> <code>${baseUrl}/graphql</code></p>
-            <p><strong>GraphQL Playground:</strong> <code>${baseUrl}/playground</code></p>
-            <p><strong>Health Check:</strong> <code>${baseUrl}/api/health</code></p>
-          </div>
-
-          <a href="/playground" class="button">🎮 Abrir GraphQL Playground</a>
-          <a href="/api/health" class="button">❤️ Health Check</a>
-
-          <div class="example">
-            <h3>📝 Ejemplo de consulta:</h3>
-            <pre>query GetProducts {
-  products(limit: 5) {
-    products {
-      ean
-      title
-      base_price
-      image_url
-      tax {
-        name
-        tax_rate
-      }
-    }
-    total
-  }
-}</pre>
-          </div>
-
-          <div class="example">
-            <h3>🔄 Generar productos de ejemplo:</h3>
-            <pre>mutation GenerateProducts {
-  generateRandomProducts(count: 10) {
-    success
-    createdCount
-    message
-  }
-}</pre>
-          </div>
-
-        </body>
-        </html>
-      `);
-    });
-
-    console.log(`📋 Información de la API en /graphql-info`);
 
     // Ensure our routes are registered with high priority
     app._router.stack.unshift(...app._router.stack.splice(-10));
