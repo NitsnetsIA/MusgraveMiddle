@@ -55,6 +55,7 @@ Preferred communication style: Simple, everyday language.
 - **Pagination support** with configurable limits (default 100) for handling large datasets
 - **Type-safe resolvers** with database relation queries
 - **Error handling** with formatted GraphQL errors and comprehensive logging
+- **Sync info endpoint** (`sync_info`) providing last updated timestamps for client synchronization across users, products, stores, delivery_centers, and purchase_orders entities
 
 ### Development Environment
 - **Replit integration** with custom plugins for development banner and cartographer

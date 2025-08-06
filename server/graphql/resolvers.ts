@@ -85,6 +85,11 @@ export const resolvers = {
     orderItem: async (_: any, { item_id }: { item_id: number }) => {
       return await storage.getOrderItem(item_id);
     },
+
+    // Sync info query
+    sync_info: async () => {
+      return await storage.getSyncInfo();
+    },
   },
 
   Mutation: {

@@ -320,6 +320,8 @@ export const typeDefs = `#graphql
     
     orderItems: [OrderItem!]!
     orderItem(item_id: Int!): OrderItem
+
+    sync_info: SyncInfoResult!
   }
 
   type ProductConnection {
@@ -387,5 +389,16 @@ export const typeDefs = `#graphql
     createdCount: Int!
     products: [Product!]!
     message: String!
+  }
+
+  type EntitySyncInfo {
+    entity_name: String!
+    last_updated: DateTime
+    total_records: Int!
+  }
+
+  type SyncInfoResult {
+    entities: [EntitySyncInfo!]!
+    generated_at: DateTime!
   }
 `;

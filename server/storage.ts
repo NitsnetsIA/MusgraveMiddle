@@ -102,6 +102,9 @@ export interface IStorage {
   createOrderItem(item: InsertOrderItem): Promise<OrderItem>;
   updateOrderItem(item_id: number, item: Partial<InsertOrderItem>): Promise<OrderItem>;
   deleteOrderItem(item_id: number): Promise<boolean>;
+
+  // Sync info method
+  getSyncInfo(): Promise<{ entities: Array<{ entity_name: string; last_updated: Date | null; total_records: number }>; generated_at: Date }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -625,6 +628,40 @@ export class DatabaseStorage implements IStorage {
   async deleteOrderItem(item_id: number): Promise<boolean> {
     const result = await db.delete(orderItems).where(eq(orderItems.item_id, item_id));
     return result.rowCount! > 0;
+  }
+
+  // Sync info implementation
+  async getSyncInfo(): Promise<{ entities: Array<{ entity_name: string; last_updated: Date | null; total_records: number }>; generated_at: Date }> {
+    const entities = [
+      { table: users, name: 'users' },
+      { table: products, name: 'products' },
+      { table: stores, name: 'stores' },
+      { table: deliveryCenters, name: 'delivery_centers' },
+      { table: purchaseOrders, name: 'purchase_orders' }
+    ];
+
+    const results = await Promise.all(
+      entities.map(async ({ table, name }) => {
+        // Get the most recent timestamp (either created_at or updated_at)
+        const [result] = await db
+          .select({
+            last_updated: sql<Date>`GREATEST(MAX(created_at), MAX(updated_at))`,
+            total_records: sql<number>`COUNT(*)`
+          })
+          .from(table);
+
+        return {
+          entity_name: name,
+          last_updated: result.last_updated || null,
+          total_records: Number(result.total_records) || 0
+        };
+      })
+    );
+
+    return {
+      entities: results,
+      generated_at: new Date()
+    };
   }
 }
 
