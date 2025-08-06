@@ -66,6 +66,7 @@ async function fetchProducts(): Promise<ProductsResponse> {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      "Apollo-Require-Preflight": "true",
     },
     body: JSON.stringify({ query }),
   });
@@ -98,6 +99,7 @@ async function deleteAllProducts() {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      "Apollo-Require-Preflight": "true",
     },
     body: JSON.stringify({ query: mutation }),
   });
@@ -137,6 +139,7 @@ async function generateRandomProducts(count: number, timestampOffset?: string) {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      "Apollo-Require-Preflight": "true",
     },
     body: JSON.stringify({ 
       query: mutation,

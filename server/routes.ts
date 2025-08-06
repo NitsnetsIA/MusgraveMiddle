@@ -49,40 +49,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
       csrfPrevention: false,
     });
 
-    // Start the GraphQL server on a separate port with error handling
+    // Start the standalone Apollo Server on port 4000 (for internal communication)
     let graphqlUrl = "http://localhost:4000/";
     try {
       const { url } = await startStandaloneServer(apolloServer, {
-        listen: { port: 4000 },
+        listen: { port: 4000, host: "127.0.0.1" }, // Only bind to localhost
         context: async ({ req }) => {
-          return {
-            // Add any context you need here
-          };
+          return {};
         },
       });
       graphqlUrl = url;
-      console.log(`🚀 GraphQL Server ready at ${url}`);
+      console.log(`🚀 GraphQL Server ready at ${url} (internal only)`);
     } catch (graphqlError) {
       console.error("Failed to start GraphQL server:", graphqlError);
-      console.log("Continuing with REST endpoints only...");
     }
-
+    
     // Health check endpoint
     app.get("/api/health", (req, res) => {
       res.json({ 
         status: "ok", 
         service: "grocery-pim-graphql",
-        graphql_endpoint: graphqlUrl,
+        graphql_endpoint: "/graphql",
         timestamp: new Date().toISOString()
       });
     });
 
-    // Proxy GraphQL requests to the standalone server
-    app.post("/graphql", async (req, res) => {
+    // Direct GraphQL endpoint using Apollo server resolvers (no proxy)
+    app.all("/graphql", async (req, res) => {
+      console.log(`${req.method} request to /graphql received from ${req.get('host')} - User-Agent: ${req.get('User-Agent')}`);
+      if (req.method === 'OPTIONS') {
+        res.header('Access-Control-Allow-Origin', '*');
+        res.header('Access-Control-Allow-Methods', 'POST, OPTIONS');
+        res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Apollo-Require-Preflight');
+        return res.status(200).end();
+      }
       try {
-        console.log('Proxying GraphQL request:', req.body);
+        console.log('Direct GraphQL request to internal Apollo:', JSON.stringify(req.body));
         
-        const response = await fetch('http://localhost:4000/', {
+        // Set CORS headers
+        res.header('Access-Control-Allow-Origin', '*');
+        res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Apollo-Require-Preflight');
+        
+        const response = await fetch(graphqlUrl, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -92,32 +100,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
         
         if (!response.ok) {
-          throw new Error(`GraphQL server responded with status: ${response.status}`);
+          throw new Error(`GraphQL server error: ${response.status}`);
         }
         
         const data = await response.json();
-        console.log('GraphQL response:', data);
+        console.log('GraphQL response success');
         res.json(data);
       } catch (error) {
-        console.error('GraphQL proxy error:', error);
+        console.error('GraphQL endpoint error:', error);
         res.status(500).json({ 
-          errors: [{ message: 'GraphQL server unavailable', details: error instanceof Error ? error.message : 'Unknown error' }] 
+          errors: [{ message: 'Internal GraphQL error', details: error instanceof Error ? error.message : 'Unknown error' }] 
         });
       }
     });
 
-    // Handle GET requests to GraphQL endpoint (for GraphQL Playground, introspection, etc.)
-    app.get("/graphql", (req, res) => {
-      res.json({
-        message: "GraphQL endpoint is available. Send POST requests with GraphQL queries.",
-        endpoint: "/graphql",
-        example: {
-          query: "{ products(limit: 5) { products { ean title } } }"
-        }
-      });
+    // OPTIONS preflight for CORS
+    app.options("/graphql", (req, res) => {
+      res.header('Access-Control-Allow-Origin', '*');
+      res.header('Access-Control-Allow-Methods', 'POST, OPTIONS');
+      res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Apollo-Require-Preflight');
+      res.status(200).end();
     });
 
+    console.log(`🚀 Public GraphQL endpoint ready at /graphql`);
+
     console.log("Server routes registered successfully");
+    console.log("Routes registered:");
+    app._router.stack.forEach((layer: any) => {
+      if (layer.route) {
+        console.log(`  ${Object.keys(layer.route.methods)} ${layer.route.path}`);
+      }
+    });
     return httpServer;
     
   } catch (error) {
