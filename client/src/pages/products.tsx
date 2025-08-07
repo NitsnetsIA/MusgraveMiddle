@@ -1541,7 +1541,7 @@ export default function Products() {
   // Data queries for all entities with pagination
   const { data: productsData, isLoading: productsLoading, error: productsError } = useQuery({
     queryKey: ["products", currentPageProducts],
-    queryFn: () => fetchProducts(pageSize, currentPageProducts * pageSize),
+    queryFn: fetchProducts,
   });
 
   const { data: centersData, isLoading: centersLoading } = useQuery({
@@ -2575,7 +2575,7 @@ export default function Products() {
                               onClick={async () => {
                                 try {
                                   await toggleProductStatus(product.ean);
-                                  refetchProducts();
+                                  queryClient.invalidateQueries({ queryKey: ["products"] });
                                 } catch (error) {
                                   console.error('Error toggling product status:', error);
                                 }
@@ -2586,7 +2586,7 @@ export default function Products() {
                             </Badge>
                           </TableCell>
                           <TableCell className="text-sm text-muted-foreground">
-                            {new Date(product.created_at).toLocaleDateString('es-ES')}
+                            {new Date().toLocaleDateString('es-ES')}
                           </TableCell>
                           <TableCell>
                             <Button
@@ -2596,7 +2596,7 @@ export default function Products() {
                                 if (confirm(`¿Estás seguro de que quieres eliminar el producto ${product.title}?`)) {
                                   try {
                                     await deleteProduct(product.ean);
-                                    refetchProducts();
+                                    queryClient.invalidateQueries({ queryKey: ["products"] });
                                   } catch (error) {
                                     console.error('Error deleting product:', error);
                                   }
@@ -2684,7 +2684,7 @@ export default function Products() {
                               if (confirm(`¿Estás seguro de que quieres eliminar el centro ${center.name}?`)) {
                                 try {
                                   await deleteDeliveryCenter(center.code);
-                                  refetchCenters();
+                                  queryClient.invalidateQueries({ queryKey: ["delivery-centers"] });
                                 } catch (error) {
                                   console.error('Error deleting delivery center:', error);
                                 }
@@ -2771,7 +2771,7 @@ export default function Products() {
                             onClick={async () => {
                               try {
                                 await toggleStoreStatus(store.code);
-                                refetchStores();
+                                queryClient.invalidateQueries({ queryKey: ["stores"] });
                               } catch (error) {
                                 console.error('Error toggling store status:', error);
                               }
@@ -2792,7 +2792,7 @@ export default function Products() {
                               if (confirm(`¿Estás seguro de que quieres eliminar la tienda ${store.name}?`)) {
                                 try {
                                   await deleteStore(store.code);
-                                  refetchStores();
+                                  queryClient.invalidateQueries({ queryKey: ["stores"] });
                                 } catch (error) {
                                   console.error('Error deleting store:', error);
                                 }
@@ -2885,7 +2885,7 @@ export default function Products() {
                             onClick={async () => {
                               try {
                                 await toggleUserStatus(user.email);
-                                refetchUsers();
+                                queryClient.invalidateQueries({ queryKey: ["users"] });
                               } catch (error) {
                                 console.error('Error toggling user status:', error);
                               }
@@ -2906,7 +2906,7 @@ export default function Products() {
                               if (confirm(`¿Estás seguro de que quieres eliminar el usuario ${user.name || user.email}?`)) {
                                 try {
                                   await deleteUser(user.email);
-                                  refetchUsers();
+                                  queryClient.invalidateQueries({ queryKey: ["users"] });
                                 } catch (error) {
                                   console.error('Error deleting user:', error);
                                 }
@@ -3022,7 +3022,7 @@ export default function Products() {
                               if (confirm(`¿Estás seguro de que quieres eliminar la orden ${order.purchase_order_id.slice(-8)}?`)) {
                                 try {
                                   await deletePurchaseOrder(order.purchase_order_id);
-                                  refetchPurchaseOrders();
+                                  queryClient.invalidateQueries({ queryKey: ["purchase-orders"] });
                                 } catch (error) {
                                   console.error('Error deleting purchase order:', error);
                                 }
@@ -3148,7 +3148,7 @@ export default function Products() {
                               if (confirm(`¿Estás seguro de que quieres eliminar el pedido ${order.order_id?.slice(-8) || 'N/A'}?`)) {
                                 try {
                                   await deleteOrder(order.order_id);
-                                  refetchOrders();
+                                  queryClient.invalidateQueries({ queryKey: ["orders"] });
                                 } catch (error) {
                                   console.error('Error deleting order:', error);
                                 }
