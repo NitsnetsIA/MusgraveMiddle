@@ -247,6 +247,139 @@ async function fetchPurchaseOrderItems(purchaseOrderId: string): Promise<Purchas
   return result.data.purchaseOrderItems || [];
 }
 
+// Function to fetch order items
+async function fetchOrderItems(orderId: string): Promise<OrderItem[]> {
+  const query = `
+    query GetOrderItems($order_id: String!) {
+      orderItems(order_id: $order_id) {
+        item_id
+        order_id
+        item_ean
+        item_title
+        item_description
+        unit_of_measure
+        quantity_measure
+        image_url
+        quantity
+        base_price_at_order
+        tax_rate_at_order
+        created_at
+        updated_at
+      }
+    }
+  `;
+
+  const response = await fetch(GRAPHQL_ENDPOINT, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Apollo-Require-Preflight": "true",
+    },
+    body: JSON.stringify({ 
+      query,
+      variables: { order_id: orderId }
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const result = await response.json();
+  
+  if (result.errors) {
+    throw new Error(result.errors[0]?.message || "GraphQL error");
+  }
+
+  return result.data.orderItems || [];
+}
+
+// Component to display order items table
+function OrderItemsTable({ orderId }: { orderId: string }) {
+  const { data: orderItems, isLoading, error } = useQuery({
+    queryKey: ["orderItems", orderId],
+    queryFn: () => fetchOrderItems(orderId),
+    enabled: !!orderId,
+  });
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <Skeleton key={i} className="h-16 w-full" />
+        ))}
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-4">
+        <p className="text-muted-foreground">
+          Error al cargar las líneas del pedido: {error instanceof Error ? error.message : "Error desconocido"}
+        </p>
+      </div>
+    );
+  }
+
+  if (!orderItems || orderItems.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+        <p className="text-muted-foreground">Este pedido no tiene líneas de productos</p>
+      </div>
+    );
+  }
+
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Imagen</TableHead>
+          <TableHead>Producto</TableHead>
+          <TableHead>Cantidad</TableHead>
+          <TableHead>Precio Unitario</TableHead>
+          <TableHead>IVA</TableHead>
+          <TableHead>Total Línea</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {orderItems.map((item) => {
+          const lineTotal = item.quantity * item.base_price_at_order * (1 + item.tax_rate_at_order);
+          return (
+            <TableRow key={item.item_id}>
+              <TableCell>
+                {item.image_url && (
+                  <img 
+                    src={item.image_url} 
+                    alt={item.item_title}
+                    className="w-12 h-12 object-cover rounded border"
+                  />
+                )}
+              </TableCell>
+              <TableCell>
+                <div>
+                  <div className="font-medium">{item.item_title}</div>
+                  <div className="text-sm text-muted-foreground">
+                    EAN: {item.item_ean}
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    {item.quantity_measure} {item.unit_of_measure}
+                  </div>
+                </div>
+              </TableCell>
+              <TableCell>{item.quantity}</TableCell>
+              <TableCell>€{item.base_price_at_order.toFixed(2)}</TableCell>
+              <TableCell>{(item.tax_rate_at_order * 100).toFixed(1)}%</TableCell>
+              <TableCell className="font-medium">€{lineTotal.toFixed(2)}</TableCell>
+            </TableRow>
+          );
+        })}
+      </TableBody>
+    </Table>
+  );
+}
+
 async function fetchDeliveryCenters(limit: number = 20, offset: number = 0): Promise<EntitiesResponse<DeliveryCenter>> {
   const query = `
     query GetDeliveryCenters {
@@ -3361,23 +3494,77 @@ export default function Products() {
                           {new Date(order.created_at).toLocaleDateString('es-ES')}
                         </TableCell>
                         <TableCell>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={async () => {
-                              if (confirm(`¿Estás seguro de que quieres eliminar el pedido ${order.order_id?.slice(-8) || 'N/A'}?`)) {
-                                try {
-                                  await deleteOrder(order.order_id);
-                                  queryClient.invalidateQueries({ queryKey: ["orders"] });
-                                } catch (error) {
-                                  console.error('Error deleting order:', error);
+                          <div className="flex gap-2">
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  data-testid={`button-view-order-${order.order_id}`}
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                                <DialogHeader>
+                                  <DialogTitle>Detalles del Pedido: {order.order_id}</DialogTitle>
+                                  <DialogDescription>
+                                    Información completa del pedido y sus líneas de productos
+                                  </DialogDescription>
+                                </DialogHeader>
+                                
+                                <div className="space-y-4">
+                                  {/* Order Information */}
+                                  <div className="grid grid-cols-2 gap-4 p-4 border rounded-lg">
+                                    <div>
+                                      <h4 className="font-semibold">Información General</h4>
+                                      <div className="text-sm space-y-1 mt-2">
+                                        <div><span className="font-medium">ID:</span> {order.order_id}</div>
+                                        <div><span className="font-medium">Usuario:</span> {order.user?.name || "Sin nombre"} ({order.user?.email})</div>
+                                        <div><span className="font-medium">Tienda:</span> {order.user?.store?.name || order.store_id}</div>
+                                        <div><span className="font-medium">Fecha:</span> {new Date(order.created_at).toLocaleDateString('es-ES')}</div>
+                                      </div>
+                                    </div>
+                                    <div>
+                                      <h4 className="font-semibold">Totales</h4>
+                                      <div className="text-sm space-y-1 mt-2">
+                                        <div><span className="font-medium">Subtotal:</span> €{order.subtotal?.toFixed(2) || '0.00'}</div>
+                                        <div><span className="font-medium">IVA:</span> €{order.tax_total?.toFixed(2) || '0.00'}</div>
+                                        <div><span className="font-medium text-lg">Total:</span> <span className="text-lg">€{order.final_total?.toFixed(2) || '0.00'}</span></div>
+                                        {order.observations && (
+                                          <div><span className="font-medium">Observaciones:</span> {order.observations}</div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                  
+                                  {/* Order Items */}
+                                  <div>
+                                    <h4 className="font-semibold mb-3">Líneas del Pedido</h4>
+                                    <OrderItemsTable orderId={order.order_id} />
+                                  </div>
+                                </div>
+                              </DialogContent>
+                            </Dialog>
+
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={async () => {
+                                if (confirm(`¿Estás seguro de que quieres eliminar el pedido ${order.order_id?.slice(-8) || 'N/A'}?`)) {
+                                  try {
+                                    await deleteOrder(order.order_id);
+                                    queryClient.invalidateQueries({ queryKey: ["orders"] });
+                                  } catch (error) {
+                                    console.error('Error deleting order:', error);
+                                  }
                                 }
-                              }
-                            }}
-                            data-testid={`button-delete-order-${order.order_id}`}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                              }}
+                              data-testid={`button-delete-order-${order.order_id}`}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
