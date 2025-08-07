@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { ShoppingCart, Package, Trash2, Plus, RefreshCw, Building2, Store, Users, FileText, Receipt, ChevronLeft, ChevronRight } from "lucide-react";
+import { ShoppingCart, Package, Trash2, Plus, RefreshCw, Building2, Store, Users, FileText, Receipt, ChevronLeft, ChevronRight, Eye } from "lucide-react";
 import React, { useState } from "react";
 
 interface Product {
@@ -128,6 +128,22 @@ interface Tax {
   updated_at: string;
 }
 
+interface PurchaseOrderItem {
+  item_id: number;
+  purchase_order_id: string;
+  item_ean: string;
+  item_title: string | null;
+  item_description: string | null;
+  unit_of_measure: string | null;
+  quantity_measure: number | null;
+  image_url: string | null;
+  quantity: number;
+  base_price_at_order: number;
+  tax_rate_at_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
 interface EntitiesResponse<T> {
   data: T[];
   total: number;
@@ -182,6 +198,53 @@ async function fetchProducts(): Promise<ProductsResponse> {
   }
 
   return result.data.products;
+}
+
+// Function to fetch purchase order items
+async function fetchPurchaseOrderItems(purchaseOrderId: string): Promise<PurchaseOrderItem[]> {
+  const query = `
+    query GetPurchaseOrderItems($purchase_order_id: String!) {
+      purchaseOrderItems(purchase_order_id: $purchase_order_id) {
+        item_id
+        purchase_order_id
+        item_ean
+        item_title
+        item_description
+        unit_of_measure
+        quantity_measure
+        image_url
+        quantity
+        base_price_at_order
+        tax_rate_at_order
+        created_at
+        updated_at
+      }
+    }
+  `;
+
+  const response = await fetch(GRAPHQL_ENDPOINT, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Apollo-Require-Preflight": "true",
+    },
+    body: JSON.stringify({ 
+      query,
+      variables: { purchase_order_id: purchaseOrderId }
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const result = await response.json();
+  
+  if (result.errors) {
+    throw new Error(result.errors[0]?.message || "GraphQL error");
+  }
+
+  return result.data.purchaseOrderItems || [];
 }
 
 async function fetchDeliveryCenters(limit: number = 20, offset: number = 0): Promise<EntitiesResponse<DeliveryCenter>> {
@@ -1537,6 +1600,10 @@ export default function Products() {
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  // Modal state for purchase order items
+  const [selectedPurchaseOrderId, setSelectedPurchaseOrderId] = useState<string | null>(null);
+  const [isOrderItemsModalOpen, setIsOrderItemsModalOpen] = useState(false);
 
   // Data queries for all entities with pagination
   const { data: productsData, isLoading: productsLoading, error: productsError } = useQuery({
@@ -1572,6 +1639,13 @@ export default function Products() {
   const { data: taxesData, isLoading: taxesLoading } = useQuery({
     queryKey: ["taxes", currentPageTaxes],
     queryFn: () => fetchTaxes(pageSize, currentPageTaxes * pageSize),
+  });
+
+  // Query for purchase order items when modal is open
+  const { data: purchaseOrderItems, isLoading: itemsLoading } = useQuery({
+    queryKey: ["purchase-order-items", selectedPurchaseOrderId],
+    queryFn: () => selectedPurchaseOrderId ? fetchPurchaseOrderItems(selectedPurchaseOrderId) : Promise.resolve([]),
+    enabled: !!selectedPurchaseOrderId && isOrderItemsModalOpen,
   });
 
   const deleteAllMutation = useMutation({
@@ -3015,23 +3089,36 @@ export default function Products() {
                           {new Date(order.created_at).toLocaleDateString('es-ES')}
                         </TableCell>
                         <TableCell>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={async () => {
-                              if (confirm(`¿Estás seguro de que quieres eliminar la orden ${order.purchase_order_id.slice(-8)}?`)) {
-                                try {
-                                  await deletePurchaseOrder(order.purchase_order_id);
-                                  queryClient.invalidateQueries({ queryKey: ["purchase-orders"] });
-                                } catch (error) {
-                                  console.error('Error deleting purchase order:', error);
+                          <div className="flex gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedPurchaseOrderId(order.purchase_order_id);
+                                setIsOrderItemsModalOpen(true);
+                              }}
+                              data-testid={`button-view-items-${order.purchase_order_id}`}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={async () => {
+                                if (confirm(`¿Estás seguro de que quieres eliminar la orden ${order.purchase_order_id.slice(-8)}?`)) {
+                                  try {
+                                    await deletePurchaseOrder(order.purchase_order_id);
+                                    queryClient.invalidateQueries({ queryKey: ["purchase-orders"] });
+                                  } catch (error) {
+                                    console.error('Error deleting purchase order:', error);
+                                  }
                                 }
-                              }
-                            }}
-                            data-testid={`button-delete-purchase-order-${order.purchase_order_id}`}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                              }}
+                              data-testid={`button-delete-purchase-order-${order.purchase_order_id}`}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -3258,6 +3345,100 @@ export default function Products() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Modal para ver líneas de pedido */}
+      <Dialog open={isOrderItemsModalOpen} onOpenChange={setIsOrderItemsModalOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Líneas de Pedido</DialogTitle>
+            <DialogDescription>
+              Orden: {selectedPurchaseOrderId?.slice(-8) || 'N/A'}
+            </DialogDescription>
+          </DialogHeader>
+          
+          {itemsLoading ? (
+            <div className="space-y-4">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={i} className="h-16 w-full" />
+              ))}
+            </div>
+          ) : purchaseOrderItems && purchaseOrderItems.length > 0 ? (
+            <div className="space-y-4">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Producto</TableHead>
+                    <TableHead>EAN</TableHead>
+                    <TableHead>Cantidad</TableHead>
+                    <TableHead>Precio Unit.</TableHead>
+                    <TableHead>Total Línea</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {purchaseOrderItems.map((item) => {
+                    const lineTotal = item.quantity * item.base_price_at_order * (1 + item.tax_rate_at_order);
+                    return (
+                      <TableRow key={item.item_id}>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            {item.image_url ? (
+                              <img 
+                                src={item.image_url} 
+                                alt={item.item_title || 'Producto'}
+                                className="w-12 h-12 rounded-lg object-cover"
+                              />
+                            ) : (
+                              <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
+                                <Package className="h-6 w-6 text-gray-400" />
+                              </div>
+                            )}
+                            <div>
+                              <div className="font-medium">{item.item_title || 'Sin título'}</div>
+                              <div className="text-sm text-muted-foreground">
+                                {item.unit_of_measure || 'unidad'}
+                              </div>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="font-mono text-sm">{item.item_ean}</TableCell>
+                        <TableCell>{item.quantity}</TableCell>
+                        <TableCell>€{item.base_price_at_order.toFixed(2)}</TableCell>
+                        <TableCell className="font-medium">€{lineTotal.toFixed(2)}</TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+              
+              <div className="flex justify-end pt-4 border-t">
+                <div className="text-lg font-semibold">
+                  Total: €{purchaseOrderItems.reduce((sum, item) => {
+                    const lineTotal = item.quantity * item.base_price_at_order * (1 + item.tax_rate_at_order);
+                    return sum + lineTotal;
+                  }, 0).toFixed(2)}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <p className="text-muted-foreground">No hay líneas de pedido para esta orden</p>
+            </div>
+          )}
+          
+          <div className="flex justify-end gap-2 pt-4">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsOrderItemsModalOpen(false);
+                setSelectedPurchaseOrderId(null);
+              }}
+            >
+              Cerrar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

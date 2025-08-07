@@ -312,7 +312,7 @@ export const typeDefs = `#graphql
     purchaseOrders: [PurchaseOrder!]!
     purchaseOrder(purchase_order_id: String!): PurchaseOrder
     
-    purchaseOrderItems: [PurchaseOrderItem!]!
+    purchaseOrderItems(purchase_order_id: String): [PurchaseOrderItem!]!
     purchaseOrderItem(item_id: Int!): PurchaseOrderItem
     
     orders: [Order!]!

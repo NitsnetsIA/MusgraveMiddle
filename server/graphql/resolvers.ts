@@ -61,7 +61,10 @@ export const resolvers = {
     },
 
     // Purchase Order Items queries
-    purchaseOrderItems: async () => {
+    purchaseOrderItems: async (_: any, { purchase_order_id }: { purchase_order_id?: string }) => {
+      if (purchase_order_id) {
+        return await storage.getPurchaseOrderItemsByOrderId(purchase_order_id);
+      }
       return await storage.getPurchaseOrderItems();
     },
     
