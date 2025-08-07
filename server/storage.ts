@@ -25,7 +25,7 @@ export interface TaxConnection {
   offset: number;
 }
 
-export interface DeleteAllProductsResult {
+export interface DeleteAllResult {
   success: boolean;
   deletedCount: number;
   message: string;
@@ -45,7 +45,7 @@ export interface IStorage {
   createProduct(product: InsertProduct): Promise<Product>;
   updateProduct(ean: string, product: Partial<InsertProduct>): Promise<Product>;
   deleteProduct(ean: string): Promise<boolean>;
-  deleteAllProducts(): Promise<DeleteAllProductsResult>;
+  deleteAllProducts(): Promise<DeleteAllResult>;
   generateRandomProducts(count: number, timestampOffset?: string): Promise<GenerateProductsResult>;
   
   // Tax methods
@@ -54,6 +54,7 @@ export interface IStorage {
   createTax(tax: InsertTax): Promise<Tax>;
   updateTax(code: string, tax: Partial<InsertTax>): Promise<Tax>;
   deleteTax(code: string): Promise<boolean>;
+  deleteAllTaxes(): Promise<DeleteAllResult>;
 
   // Delivery Centers methods
   getDeliveryCenters(): Promise<DeliveryCenter[]>;
@@ -61,6 +62,7 @@ export interface IStorage {
   createDeliveryCenter(deliveryCenter: InsertDeliveryCenter): Promise<DeliveryCenter>;
   updateDeliveryCenter(code: string, deliveryCenter: Partial<InsertDeliveryCenter>): Promise<DeliveryCenter>;
   deleteDeliveryCenter(code: string): Promise<boolean>;
+  deleteAllDeliveryCenters(): Promise<DeleteAllResult>;
 
   // Stores methods
   getStores(): Promise<Store[]>;
@@ -68,6 +70,7 @@ export interface IStorage {
   createStore(store: InsertStore): Promise<Store>;
   updateStore(code: string, store: Partial<InsertStore>): Promise<Store>;
   deleteStore(code: string): Promise<boolean>;
+  deleteAllStores(): Promise<DeleteAllResult>;
 
   // Users methods
   getUsers(): Promise<User[]>;
@@ -75,6 +78,7 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   updateUser(email: string, user: Partial<InsertUser>): Promise<User>;
   deleteUser(email: string): Promise<boolean>;
+  deleteAllUsers(): Promise<DeleteAllResult>;
 
   // Purchase Orders methods
   getPurchaseOrders(): Promise<PurchaseOrder[]>;
@@ -82,6 +86,7 @@ export interface IStorage {
   createPurchaseOrder(order: InsertPurchaseOrder): Promise<PurchaseOrder>;
   updatePurchaseOrder(purchase_order_id: string, order: Partial<InsertPurchaseOrder>): Promise<PurchaseOrder>;
   deletePurchaseOrder(purchase_order_id: string): Promise<boolean>;
+  deleteAllPurchaseOrders(): Promise<DeleteAllResult>;
 
   // Purchase Order Items methods
   getPurchaseOrderItems(): Promise<PurchaseOrderItem[]>;
@@ -89,6 +94,7 @@ export interface IStorage {
   createPurchaseOrderItem(item: InsertPurchaseOrderItem): Promise<PurchaseOrderItem>;
   updatePurchaseOrderItem(item_id: number, item: Partial<InsertPurchaseOrderItem>): Promise<PurchaseOrderItem>;
   deletePurchaseOrderItem(item_id: number): Promise<boolean>;
+  deleteAllPurchaseOrderItems(): Promise<DeleteAllResult>;
 
   // Orders methods
   getOrders(): Promise<Order[]>;
@@ -96,6 +102,7 @@ export interface IStorage {
   createOrder(order: InsertOrder): Promise<Order>;
   updateOrder(order_id: string, order: Partial<InsertOrder>): Promise<Order>;
   deleteOrder(order_id: string): Promise<boolean>;
+  deleteAllOrders(): Promise<DeleteAllResult>;
 
   // Order Items methods
   getOrderItems(): Promise<OrderItem[]>;
@@ -103,6 +110,7 @@ export interface IStorage {
   createOrderItem(item: InsertOrderItem): Promise<OrderItem>;
   updateOrderItem(item_id: number, item: Partial<InsertOrderItem>): Promise<OrderItem>;
   deleteOrderItem(item_id: number): Promise<boolean>;
+  deleteAllOrderItems(): Promise<DeleteAllResult>;
 
   // Sync info method
   getSyncInfo(): Promise<{ entities: Array<{ entity_name: string; last_updated: Date | null; total_records: number }>; generated_at: Date }>;
@@ -175,7 +183,7 @@ export class DatabaseStorage implements IStorage {
     return result.rowCount! > 0;
   }
 
-  async deleteAllProducts(): Promise<DeleteAllProductsResult> {
+  async deleteAllProducts(): Promise<DeleteAllResult> {
     try {
       const result = await db.delete(products);
       const deletedCount = result.rowCount || 0;
@@ -358,6 +366,26 @@ export class DatabaseStorage implements IStorage {
     return result.rowCount! > 0;
   }
 
+  async deleteAllTaxes(): Promise<DeleteAllResult> {
+    try {
+      const result = await db.delete(taxes);
+      const deletedCount = result.rowCount || 0;
+      
+      return {
+        success: true,
+        deletedCount,
+        message: `Successfully deleted ${deletedCount} taxes`
+      };
+    } catch (error) {
+      console.error("Error deleting all taxes:", error);
+      return {
+        success: false,
+        deletedCount: 0,
+        message: `Error deleting taxes: ${error instanceof Error ? error.message : 'Unknown error'}`
+      };
+    }
+  }
+
   // Delivery Centers CRUD
   async getDeliveryCenters(): Promise<DeliveryCenter[]> {
     return await db.select().from(deliveryCenters).orderBy(desc(deliveryCenters.updated_at));
@@ -395,6 +423,33 @@ export class DatabaseStorage implements IStorage {
   async deleteDeliveryCenter(code: string): Promise<boolean> {
     const result = await db.delete(deliveryCenters).where(eq(deliveryCenters.code, code));
     return result.rowCount! > 0;
+  }
+
+  async deleteAllDeliveryCenters(): Promise<DeleteAllResult> {
+    try {
+      // Delete in correct order to avoid foreign key constraints
+      await db.execute(sql`DELETE FROM order_items;`);
+      await db.execute(sql`DELETE FROM orders;`);
+      await db.execute(sql`DELETE FROM purchase_order_items;`);
+      await db.execute(sql`DELETE FROM purchase_orders;`);
+      await db.execute(sql`DELETE FROM users;`);
+      await db.execute(sql`DELETE FROM stores;`);
+      const result = await db.delete(deliveryCenters);
+      const deletedCount = result.rowCount || 0;
+      
+      return {
+        success: true,
+        deletedCount,
+        message: `Successfully deleted ${deletedCount} delivery centers and all dependent entities`
+      };
+    } catch (error) {
+      console.error("Error deleting all delivery centers:", error);
+      return {
+        success: false,
+        deletedCount: 0,
+        message: `Error deleting delivery centers: ${error instanceof Error ? error.message : 'Unknown error'}`
+      };
+    }
   }
 
   // Stores CRUD
@@ -436,6 +491,32 @@ export class DatabaseStorage implements IStorage {
     return result.rowCount! > 0;
   }
 
+  async deleteAllStores(): Promise<DeleteAllResult> {
+    try {
+      // Delete in correct order to avoid foreign key constraints
+      await db.execute(sql`DELETE FROM order_items;`);
+      await db.execute(sql`DELETE FROM orders;`);
+      await db.execute(sql`DELETE FROM purchase_order_items;`);
+      await db.execute(sql`DELETE FROM purchase_orders;`);
+      await db.execute(sql`DELETE FROM users;`);
+      const result = await db.delete(stores);
+      const deletedCount = result.rowCount || 0;
+      
+      return {
+        success: true,
+        deletedCount,
+        message: `Successfully deleted ${deletedCount} stores and all dependent entities`
+      };
+    } catch (error) {
+      console.error("Error deleting all stores:", error);
+      return {
+        success: false,
+        deletedCount: 0,
+        message: `Error deleting stores: ${error instanceof Error ? error.message : 'Unknown error'}`
+      };
+    }
+  }
+
   // Users CRUD
   async getUsers(): Promise<User[]> {
     return await db.select().from(users).orderBy(desc(users.updated_at));
@@ -473,6 +554,31 @@ export class DatabaseStorage implements IStorage {
   async deleteUser(email: string): Promise<boolean> {
     const result = await db.delete(users).where(eq(users.email, email));
     return result.rowCount! > 0;
+  }
+
+  async deleteAllUsers(): Promise<DeleteAllResult> {
+    try {
+      // Delete in correct order to avoid foreign key constraints
+      await db.execute(sql`DELETE FROM order_items;`);
+      await db.execute(sql`DELETE FROM orders;`);
+      await db.execute(sql`DELETE FROM purchase_order_items;`);
+      await db.execute(sql`DELETE FROM purchase_orders;`);
+      const result = await db.delete(users);
+      const deletedCount = result.rowCount || 0;
+      
+      return {
+        success: true,
+        deletedCount,
+        message: `Successfully deleted ${deletedCount} users and all dependent entities`
+      };
+    } catch (error) {
+      console.error("Error deleting all users:", error);
+      return {
+        success: false,
+        deletedCount: 0,
+        message: `Error deleting users: ${error instanceof Error ? error.message : 'Unknown error'}`
+      };
+    }
   }
 
   // Purchase Orders CRUD
@@ -514,6 +620,30 @@ export class DatabaseStorage implements IStorage {
     return result.rowCount! > 0;
   }
 
+  async deleteAllPurchaseOrders(): Promise<DeleteAllResult> {
+    try {
+      // Delete in correct order to avoid foreign key constraints
+      await db.execute(sql`DELETE FROM order_items;`);
+      await db.execute(sql`DELETE FROM orders;`);
+      await db.execute(sql`DELETE FROM purchase_order_items;`);
+      const result = await db.delete(purchaseOrders);
+      const deletedCount = result.rowCount || 0;
+      
+      return {
+        success: true,
+        deletedCount,
+        message: `Successfully deleted ${deletedCount} purchase orders and all dependent entities`
+      };
+    } catch (error) {
+      console.error("Error deleting all purchase orders:", error);
+      return {
+        success: false,
+        deletedCount: 0,
+        message: `Error deleting purchase orders: ${error instanceof Error ? error.message : 'Unknown error'}`
+      };
+    }
+  }
+
   // Purchase Order Items CRUD
   async getPurchaseOrderItems(): Promise<PurchaseOrderItem[]> {
     return await db.select().from(purchaseOrderItems).orderBy(desc(purchaseOrderItems.updated_at));
@@ -551,6 +681,26 @@ export class DatabaseStorage implements IStorage {
   async deletePurchaseOrderItem(item_id: number): Promise<boolean> {
     const result = await db.delete(purchaseOrderItems).where(eq(purchaseOrderItems.item_id, item_id));
     return result.rowCount! > 0;
+  }
+
+  async deleteAllPurchaseOrderItems(): Promise<DeleteAllResult> {
+    try {
+      const result = await db.delete(purchaseOrderItems);
+      const deletedCount = result.rowCount || 0;
+      
+      return {
+        success: true,
+        deletedCount,
+        message: `Successfully deleted ${deletedCount} purchase order items`
+      };
+    } catch (error) {
+      console.error("Error deleting all purchase order items:", error);
+      return {
+        success: false,
+        deletedCount: 0,
+        message: `Error deleting purchase order items: ${error instanceof Error ? error.message : 'Unknown error'}`
+      };
+    }
   }
 
   // Orders CRUD
@@ -592,6 +742,28 @@ export class DatabaseStorage implements IStorage {
     return result.rowCount! > 0;
   }
 
+  async deleteAllOrders(): Promise<DeleteAllResult> {
+    try {
+      // Delete in correct order to avoid foreign key constraints
+      await db.execute(sql`DELETE FROM order_items;`);
+      const result = await db.delete(orders);
+      const deletedCount = result.rowCount || 0;
+      
+      return {
+        success: true,
+        deletedCount,
+        message: `Successfully deleted ${deletedCount} orders and all order items`
+      };
+    } catch (error) {
+      console.error("Error deleting all orders:", error);
+      return {
+        success: false,
+        deletedCount: 0,
+        message: `Error deleting orders: ${error instanceof Error ? error.message : 'Unknown error'}`
+      };
+    }
+  }
+
   // Order Items CRUD
   async getOrderItems(): Promise<OrderItem[]> {
     return await db.select().from(orderItems).orderBy(desc(orderItems.updated_at));
@@ -629,6 +801,26 @@ export class DatabaseStorage implements IStorage {
   async deleteOrderItem(item_id: number): Promise<boolean> {
     const result = await db.delete(orderItems).where(eq(orderItems.item_id, item_id));
     return result.rowCount! > 0;
+  }
+
+  async deleteAllOrderItems(): Promise<DeleteAllResult> {
+    try {
+      const result = await db.delete(orderItems);
+      const deletedCount = result.rowCount || 0;
+      
+      return {
+        success: true,
+        deletedCount,
+        message: `Successfully deleted ${deletedCount} order items`
+      };
+    } catch (error) {
+      console.error("Error deleting all order items:", error);
+      return {
+        success: false,
+        deletedCount: 0,
+        message: `Error deleting order items: ${error instanceof Error ? error.message : 'Unknown error'}`
+      };
+    }
   }
 
   // Sync info implementation

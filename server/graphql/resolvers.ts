@@ -126,6 +126,10 @@ export const resolvers = {
       return await storage.deleteTax(code);
     },
 
+    deleteAllTaxes: async () => {
+      return await storage.deleteAllTaxes();
+    },
+
     // Delivery Centers mutations
     createDeliveryCenter: async (_: any, { input }: { input: any }) => {
       return await storage.createDeliveryCenter(input);
@@ -137,6 +141,10 @@ export const resolvers = {
     
     deleteDeliveryCenter: async (_: any, { code }: { code: string }) => {
       return await storage.deleteDeliveryCenter(code);
+    },
+
+    deleteAllDeliveryCenters: async () => {
+      return await storage.deleteAllDeliveryCenters();
     },
 
     // Stores mutations
@@ -152,6 +160,10 @@ export const resolvers = {
       return await storage.deleteStore(code);
     },
 
+    deleteAllStores: async () => {
+      return await storage.deleteAllStores();
+    },
+
     // Users mutations
     createUser: async (_: any, { input }: { input: any }) => {
       return await storage.createUser(input);
@@ -163,6 +175,10 @@ export const resolvers = {
     
     deleteUser: async (_: any, { email }: { email: string }) => {
       return await storage.deleteUser(email);
+    },
+
+    deleteAllUsers: async () => {
+      return await storage.deleteAllUsers();
     },
 
     // Purchase Orders mutations
@@ -178,6 +194,10 @@ export const resolvers = {
       return await storage.deletePurchaseOrder(purchase_order_id);
     },
 
+    deleteAllPurchaseOrders: async () => {
+      return await storage.deleteAllPurchaseOrders();
+    },
+
     // Purchase Order Items mutations
     createPurchaseOrderItem: async (_: any, { input }: { input: any }) => {
       return await storage.createPurchaseOrderItem(input);
@@ -189,6 +209,10 @@ export const resolvers = {
     
     deletePurchaseOrderItem: async (_: any, { item_id }: { item_id: number }) => {
       return await storage.deletePurchaseOrderItem(item_id);
+    },
+
+    deleteAllPurchaseOrderItems: async () => {
+      return await storage.deleteAllPurchaseOrderItems();
     },
 
     // Orders mutations
@@ -204,6 +228,10 @@ export const resolvers = {
       return await storage.deleteOrder(order_id);
     },
 
+    deleteAllOrders: async () => {
+      return await storage.deleteAllOrders();
+    },
+
     // Order Items mutations
     createOrderItem: async (_: any, { input }: { input: any }) => {
       return await storage.createOrderItem(input);
@@ -215,6 +243,10 @@ export const resolvers = {
     
     deleteOrderItem: async (_: any, { item_id }: { item_id: number }) => {
       return await storage.deleteOrderItem(item_id);
+    },
+
+    deleteAllOrderItems: async () => {
+      return await storage.deleteAllOrderItems();
     },
 
     // Entity generation mutation

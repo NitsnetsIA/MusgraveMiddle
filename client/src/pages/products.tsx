@@ -661,7 +661,71 @@ async function deleteAllUsers() {
   return result.data.deleteAllUsers;
 }
 
+async function deleteAllPurchaseOrders() {
+  const mutation = `
+    mutation DeleteAllPurchaseOrders {
+      deleteAllPurchaseOrders {
+        success
+        deletedCount
+        message
+      }
+    }
+  `;
 
+  const response = await fetch(GRAPHQL_ENDPOINT, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Apollo-Require-Preflight": "true",
+    },
+    body: JSON.stringify({ query: mutation }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const result = await response.json();
+  
+  if (result.errors) {
+    throw new Error(result.errors[0]?.message || "GraphQL error");
+  }
+
+  return result.data.deleteAllPurchaseOrders;
+}
+
+async function deleteAllOrders() {
+  const mutation = `
+    mutation DeleteAllOrders {
+      deleteAllOrders {
+        success
+        deletedCount
+        message
+      }
+    }
+  `;
+
+  const response = await fetch(GRAPHQL_ENDPOINT, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Apollo-Require-Preflight": "true",
+    },
+    body: JSON.stringify({ query: mutation }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const result = await response.json();
+  
+  if (result.errors) {
+    throw new Error(result.errors[0]?.message || "GraphQL error");
+  }
+
+  return result.data.deleteAllOrders;
+}
 
 // Individual entity generation functions
 async function generateDeliveryCenters(count: number, clearExisting: boolean = false, timestampOffset?: string) {
@@ -1304,6 +1368,42 @@ export default function Products() {
     },
   });
 
+  const deleteAllPurchaseOrdersMutation = useMutation({
+    mutationFn: deleteAllPurchaseOrders,
+    onSuccess: (result) => {
+      toast({
+        title: "Órdenes de compra eliminadas",
+        description: result.message,
+      });
+      queryClient.invalidateQueries({ queryKey: ["purchase-orders"] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Error al eliminar órdenes de compra",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteAllOrdersMutation = useMutation({
+    mutationFn: deleteAllOrders,
+    onSuccess: (result) => {
+      toast({
+        title: "Pedidos eliminados",
+        description: result.message,
+      });
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Error al eliminar pedidos",
+        variant: "destructive",
+      });
+    },
+  });
+
 
 
   // Individual entity generation mutations
@@ -1432,6 +1532,18 @@ export default function Products() {
   const handleDeleteAllUsers = () => {
     if (confirm("¿Estás seguro de que quieres eliminar TODOS los usuarios? Esta acción no se puede deshacer.")) {
       deleteAllUsersMutation.mutate();
+    }
+  };
+
+  const handleDeleteAllPurchaseOrders = () => {
+    if (confirm("¿Estás seguro de que quieres eliminar TODAS las órdenes de compra? Esta acción no se puede deshacer.")) {
+      deleteAllPurchaseOrdersMutation.mutate();
+    }
+  };
+
+  const handleDeleteAllOrders = () => {
+    if (confirm("¿Estás seguro de que quieres eliminar TODOS los pedidos? Esta acción no se puede deshacer.")) {
+      deleteAllOrdersMutation.mutate();
     }
   };
 
@@ -1817,14 +1929,30 @@ export default function Products() {
 
           {/* Purchase Orders Section - Solo para desarrollo */}
           <div className="p-4 border rounded-lg space-y-4">
-            <div>
-              <h3 className="font-medium flex items-center gap-2">
-                <FileText className="h-4 w-4" />
-                Órdenes de Compra (Solo Desarrollo)
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                Generación de datos de prueba - requiere usuarios existentes
-              </p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-medium flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  Órdenes de Compra (Solo Desarrollo)
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Generación de datos de prueba - requiere usuarios existentes
+                </p>
+              </div>
+              <Button
+                onClick={handleDeleteAllPurchaseOrders}
+                variant="destructive"
+                size="sm"
+                disabled={deleteAllPurchaseOrdersMutation.isPending}
+                data-testid="button-delete-all-purchase-orders"
+              >
+                {deleteAllPurchaseOrdersMutation.isPending ? (
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Trash2 className="h-4 w-4 mr-2" />
+                )}
+                Eliminar Todas
+              </Button>
             </div>
             
             <div className="flex items-center gap-4">
@@ -2223,13 +2351,31 @@ export default function Products() {
         <TabsContent value="purchase-orders" className="mt-6">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                Órdenes de Compra ({purchaseOrdersData?.total || 0})
-              </CardTitle>
-              <CardDescription>
-                Órdenes de compra realizadas por los usuarios
-              </CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="h-5 w-5" />
+                    Órdenes de Compra ({purchaseOrdersData?.total || 0})
+                  </CardTitle>
+                  <CardDescription>
+                    Órdenes de compra realizadas por los usuarios
+                  </CardDescription>
+                </div>
+                <Button
+                  onClick={handleDeleteAllPurchaseOrders}
+                  variant="destructive"
+                  size="sm"
+                  disabled={deleteAllPurchaseOrdersMutation.isPending}
+                  data-testid="button-delete-all-purchase-orders-tab"
+                >
+                  {deleteAllPurchaseOrdersMutation.isPending ? (
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-4 w-4 mr-2" />
+                  )}
+                  Eliminar Todas
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               {purchaseOrdersLoading ? (
@@ -2301,13 +2447,31 @@ export default function Products() {
         <TabsContent value="orders" className="mt-6">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                Pedidos ({ordersData?.total || 0})
-              </CardTitle>
-              <CardDescription>
-                Pedidos procesados del sistema (con o sin orden de compra previa)
-              </CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="h-5 w-5" />
+                    Pedidos ({ordersData?.total || 0})
+                  </CardTitle>
+                  <CardDescription>
+                    Pedidos procesados del sistema (con o sin orden de compra previa)
+                  </CardDescription>
+                </div>
+                <Button
+                  onClick={handleDeleteAllOrders}
+                  variant="destructive"
+                  size="sm"
+                  disabled={deleteAllOrdersMutation.isPending}
+                  data-testid="button-delete-all-orders"
+                >
+                  {deleteAllOrdersMutation.isPending ? (
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-4 w-4 mr-2" />
+                  )}
+                  Eliminar Todos
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               {ordersLoading ? (

@@ -342,40 +342,48 @@ export const typeDefs = `#graphql
     createProduct(input: ProductInput!): Product!
     updateProduct(ean: String!, input: UpdateProductInput!): Product!
     deleteProduct(ean: String!): Boolean!
-    deleteAllProducts: DeleteAllProductsResult!
+    deleteAllProducts: DeleteAllResult!
     generateRandomProducts(count: Int!, timestampOffset: String): GenerateProductsResult!
     
     createTax(input: TaxInput!): Tax!
     updateTax(code: String!, input: UpdateTaxInput!): Tax!
     deleteTax(code: String!): Boolean!
+    deleteAllTaxes: DeleteAllResult!
 
     createDeliveryCenter(input: DeliveryCenterInput!): DeliveryCenter!
     updateDeliveryCenter(code: String!, input: UpdateDeliveryCenterInput!): DeliveryCenter!
     deleteDeliveryCenter(code: String!): Boolean!
+    deleteAllDeliveryCenters: DeleteAllResult!
 
     createStore(input: StoreInput!): Store!
     updateStore(code: String!, input: UpdateStoreInput!): Store!
     deleteStore(code: String!): Boolean!
+    deleteAllStores: DeleteAllResult!
 
     createUser(input: UserInput!): User!
     updateUser(email: String!, input: UpdateUserInput!): User!
     deleteUser(email: String!): Boolean!
+    deleteAllUsers: DeleteAllResult!
 
     createPurchaseOrder(input: PurchaseOrderInput!): PurchaseOrder!
     updatePurchaseOrder(purchase_order_id: String!, input: UpdatePurchaseOrderInput!): PurchaseOrder!
     deletePurchaseOrder(purchase_order_id: String!): Boolean!
+    deleteAllPurchaseOrders: DeleteAllResult!
 
     createPurchaseOrderItem(input: PurchaseOrderItemInput!): PurchaseOrderItem!
     updatePurchaseOrderItem(item_id: Int!, input: UpdatePurchaseOrderItemInput!): PurchaseOrderItem!
     deletePurchaseOrderItem(item_id: Int!): Boolean!
+    deleteAllPurchaseOrderItems: DeleteAllResult!
 
     createOrder(input: OrderInput!): Order!
     updateOrder(order_id: String!, input: UpdateOrderInput!): Order!
     deleteOrder(order_id: String!): Boolean!
+    deleteAllOrders: DeleteAllResult!
 
     createOrderItem(input: OrderItemInput!): OrderItem!
     updateOrderItem(item_id: Int!, input: UpdateOrderItemInput!): OrderItem!
     deleteOrderItem(item_id: Int!): Boolean!
+    deleteAllOrderItems: DeleteAllResult!
     
     # Entity generation
     generateDeliveryCenters(count: Int!, clearExisting: Boolean = false): SingleEntityGenerationResult!
@@ -385,7 +393,7 @@ export const typeDefs = `#graphql
     generateEntities(input: GenerateEntitiesInput!): GenerateEntitiesResult!
   }
 
-  type DeleteAllProductsResult {
+  type DeleteAllResult {
     success: Boolean!
     deletedCount: Int!
     message: String!
