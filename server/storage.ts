@@ -9,7 +9,8 @@ import {
 import { db } from "./db";
 import { eq, gte, desc, sql } from "drizzle-orm";
 import { generateRandomProduct } from "./product-generator.js";
-import { generateCoherentEntities, SPANISH_CITIES, SPANISH_NAMES, STORE_TYPES, PURCHASE_ORDER_STATUSES } from './entity-generator';
+import { generateCoherentEntities, SPANISH_CITIES, SPANISH_NAMES, STORE_TYPES, PURCHASE_ORDER_STATUSES, DELIVERY_CENTER_TYPES } from './entity-generator';
+import { nanoid } from 'nanoid';
 
 export interface ProductConnection {
   products: Product[];
@@ -878,20 +879,47 @@ export class DatabaseStorage implements IStorage {
         await db.execute(sql`DELETE FROM delivery_centers;`);
       }
 
-      const generatedDeliveryCenters = generateCoherentEntities({
-        deliveryCenters: count,
-        storesPerCenter: 0,
-        usersPerStore: 0,
-        purchaseOrders: 0
-      });
+      // Get existing delivery centers to avoid duplicate codes
+      const existingCenters = await db.select({ code: deliveryCenters.code }).from(deliveryCenters).execute();
+      const existingCodes = new Set(existingCenters.map(center => center.code));
 
-      await db.insert(deliveryCenters).values(generatedDeliveryCenters.deliveryCenters);
+      // Generate unique delivery centers
+      const centersToCreate = [];
+      const usedCities = new Set<string>();
+      let centerIndex = 1;
+
+      // Find the next available index
+      while (existingCodes.has(`DC${centerIndex.toString().padStart(3, '0')}`)) {
+        centerIndex++;
+      }
+
+      for (let i = 0; i < count; i++) {
+        let city;
+        do {
+          city = SPANISH_CITIES[Math.floor(Math.random() * SPANISH_CITIES.length)];
+        } while (usedCities.has(city) && usedCities.size < SPANISH_CITIES.length);
+        
+        usedCities.add(city);
+        const type = DELIVERY_CENTER_TYPES[Math.floor(Math.random() * DELIVERY_CENTER_TYPES.length)];
+        const code = `DC${centerIndex.toString().padStart(3, '0')}`;
+        
+        centersToCreate.push({
+          code,
+          name: `${type} ${city}`,
+          created_at: new Date(),
+          updated_at: new Date()
+        });
+        
+        centerIndex++;
+      }
+
+      await db.insert(deliveryCenters).values(centersToCreate);
 
       return {
         success: true,
         entityType: "delivery_centers",
-        createdCount: generatedDeliveryCenters.deliveryCenters.length,
-        message: `Successfully created ${generatedDeliveryCenters.deliveryCenters.length} delivery centers.`
+        createdCount: centersToCreate.length,
+        message: `Successfully created ${centersToCreate.length} delivery centers.`
       };
     } catch (error) {
       console.error('Error generating delivery centers:', error);
@@ -932,13 +960,22 @@ export class DatabaseStorage implements IStorage {
         await db.execute(sql`DELETE FROM stores;`);
       }
 
+      // Get existing stores to avoid duplicate codes
+      const existingStores = await db.select({ code: stores.code }).from(stores).execute();
+      const existingStoreCodes = new Set(existingStores.map(store => store.code));
+
       // Generate stores for existing delivery centers
       const storesToCreate = [];
-      for (let i = 0; i < existingDeliveryCenters.length; i++) {
-        const deliveryCenter = existingDeliveryCenters[i];
+      let storeIndex = 1;
+
+      // Find the next available store index
+      while (existingStoreCodes.has(`ST${storeIndex.toString().padStart(3, '0')}`)) {
+        storeIndex++;
+      }
+
+      for (const deliveryCenter of existingDeliveryCenters) {
         for (let j = 0; j < storesPerCenter; j++) {
-          const storeNumber = (i * storesPerCenter) + j + 1;
-          const storeCode = `ST${storeNumber.toString().padStart(3, '0')}`;
+          const storeCode = `ST${storeIndex.toString().padStart(3, '0')}`;
           const cityIndex = Math.floor(Math.random() * SPANISH_CITIES.length);
           const storeTypeIndex = Math.floor(Math.random() * STORE_TYPES.length);
           
@@ -951,6 +988,8 @@ export class DatabaseStorage implements IStorage {
             created_at: new Date(),
             updated_at: new Date()
           });
+          
+          storeIndex++;
         }
       }
 
@@ -1000,9 +1039,14 @@ export class DatabaseStorage implements IStorage {
         await db.execute(sql`DELETE FROM users;`);
       }
 
+      // Get existing users to avoid duplicate emails
+      const existingUsers = await db.select({ email: users.email }).from(users).execute();
+      const existingEmails = new Set(existingUsers.map(user => user.email));
+
       // Generate users for existing stores
       const usersToCreate = [];
       let userIndex = 0;
+      
       for (const store of existingStores) {
         for (let j = 0; j < usersPerStore; j++) {
           userIndex++;
@@ -1012,8 +1056,17 @@ export class DatabaseStorage implements IStorage {
           const fullName = `${firstName} ${lastName1} ${lastName2}`;
           const emailName = `${firstName.toLowerCase()}.${lastName1.toLowerCase()}`;
           
+          // Generate unique email
+          let email = `${emailName}@${store.code.toLowerCase()}.tiendas.com`;
+          let emailIndex = 1;
+          while (existingEmails.has(email)) {
+            email = `${emailName}${emailIndex}@${store.code.toLowerCase()}.tiendas.com`;
+            emailIndex++;
+          }
+          existingEmails.add(email); // Add to set to avoid duplicates in this batch
+          
           usersToCreate.push({
-            email: `${emailName}@${store.code.toLowerCase()}.tiendas.com`,
+            email,
             store_id: store.code,
             name: fullName,
             password_hash: `hashed_password_${userIndex}`,
@@ -1069,13 +1122,29 @@ export class DatabaseStorage implements IStorage {
         await db.execute(sql`DELETE FROM purchase_orders;`);
       }
 
+      // Get existing purchase orders to avoid duplicate IDs
+      const existingPOs = await db.select({ purchase_order_id: purchaseOrders.purchase_order_id }).from(purchaseOrders).execute();
+      const existingPOIds = new Set(existingPOs.map(po => po.purchase_order_id));
+
       // Generate purchase orders using existing users
       const purchaseOrdersToCreate = [];
       for (let i = 0; i < count; i++) {
         const randomUser = existingUsers[Math.floor(Math.random() * existingUsers.length)];
-        const timestamp = Date.now();
-        const randomId = Math.random().toString(36).substring(2, 8);
-        const orderId = `PO${timestamp}-${randomId}`;
+        
+        // Generate unique purchase order ID
+        let orderId: string;
+        let attempts = 0;
+        do {
+          const timestamp = Date.now() + Math.floor(Math.random() * 1000); // Add randomness to timestamp
+          const randomId = Math.random().toString(36).substring(2, 8);
+          orderId = `PO${timestamp}-${randomId}`;
+          attempts++;
+        } while (existingPOIds.has(orderId) && attempts < 10);
+        
+        if (attempts >= 10) {
+          orderId = `PO${Date.now()}-${nanoid(6)}`;
+        }
+        existingPOIds.add(orderId); // Add to set to avoid duplicates in this batch
         
         const subtotal = Math.floor(Math.random() * 200 + 50); // 50-250€
         const taxTotal = Math.round(subtotal * 0.21 * 100) / 100; // 21% VAT
