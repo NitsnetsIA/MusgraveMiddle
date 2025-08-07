@@ -1704,69 +1704,183 @@ export default function Products() {
 
   // Individual delete functions
   const deletePurchaseOrder = async (purchase_order_id: string) => {
-    return await apiRequest('/graphql', {
-      query: `
-        mutation DeletePurchaseOrder($purchase_order_id: String!) {
-          deletePurchaseOrder(purchase_order_id: $purchase_order_id)
-        }
-      `,
-      variables: { purchase_order_id },
+    const response = await fetch(GRAPHQL_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Apollo-Require-Preflight": "true",
+      },
+      body: JSON.stringify({
+        query: `
+          mutation DeletePurchaseOrder($purchase_order_id: String!) {
+            deletePurchaseOrder(purchase_order_id: $purchase_order_id)
+          }
+        `,
+        variables: { purchase_order_id },
+      }),
     });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    
+    if (result.errors) {
+      throw new Error(result.errors[0]?.message || "GraphQL error");
+    }
+
+    return result.data.deletePurchaseOrder;
   };
 
   const deleteOrder = async (order_id: string) => {
-    return await apiRequest('/graphql', {
-      query: `
-        mutation DeleteOrder($order_id: String!) {
-          deleteOrder(order_id: $order_id)
-        }
-      `,
-      variables: { order_id },
+    const response = await fetch(GRAPHQL_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Apollo-Require-Preflight": "true",
+      },
+      body: JSON.stringify({
+        query: `
+          mutation DeleteOrder($order_id: String!) {
+            deleteOrder(order_id: $order_id)
+          }
+        `,
+        variables: { order_id },
+      }),
     });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    
+    if (result.errors) {
+      throw new Error(result.errors[0]?.message || "GraphQL error");
+    }
+
+    return result.data.deleteOrder;
   };
 
   const deleteUser = async (email: string) => {
-    return await apiRequest('/graphql', {
-      query: `
-        mutation DeleteUser($email: String!) {
-          deleteUser(email: $email)
-        }
-      `,
-      variables: { email },
+    const response = await fetch(GRAPHQL_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Apollo-Require-Preflight": "true",
+      },
+      body: JSON.stringify({
+        query: `
+          mutation DeleteUser($email: String!) {
+            deleteUser(email: $email)
+          }
+        `,
+        variables: { email },
+      }),
     });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    
+    if (result.errors) {
+      throw new Error(result.errors[0]?.message || "GraphQL error");
+    }
+
+    return result.data.deleteUser;
   };
 
   const deleteStore = async (code: string) => {
-    return await apiRequest('/graphql', {
-      query: `
-        mutation DeleteStore($code: String!) {
-          deleteStore(code: $code)
-        }
-      `,
-      variables: { code },
+    const response = await fetch(GRAPHQL_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Apollo-Require-Preflight": "true",
+      },
+      body: JSON.stringify({
+        query: `
+          mutation DeleteStore($code: String!) {
+            deleteStore(code: $code)
+          }
+        `,
+        variables: { code },
+      }),
     });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    
+    if (result.errors) {
+      throw new Error(result.errors[0]?.message || "GraphQL error");
+    }
+
+    return result.data.deleteStore;
   };
 
   const deleteDeliveryCenter = async (code: string) => {
-    return await apiRequest('/graphql', {
-      query: `
-        mutation DeleteDeliveryCenter($code: String!) {
-          deleteDeliveryCenter(code: $code)
-        }
-      `,
-      variables: { code },
+    const response = await fetch(GRAPHQL_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Apollo-Require-Preflight": "true",
+      },
+      body: JSON.stringify({
+        query: `
+          mutation DeleteDeliveryCenter($code: String!) {
+            deleteDeliveryCenter(code: $code)
+          }
+        `,
+        variables: { code },
+      }),
     });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    
+    if (result.errors) {
+      throw new Error(result.errors[0]?.message || "GraphQL error");
+    }
+
+    return result.data.deleteDeliveryCenter;
   };
 
   const deleteProduct = async (ean: string) => {
-    return await apiRequest('/graphql', {
-      query: `
-        mutation DeleteProduct($ean: String!) {
-          deleteProduct(ean: $ean)
-        }
-      `,
-      variables: { ean },
+    const response = await fetch(GRAPHQL_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Apollo-Require-Preflight": "true",
+      },
+      body: JSON.stringify({
+        query: `
+          mutation DeleteProduct($ean: String!) {
+            deleteProduct(ean: $ean)
+          }
+        `,
+        variables: { ean },
+      }),
     });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    
+    if (result.errors) {
+      throw new Error(result.errors[0]?.message || "GraphQL error");
+    }
+
+    return result.data.deleteProduct;
   };
 
 
