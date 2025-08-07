@@ -160,6 +160,155 @@ async function generateRandomProducts(count: number, timestampOffset?: string) {
   return result.data.generateRandomProducts;
 }
 
+// Individual entity generation functions
+async function generateDeliveryCenters(count: number, clearExisting: boolean = false) {
+  const mutation = `
+    mutation GenerateDeliveryCenters($count: Int!, $clearExisting: Boolean) {
+      generateDeliveryCenters(count: $count, clearExisting: $clearExisting) {
+        success
+        entityType
+        createdCount
+        message
+      }
+    }
+  `;
+
+  const response = await fetch(GRAPHQL_ENDPOINT, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Apollo-Require-Preflight": "true",
+    },
+    body: JSON.stringify({ 
+      query: mutation,
+      variables: { count, clearExisting }
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const result = await response.json();
+  
+  if (result.errors) {
+    throw new Error(result.errors[0]?.message || "GraphQL error");
+  }
+
+  return result.data.generateDeliveryCenters;
+}
+
+async function generateStores(storesPerCenter: number, clearExisting: boolean = false) {
+  const mutation = `
+    mutation GenerateStores($storesPerCenter: Int!, $clearExisting: Boolean) {
+      generateStores(storesPerCenter: $storesPerCenter, clearExisting: $clearExisting) {
+        success
+        entityType
+        createdCount
+        message
+      }
+    }
+  `;
+
+  const response = await fetch(GRAPHQL_ENDPOINT, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Apollo-Require-Preflight": "true",
+    },
+    body: JSON.stringify({ 
+      query: mutation,
+      variables: { storesPerCenter, clearExisting }
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const result = await response.json();
+  
+  if (result.errors) {
+    throw new Error(result.errors[0]?.message || "GraphQL error");
+  }
+
+  return result.data.generateStores;
+}
+
+async function generateUsers(usersPerStore: number, clearExisting: boolean = false) {
+  const mutation = `
+    mutation GenerateUsers($usersPerStore: Int!, $clearExisting: Boolean) {
+      generateUsers(usersPerStore: $usersPerStore, clearExisting: $clearExisting) {
+        success
+        entityType
+        createdCount
+        message
+      }
+    }
+  `;
+
+  const response = await fetch(GRAPHQL_ENDPOINT, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Apollo-Require-Preflight": "true",
+    },
+    body: JSON.stringify({ 
+      query: mutation,
+      variables: { usersPerStore, clearExisting }
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const result = await response.json();
+  
+  if (result.errors) {
+    throw new Error(result.errors[0]?.message || "GraphQL error");
+  }
+
+  return result.data.generateUsers;
+}
+
+async function generatePurchaseOrders(count: number, clearExisting: boolean = false) {
+  const mutation = `
+    mutation GeneratePurchaseOrders($count: Int!, $clearExisting: Boolean) {
+      generatePurchaseOrders(count: $count, clearExisting: $clearExisting) {
+        success
+        entityType
+        createdCount
+        message
+      }
+    }
+  `;
+
+  const response = await fetch(GRAPHQL_ENDPOINT, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Apollo-Require-Preflight": "true",
+    },
+    body: JSON.stringify({ 
+      query: mutation,
+      variables: { count, clearExisting }
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const result = await response.json();
+  
+  if (result.errors) {
+    throw new Error(result.errors[0]?.message || "GraphQL error");
+  }
+
+  return result.data.generatePurchaseOrders;
+}
+
 function ProductCard({ product }: { product: Product }) {
   const totalPrice = product.base_price * (1 + (product.tax?.tax_rate || 0));
   
@@ -237,6 +386,13 @@ function ProductCard({ product }: { product: Product }) {
 export default function Products() {
   const [productCount, setProductCount] = useState(10);
   const [timestampOffset, setTimestampOffset] = useState('');
+  
+  // Entity generation states
+  const [deliveryCentersCount, setDeliveryCentersCount] = useState(2);
+  const [storesPerCenter, setStoresPerCenter] = useState(2);
+  const [usersPerStore, setUsersPerStore] = useState(2);
+  const [purchaseOrdersCount, setPurchaseOrdersCount] = useState(10);
+  
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -277,6 +433,83 @@ export default function Products() {
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Error al generar productos",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Individual entity generation mutations
+  const generateDeliveryCentersMutation = useMutation({
+    mutationFn: ({ count, clearExisting }: { count: number; clearExisting?: boolean }) => 
+      generateDeliveryCenters(count, clearExisting),
+    onSuccess: (result) => {
+      toast({
+        title: result.success ? "Centros de distribución creados" : "Error",
+        description: result.message,
+        variant: result.success ? "default" : "destructive",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Error al generar centros",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const generateStoresMutation = useMutation({
+    mutationFn: ({ storesPerCenter, clearExisting }: { storesPerCenter: number; clearExisting?: boolean }) => 
+      generateStores(storesPerCenter, clearExisting),
+    onSuccess: (result) => {
+      toast({
+        title: result.success ? "Tiendas creadas" : "Error",
+        description: result.message,
+        variant: result.success ? "default" : "destructive",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Error al generar tiendas",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const generateUsersMutation = useMutation({
+    mutationFn: ({ usersPerStore, clearExisting }: { usersPerStore: number; clearExisting?: boolean }) => 
+      generateUsers(usersPerStore, clearExisting),
+    onSuccess: (result) => {
+      toast({
+        title: result.success ? "Usuarios creados" : "Error",
+        description: result.message,
+        variant: result.success ? "default" : "destructive",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Error al generar usuarios",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const generatePurchaseOrdersMutation = useMutation({
+    mutationFn: ({ count, clearExisting }: { count: number; clearExisting?: boolean }) => 
+      generatePurchaseOrders(count, clearExisting),
+    onSuccess: (result) => {
+      toast({
+        title: result.success ? "Órdenes de compra creadas" : "Error", 
+        description: result.message,
+        variant: result.success ? "default" : "destructive",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Error al generar órdenes",
         variant: "destructive",
       });
     },
@@ -439,6 +672,191 @@ export default function Products() {
               )}
               Generar Productos
             </Button>
+          </div>
+
+          {/* Individual Entity Generation */}
+          <div className="p-4 border rounded-lg space-y-4">
+            <div>
+              <h3 className="font-medium">Generación de Entidades Individuales</h3>
+              <p className="text-sm text-muted-foreground">
+                Crea entidades específicas con validación de dependencias (centros → tiendas → usuarios → órdenes)
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Delivery Centers */}
+              <div className="space-y-3">
+                <div>
+                  <Label htmlFor="delivery-centers-count">Centros de Distribución</Label>
+                  <Input
+                    id="delivery-centers-count"
+                    type="number"
+                    min="1"
+                    max="10"
+                    value={deliveryCentersCount}
+                    onChange={(e) => setDeliveryCentersCount(parseInt(e.target.value) || 0)}
+                    data-testid="input-delivery-centers-count"
+                    className="mb-2"
+                  />
+                </div>
+                <Button
+                  onClick={() => generateDeliveryCentersMutation.mutate({ count: deliveryCentersCount })}
+                  disabled={generateDeliveryCentersMutation.isPending}
+                  size="sm"
+                  className="w-full"
+                  data-testid="button-generate-delivery-centers"
+                >
+                  {generateDeliveryCentersMutation.isPending ? (
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Plus className="h-4 w-4 mr-2" />
+                  )}
+                  Crear Centros
+                </Button>
+                <Button
+                  onClick={() => generateDeliveryCentersMutation.mutate({ count: deliveryCentersCount, clearExisting: true })}
+                  disabled={generateDeliveryCentersMutation.isPending}
+                  size="sm"
+                  variant="outline"
+                  className="w-full"
+                  data-testid="button-replace-delivery-centers"
+                >
+                  Reemplazar Centros
+                </Button>
+              </div>
+
+              {/* Stores */}
+              <div className="space-y-3">
+                <div>
+                  <Label htmlFor="stores-per-center">Tiendas por Centro</Label>
+                  <Input
+                    id="stores-per-center"
+                    type="number"
+                    min="1"
+                    max="5"
+                    value={storesPerCenter}
+                    onChange={(e) => setStoresPerCenter(parseInt(e.target.value) || 0)}
+                    data-testid="input-stores-per-center"
+                    className="mb-2"
+                  />
+                </div>
+                <Button
+                  onClick={() => generateStoresMutation.mutate({ storesPerCenter })}
+                  disabled={generateStoresMutation.isPending}
+                  size="sm"
+                  className="w-full"
+                  data-testid="button-generate-stores"
+                >
+                  {generateStoresMutation.isPending ? (
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Plus className="h-4 w-4 mr-2" />
+                  )}
+                  Crear Tiendas
+                </Button>
+                <Button
+                  onClick={() => generateStoresMutation.mutate({ storesPerCenter, clearExisting: true })}
+                  disabled={generateStoresMutation.isPending}
+                  size="sm"
+                  variant="outline"
+                  className="w-full"
+                  data-testid="button-replace-stores"
+                >
+                  Reemplazar Tiendas
+                </Button>
+              </div>
+
+              {/* Users */}
+              <div className="space-y-3">
+                <div>
+                  <Label htmlFor="users-per-store">Usuarios por Tienda</Label>
+                  <Input
+                    id="users-per-store"
+                    type="number"
+                    min="1"
+                    max="5"
+                    value={usersPerStore}
+                    onChange={(e) => setUsersPerStore(parseInt(e.target.value) || 0)}
+                    data-testid="input-users-per-store"
+                    className="mb-2"
+                  />
+                </div>
+                <Button
+                  onClick={() => generateUsersMutation.mutate({ usersPerStore })}
+                  disabled={generateUsersMutation.isPending}
+                  size="sm"
+                  className="w-full"
+                  data-testid="button-generate-users"
+                >
+                  {generateUsersMutation.isPending ? (
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Plus className="h-4 w-4 mr-2" />
+                  )}
+                  Crear Usuarios
+                </Button>
+                <Button
+                  onClick={() => generateUsersMutation.mutate({ usersPerStore, clearExisting: true })}
+                  disabled={generateUsersMutation.isPending}
+                  size="sm"
+                  variant="outline"
+                  className="w-full"
+                  data-testid="button-replace-users"
+                >
+                  Reemplazar Usuarios
+                </Button>
+              </div>
+
+              {/* Purchase Orders */}
+              <div className="space-y-3">
+                <div>
+                  <Label htmlFor="purchase-orders-count">Órdenes de Compra</Label>
+                  <Input
+                    id="purchase-orders-count"
+                    type="number"
+                    min="1"
+                    max="50"
+                    value={purchaseOrdersCount}
+                    onChange={(e) => setPurchaseOrdersCount(parseInt(e.target.value) || 0)}
+                    data-testid="input-purchase-orders-count"
+                    className="mb-2"
+                  />
+                </div>
+                <Button
+                  onClick={() => generatePurchaseOrdersMutation.mutate({ count: purchaseOrdersCount })}
+                  disabled={generatePurchaseOrdersMutation.isPending}
+                  size="sm"
+                  className="w-full"
+                  data-testid="button-generate-purchase-orders"
+                >
+                  {generatePurchaseOrdersMutation.isPending ? (
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Plus className="h-4 w-4 mr-2" />
+                  )}
+                  Crear Órdenes
+                </Button>
+                <Button
+                  onClick={() => generatePurchaseOrdersMutation.mutate({ count: purchaseOrdersCount, clearExisting: true })}
+                  disabled={generatePurchaseOrdersMutation.isPending}
+                  size="sm"
+                  variant="outline"
+                  className="w-full"
+                  data-testid="button-replace-purchase-orders"
+                >
+                  Reemplazar Órdenes
+                </Button>
+              </div>
+            </div>
+
+            {/* Dependency Info */}
+            <div className="bg-blue-50 dark:bg-blue-950 p-3 rounded-md">
+              <p className="text-xs text-blue-700 dark:text-blue-300">
+                <strong>Dependencias:</strong> Los centros de distribución no requieren dependencias. 
+                Las tiendas requieren centros existentes. Los usuarios requieren tiendas. 
+                Las órdenes de compra requieren usuarios.
+              </p>
+            </div>
           </div>
         </CardContent>
       </Card>
