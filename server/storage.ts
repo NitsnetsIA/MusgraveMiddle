@@ -860,7 +860,7 @@ export class DatabaseStorage implements IStorage {
 
   // Entity generation implementation
   // Individual entity generation methods with dependency validation
-  async generateDeliveryCenters(count: number, clearExisting: boolean = false): Promise<{
+  async generateDeliveryCenters(count: number, clearExisting: boolean = false, timestampOffset?: string): Promise<{
     success: boolean;
     entityType: string;
     createdCount: number;
@@ -904,7 +904,7 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async generateStores(storesPerCenter: number, clearExisting: boolean = false): Promise<{
+  async generateStores(storesPerCenter: number, clearExisting: boolean = false, timestampOffset?: string): Promise<{
     success: boolean;
     entityType: string;
     createdCount: number;
@@ -973,7 +973,7 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async generateUsers(usersPerStore: number, clearExisting: boolean = false): Promise<{
+  async generateUsers(usersPerStore: number, clearExisting: boolean = false, timestampOffset?: string): Promise<{
     success: boolean;
     entityType: string;
     createdCount: number;
@@ -1043,7 +1043,7 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async generatePurchaseOrders(count: number, clearExisting: boolean = false): Promise<{
+  async generatePurchaseOrders(count: number, clearExisting: boolean = false, timestampOffset?: string): Promise<{
     success: boolean;
     entityType: string;
     createdCount: number;

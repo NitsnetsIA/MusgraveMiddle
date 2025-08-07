@@ -251,20 +251,20 @@ export const resolvers = {
 
     // Entity generation mutation
     // Individual entity generation methods
-    generateDeliveryCenters: async (_: any, { count, clearExisting }: { count: number; clearExisting?: boolean }) => {
-      return await storage.generateDeliveryCenters(count, clearExisting || false);
+    generateDeliveryCenters: async (_: any, { count, clearExisting, timestampOffset }: { count: number; clearExisting?: boolean; timestampOffset?: string }) => {
+      return await storage.generateDeliveryCenters(count, clearExisting || false, timestampOffset);
     },
 
-    generateStores: async (_: any, { storesPerCenter, clearExisting }: { storesPerCenter: number; clearExisting?: boolean }) => {
-      return await storage.generateStores(storesPerCenter, clearExisting || false);
+    generateStores: async (_: any, { storesPerCenter, clearExisting, timestampOffset }: { storesPerCenter: number; clearExisting?: boolean; timestampOffset?: string }) => {
+      return await storage.generateStores(storesPerCenter, clearExisting || false, timestampOffset);
     },
 
-    generateUsers: async (_: any, { usersPerStore, clearExisting }: { usersPerStore: number; clearExisting?: boolean }) => {
-      return await storage.generateUsers(usersPerStore, clearExisting || false);
+    generateUsers: async (_: any, { usersPerStore, clearExisting, timestampOffset }: { usersPerStore: number; clearExisting?: boolean; timestampOffset?: string }) => {
+      return await storage.generateUsers(usersPerStore, clearExisting || false, timestampOffset);
     },
 
-    generatePurchaseOrders: async (_: any, { count, clearExisting }: { count: number; clearExisting?: boolean }) => {
-      return await storage.generatePurchaseOrders(count, clearExisting || false);
+    generatePurchaseOrders: async (_: any, { count, clearExisting, timestampOffset }: { count: number; clearExisting?: boolean; timestampOffset?: string }) => {
+      return await storage.generatePurchaseOrders(count, clearExisting || false, timestampOffset);
     },
 
     generateEntities: async (_: any, { input }: { input: any }) => {

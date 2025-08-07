@@ -386,10 +386,10 @@ export const typeDefs = `#graphql
     deleteAllOrderItems: DeleteAllResult!
     
     # Entity generation
-    generateDeliveryCenters(count: Int!, clearExisting: Boolean = false): SingleEntityGenerationResult!
-    generateStores(storesPerCenter: Int!, clearExisting: Boolean = false): SingleEntityGenerationResult!
-    generateUsers(usersPerStore: Int!, clearExisting: Boolean = false): SingleEntityGenerationResult!
-    generatePurchaseOrders(count: Int!, clearExisting: Boolean = false): SingleEntityGenerationResult!
+    generateDeliveryCenters(count: Int!, clearExisting: Boolean = false, timestampOffset: String): SingleEntityGenerationResult!
+    generateStores(storesPerCenter: Int!, clearExisting: Boolean = false, timestampOffset: String): SingleEntityGenerationResult!
+    generateUsers(usersPerStore: Int!, clearExisting: Boolean = false, timestampOffset: String): SingleEntityGenerationResult!
+    generatePurchaseOrders(count: Int!, clearExisting: Boolean = false, timestampOffset: String): SingleEntityGenerationResult!
     generateEntities(input: GenerateEntitiesInput!): GenerateEntitiesResult!
   }
 
