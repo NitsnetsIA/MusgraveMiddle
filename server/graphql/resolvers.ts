@@ -4,6 +4,7 @@ import {
   products, taxes, deliveryCenters, stores, users, purchaseOrders, purchaseOrderItems, orders, orderItems 
 } from "@shared/schema";
 import { eq } from "drizzle-orm";
+import { generateCoherentEntities } from '../entity-generator';
 
 export const resolvers = {
   Query: {
@@ -214,6 +215,11 @@ export const resolvers = {
     
     deleteOrderItem: async (_: any, { item_id }: { item_id: number }) => {
       return await storage.deleteOrderItem(item_id);
+    },
+
+    // Entity generation mutation
+    generateEntities: async (_: any, { input }: { input: any }) => {
+      return await storage.generateEntities(input);
     },
   },
 

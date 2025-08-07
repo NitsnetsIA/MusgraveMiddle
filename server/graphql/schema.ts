@@ -376,6 +376,9 @@ export const typeDefs = `#graphql
     createOrderItem(input: OrderItemInput!): OrderItem!
     updateOrderItem(item_id: Int!, input: UpdateOrderItemInput!): OrderItem!
     deleteOrderItem(item_id: Int!): Boolean!
+    
+    # Entity generation
+    generateEntities(input: GenerateEntitiesInput!): GenerateEntitiesResult!
   }
 
   type DeleteAllProductsResult {
@@ -400,5 +403,26 @@ export const typeDefs = `#graphql
   type SyncInfoResult {
     entities: [EntitySyncInfo!]!
     generated_at: DateTime!
+  }
+
+  input GenerateEntitiesInput {
+    deliveryCenters: Int
+    storesPerCenter: Int
+    usersPerStore: Int
+    purchaseOrders: Int
+    clearExisting: Boolean
+  }
+
+  type GenerateEntitiesResult {
+    success: Boolean!
+    summary: EntityGenerationSummary!
+    message: String!
+  }
+
+  type EntityGenerationSummary {
+    deliveryCenters: Int!
+    stores: Int!
+    users: Int!
+    purchaseOrders: Int!
   }
 `;

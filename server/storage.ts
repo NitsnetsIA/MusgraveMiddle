@@ -9,6 +9,7 @@ import {
 import { db } from "./db";
 import { eq, gte, desc, sql } from "drizzle-orm";
 import { generateRandomProduct } from "./product-generator.js";
+import { generateCoherentEntities } from './entity-generator';
 
 export interface ProductConnection {
   products: Product[];
@@ -663,6 +664,103 @@ export class DatabaseStorage implements IStorage {
       entities: results,
       generated_at: new Date()
     };
+  }
+
+  // Entity generation implementation
+  async generateEntities(options: {
+    deliveryCenters?: number;
+    storesPerCenter?: number;
+    usersPerStore?: number;
+    purchaseOrders?: number;
+    clearExisting?: boolean;
+  }): Promise<{
+    success: boolean;
+    summary: {
+      deliveryCenters: number;
+      stores: number;
+      users: number;
+      purchaseOrders: number;
+    };
+    message: string;
+  }> {
+    const {
+      deliveryCenters: deliveryCentersCount = 5,
+      storesPerCenter = 3,
+      usersPerStore = 4,
+      purchaseOrders: purchaseOrdersCount = 20,
+      clearExisting = false
+    } = options;
+
+    try {
+      // Clear existing data if requested
+      if (clearExisting) {
+        console.log("Clearing existing entity data...");
+        // Delete in correct order to avoid foreign key constraints
+        await db.execute(sql`DELETE FROM order_items;`);
+        await db.execute(sql`DELETE FROM orders;`);
+        await db.execute(sql`DELETE FROM purchase_order_items;`);
+        await db.execute(sql`DELETE FROM purchase_orders;`);
+        await db.execute(sql`DELETE FROM users;`);
+        await db.execute(sql`DELETE FROM stores;`);
+        await db.execute(sql`DELETE FROM delivery_centers;`);
+        console.log("Existing entity data cleared successfully");
+      }
+
+      // Generate coherent entities
+      const generated = generateCoherentEntities({
+        deliveryCenters: deliveryCentersCount,
+        storesPerCenter,
+        usersPerStore,
+        purchaseOrders: purchaseOrdersCount
+      });
+
+      // Insert delivery centers
+      console.log(`Inserting ${generated.deliveryCenters.length} delivery centers...`);
+      for (const center of generated.deliveryCenters) {
+        await db.insert(deliveryCenters).values(center).execute();
+      }
+
+      // Insert stores
+      console.log(`Inserting ${generated.stores.length} stores...`);
+      for (const store of generated.stores) {
+        await db.insert(stores).values(store).execute();
+      }
+
+      // Insert users
+      console.log(`Inserting ${generated.users.length} users...`);
+      for (const user of generated.users) {
+        await db.insert(users).values(user).execute();
+      }
+
+      // Insert purchase orders
+      console.log(`Inserting ${generated.purchaseOrders.length} purchase orders...`);
+      for (const order of generated.purchaseOrders) {
+        await db.insert(purchaseOrders).values(order).execute();
+      }
+
+      const message = `Successfully generated ${generated.summary.deliveryCenters} delivery centers, ${generated.summary.stores} stores, ${generated.summary.users} users, and ${generated.summary.purchaseOrders} purchase orders.`;
+      
+      console.log("Entity generation completed:", message);
+      
+      return {
+        success: true,
+        summary: generated.summary,
+        message
+      };
+
+    } catch (error) {
+      console.error("Error generating entities:", error);
+      return {
+        success: false,
+        summary: {
+          deliveryCenters: 0,
+          stores: 0,
+          users: 0,
+          purchaseOrders: 0
+        },
+        message: `Error generating entities: ${error instanceof Error ? error.message : 'Unknown error'}`
+      };
+    }
   }
 }
 
