@@ -1187,6 +1187,130 @@ function ProductCard({ product }: { product: Product }) {
   );
 }
 
+// Componente para crear pedidos directos (sin orden de compra previa)
+function CreateDirectOrderForm({ 
+  users, 
+  stores, 
+  onSuccess 
+}: { 
+  users: User[]; 
+  stores: Store[]; 
+  onSuccess: () => void;
+}) {
+  const [selectedUser, setSelectedUser] = useState<string>("");
+  const [selectedStore, setSelectedStore] = useState<string>("");
+  const [isOpen, setIsOpen] = useState(false);
+  const { toast } = useToast();
+
+  const createDirectOrderMutation = useMutation({
+    mutationFn: ({ userEmail, storeId }: { userEmail: string; storeId: string }) => 
+      createDirectOrder(userEmail, storeId),
+    onSuccess: () => {
+      toast({
+        title: "Pedido directo creado",
+        description: "Nuevo pedido creado correctamente sin orden de compra previa",
+      });
+      onSuccess();
+      setSelectedUser("");
+      setSelectedStore("");
+      setIsOpen(false);
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Error al crear el pedido directo",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (selectedUser && selectedStore) {
+      createDirectOrderMutation.mutate({ userEmail: selectedUser, storeId: selectedStore });
+    }
+  };
+
+  const availableUsers = users.filter(user => user.is_active);
+  const availableStores = stores.filter(store => store.is_active);
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        <Button data-testid="button-create-direct-order">
+          <Plus className="h-4 w-4 mr-2" />
+          Crear Pedido Directo
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Crear Pedido Directo</DialogTitle>
+          <DialogDescription>
+            Crea un nuevo pedido sin necesidad de orden de compra previa
+          </DialogDescription>
+        </DialogHeader>
+        
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label htmlFor="user">Usuario</Label>
+            <Select value={selectedUser} onValueChange={setSelectedUser}>
+              <SelectTrigger>
+                <SelectValue placeholder="Seleccionar usuario..." />
+              </SelectTrigger>
+              <SelectContent>
+                {availableUsers.map((user) => (
+                  <SelectItem key={user.email} value={user.email}>
+                    {user.name} ({user.email})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {availableUsers.length === 0 && (
+              <p className="text-sm text-muted-foreground mt-1">
+                No hay usuarios activos disponibles
+              </p>
+            )}
+          </div>
+          
+          <div>
+            <Label htmlFor="store">Tienda</Label>
+            <Select value={selectedStore} onValueChange={setSelectedStore}>
+              <SelectTrigger>
+                <SelectValue placeholder="Seleccionar tienda..." />
+              </SelectTrigger>
+              <SelectContent>
+                {availableStores.map((store) => (
+                  <SelectItem key={store.code} value={store.code}>
+                    {store.name} ({store.code})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {availableStores.length === 0 && (
+              <p className="text-sm text-muted-foreground mt-1">
+                No hay tiendas activas disponibles
+              </p>
+            )}
+          </div>
+          
+          <div className="flex justify-end space-x-2">
+            <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
+              Cancelar
+            </Button>
+            <Button 
+              type="submit" 
+              disabled={!selectedUser || !selectedStore || createDirectOrderMutation.isPending}
+              data-testid="button-submit-direct-order"
+            >
+              {createDirectOrderMutation.isPending ? "Creando..." : "Crear Pedido"}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export default function Products() {
   // Tab state
   const [activeTab, setActiveTab] = useState("products");
@@ -1990,7 +2114,7 @@ export default function Products() {
             <span>Órdenes Compra</span>
           </TabsTrigger>
           <TabsTrigger value="orders" className="flex items-center gap-2">
-            <ShoppingCart className="h-4 w-4" />
+            <FileText className="h-4 w-4" />
             <span>Pedidos</span>
           </TabsTrigger>
           <TabsTrigger value="taxes" className="flex items-center gap-2">
