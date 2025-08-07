@@ -7,9 +7,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { ShoppingCart, Package, Trash2, Plus, RefreshCw, Building2, Store, Users, FileText, Receipt } from "lucide-react";
-import { useState } from "react";
+import { ShoppingCart, Package, Trash2, Plus, RefreshCw, Building2, Store, Users, FileText, Receipt, ChevronLeft, ChevronRight } from "lucide-react";
+import React, { useState } from "react";
 
 interface Product {
   ean: string;
@@ -167,17 +169,12 @@ async function fetchProducts(): Promise<ProductsResponse> {
 
 async function fetchDeliveryCenters(limit: number = 20, offset: number = 0): Promise<EntitiesResponse<DeliveryCenter>> {
   const query = `
-    query GetDeliveryCenters($limit: Int, $offset: Int) {
-      delivery_centers(limit: $limit, offset: $offset) {
-        delivery_centers {
-          code
-          name
-          created_at
-          updated_at
-        }
-        total
-        limit
-        offset
+    query GetDeliveryCenters {
+      deliveryCenters {
+        code
+        name
+        created_at
+        updated_at
       }
     }
   `;
@@ -201,34 +198,33 @@ async function fetchDeliveryCenters(limit: number = 20, offset: number = 0): Pro
     throw new Error(result.errors[0]?.message || "GraphQL error");
   }
 
+  // Simular paginación en el frontend ya que la query no la soporta
+  const allCenters = result.data.deliveryCenters || [];
+  const paginatedCenters = allCenters.slice(offset, offset + limit);
+  
   return {
-    data: result.data.delivery_centers.delivery_centers,
-    total: result.data.delivery_centers.total,
-    limit: result.data.delivery_centers.limit,
-    offset: result.data.delivery_centers.offset
+    data: paginatedCenters,
+    total: allCenters.length,
+    limit,
+    offset
   };
 }
 
 async function fetchStores(limit: number = 20, offset: number = 0): Promise<EntitiesResponse<Store>> {
   const query = `
-    query GetStores($limit: Int, $offset: Int) {
-      stores(limit: $limit, offset: $offset) {
-        stores {
+    query GetStores {
+      stores {
+        code
+        name
+        delivery_center_code
+        responsible_email
+        is_active
+        created_at
+        updated_at
+        deliveryCenter {
           code
           name
-          delivery_center_code
-          responsible_email
-          is_active
-          created_at
-          updated_at
-          deliveryCenter {
-            code
-            name
-          }
         }
-        total
-        limit
-        offset
       }
     }
   `;
@@ -252,33 +248,32 @@ async function fetchStores(limit: number = 20, offset: number = 0): Promise<Enti
     throw new Error(result.errors[0]?.message || "GraphQL error");
   }
 
+  // Simular paginación en el frontend ya que la query no la soporta
+  const allStores = result.data.stores || [];
+  const paginatedStores = allStores.slice(offset, offset + limit);
+  
   return {
-    data: result.data.stores.stores,
-    total: result.data.stores.total,
-    limit: result.data.stores.limit,
-    offset: result.data.stores.offset
+    data: paginatedStores,
+    total: allStores.length,
+    limit,
+    offset
   };
 }
 
 async function fetchUsers(limit: number = 20, offset: number = 0): Promise<EntitiesResponse<User>> {
   const query = `
-    query GetUsers($limit: Int, $offset: Int) {
-      users(limit: $limit, offset: $offset) {
-        users {
-          email
-          store_id
+    query GetUsers {
+      users {
+        email
+        store_id
+        name
+        is_active
+        created_at
+        updated_at
+        store {
+          code
           name
-          is_active
-          created_at
-          updated_at
-          store {
-            code
-            name
-          }
         }
-        total
-        limit
-        offset
       }
     }
   `;
@@ -302,37 +297,36 @@ async function fetchUsers(limit: number = 20, offset: number = 0): Promise<Entit
     throw new Error(result.errors[0]?.message || "GraphQL error");
   }
 
+  // Simular paginación en el frontend ya que la query no la soporta
+  const allUsers = result.data.users || [];
+  const paginatedUsers = allUsers.slice(offset, offset + limit);
+  
   return {
-    data: result.data.users.users,
-    total: result.data.users.total,
-    limit: result.data.users.limit,
-    offset: result.data.users.offset
+    data: paginatedUsers,
+    total: allUsers.length,
+    limit,
+    offset
   };
 }
 
 async function fetchPurchaseOrders(limit: number = 20, offset: number = 0): Promise<EntitiesResponse<PurchaseOrder>> {
   const query = `
-    query GetPurchaseOrders($limit: Int, $offset: Int) {
-      purchase_orders(limit: $limit, offset: $offset) {
-        purchase_orders {
-          purchase_order_id
-          user_email
-          store_id
-          status
-          final_total
-          created_at
-          updated_at
-          user {
+    query GetPurchaseOrders {
+      purchaseOrders {
+        purchase_order_id
+        user_email
+        store_id
+        status
+        final_total
+        created_at
+        updated_at
+        user {
+          name
+          email
+          store {
             name
-            email
-            store {
-              name
-            }
           }
         }
-        total
-        limit
-        offset
       }
     }
   `;
@@ -356,11 +350,15 @@ async function fetchPurchaseOrders(limit: number = 20, offset: number = 0): Prom
     throw new Error(result.errors[0]?.message || "GraphQL error");
   }
 
+  // Simular paginación en el frontend ya que la query no la soporta
+  const allOrders = result.data.purchaseOrders || [];
+  const paginatedOrders = allOrders.slice(offset, offset + limit);
+  
   return {
-    data: result.data.purchase_orders.purchase_orders,
-    total: result.data.purchase_orders.total,
-    limit: result.data.purchase_orders.limit,
-    offset: result.data.purchase_orders.offset
+    data: paginatedOrders,
+    total: allOrders.length,
+    limit,
+    offset
   };
 }
 
@@ -767,6 +765,219 @@ async function generatePurchaseOrders(count: number, clearExisting: boolean = fa
   return result.data.generatePurchaseOrders;
 }
 
+// Función para crear una orden de compra
+async function createPurchaseOrder(userEmail: string, storeId: string): Promise<PurchaseOrder> {
+  const mutation = `
+    mutation CreatePurchaseOrder($input: PurchaseOrderInput!) {
+      createPurchaseOrder(input: $input) {
+        purchase_order_id
+        user_email
+        store_id
+        status
+        subtotal
+        tax_total
+        final_total
+        created_at
+        updated_at
+      }
+    }
+  `;
+
+  const purchaseOrderData = {
+    purchase_order_id: `PO-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    user_email: userEmail,
+    store_id: storeId,
+    status: "pending",
+    subtotal: 0.0,
+    tax_total: 0.0,
+    final_total: 0.0
+  };
+
+  const response = await fetch(GRAPHQL_ENDPOINT, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Apollo-Require-Preflight": "true",
+    },
+    body: JSON.stringify({ 
+      query: mutation,
+      variables: { input: purchaseOrderData }
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const result = await response.json();
+  
+  if (result.errors) {
+    throw new Error(result.errors[0]?.message || "GraphQL error");
+  }
+
+  return result.data.createPurchaseOrder;
+}
+
+// Componente para crear órdenes de compra
+function CreateOrderForm({ 
+  users, 
+  stores, 
+  onOrderCreate, 
+  isCreating 
+}: { 
+  users: User[]; 
+  stores: Store[]; 
+  onOrderCreate: (userEmail: string, storeId: string) => void;
+  isCreating: boolean;
+}) {
+  const [selectedUser, setSelectedUser] = useState<string>("");
+  const [selectedStore, setSelectedStore] = useState<string>("");
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (selectedUser && selectedStore) {
+      onOrderCreate(selectedUser, selectedStore);
+      setSelectedUser("");
+      setSelectedStore("");
+    }
+  };
+
+  const availableUsers = users.filter(user => user.is_active);
+  const availableStores = stores.filter(store => store.is_active);
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <Label htmlFor="user">Usuario</Label>
+        <Select value={selectedUser} onValueChange={setSelectedUser}>
+          <SelectTrigger>
+            <SelectValue placeholder="Seleccionar usuario..." />
+          </SelectTrigger>
+          <SelectContent>
+            {availableUsers.map((user) => (
+              <SelectItem key={user.email} value={user.email}>
+                {user.name} ({user.email})
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {availableUsers.length === 0 && (
+          <p className="text-sm text-muted-foreground mt-1">
+            No hay usuarios activos disponibles
+          </p>
+        )}
+      </div>
+      
+      <div>
+        <Label htmlFor="store">Tienda</Label>
+        <Select value={selectedStore} onValueChange={setSelectedStore}>
+          <SelectTrigger>
+            <SelectValue placeholder="Seleccionar tienda..." />
+          </SelectTrigger>
+          <SelectContent>
+            {availableStores.map((store) => (
+              <SelectItem key={store.code} value={store.code}>
+                {store.name} ({store.code})
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {availableStores.length === 0 && (
+          <p className="text-sm text-muted-foreground mt-1">
+            No hay tiendas activas disponibles
+          </p>
+        )}
+      </div>
+      
+      <div className="flex justify-end space-x-2">
+        <Button 
+          type="submit" 
+          disabled={!selectedUser || !selectedStore || isCreating}
+          data-testid="button-submit-order"
+        >
+          {isCreating ? "Creando..." : "Crear Orden"}
+        </Button>
+      </div>
+    </form>
+  );
+}
+
+// Componente de paginación
+function PaginationComponent({ 
+  currentPage, 
+  totalItems, 
+  pageSize, 
+  onPageChange 
+}: { 
+  currentPage: number; 
+  totalItems: number; 
+  pageSize: number; 
+  onPageChange: (page: number) => void; 
+}) {
+  const totalPages = Math.ceil(totalItems / pageSize);
+  
+  if (totalPages <= 1) return null;
+  
+  return (
+    <div className="flex items-center justify-between px-2">
+      <div className="flex items-center space-x-2">
+        <p className="text-sm text-muted-foreground">
+          Página {currentPage + 1} de {totalPages} ({totalItems} elementos total)
+        </p>
+      </div>
+      
+      <div className="flex items-center space-x-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage === 0}
+        >
+          <ChevronLeft className="h-4 w-4" />
+          Anterior
+        </Button>
+        
+        <div className="flex items-center space-x-1">
+          {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+            let pageNumber;
+            if (totalPages <= 5) {
+              pageNumber = i;
+            } else if (currentPage < 2) {
+              pageNumber = i;
+            } else if (currentPage > totalPages - 3) {
+              pageNumber = totalPages - 5 + i;
+            } else {
+              pageNumber = currentPage - 2 + i;
+            }
+            
+            return (
+              <Button
+                key={pageNumber}
+                variant={currentPage === pageNumber ? "default" : "outline"}
+                size="sm"
+                className="w-8"
+                onClick={() => onPageChange(pageNumber)}
+              >
+                {pageNumber + 1}
+              </Button>
+            );
+          })}
+        </div>
+        
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={currentPage >= totalPages - 1}
+        >
+          Siguiente
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 function ProductCard({ product }: { product: Product }) {
   const totalPrice = product.base_price * (1 + (product.tax?.tax_rate || 0));
   
@@ -855,38 +1066,47 @@ export default function Products() {
   const [usersPerStore, setUsersPerStore] = useState(2);
   const [purchaseOrdersCount, setPurchaseOrdersCount] = useState(10);
   
+  // Pagination states
+  const [currentPageProducts, setCurrentPageProducts] = useState(0);
+  const [currentPageCenters, setCurrentPageCenters] = useState(0);
+  const [currentPageStores, setCurrentPageStores] = useState(0);
+  const [currentPageUsers, setCurrentPageUsers] = useState(0);
+  const [currentPageOrders, setCurrentPageOrders] = useState(0);
+  const [currentPageTaxes, setCurrentPageTaxes] = useState(0);
+  const pageSize = 10;
+  
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Data queries for all entities
+  // Data queries for all entities with pagination
   const { data: productsData, isLoading: productsLoading, error: productsError } = useQuery({
-    queryKey: ["products"],
-    queryFn: fetchProducts,
+    queryKey: ["products", currentPageProducts],
+    queryFn: () => fetchProducts(pageSize, currentPageProducts * pageSize),
   });
 
   const { data: centersData, isLoading: centersLoading } = useQuery({
-    queryKey: ["delivery-centers"],
-    queryFn: () => fetchDeliveryCenters(),
+    queryKey: ["delivery-centers", currentPageCenters],
+    queryFn: () => fetchDeliveryCenters(pageSize, currentPageCenters * pageSize),
   });
 
   const { data: storesData, isLoading: storesLoading } = useQuery({
-    queryKey: ["stores"],
-    queryFn: () => fetchStores(),
+    queryKey: ["stores", currentPageStores],
+    queryFn: () => fetchStores(pageSize, currentPageStores * pageSize),
   });
 
   const { data: usersData, isLoading: usersLoading } = useQuery({
-    queryKey: ["users"],
-    queryFn: () => fetchUsers(),
+    queryKey: ["users", currentPageUsers],
+    queryFn: () => fetchUsers(pageSize, currentPageUsers * pageSize),
   });
 
   const { data: ordersData, isLoading: ordersLoading } = useQuery({
-    queryKey: ["purchase-orders"],
-    queryFn: () => fetchPurchaseOrders(),
+    queryKey: ["purchase-orders", currentPageOrders],
+    queryFn: () => fetchPurchaseOrders(pageSize, currentPageOrders * pageSize),
   });
 
   const { data: taxesData, isLoading: taxesLoading } = useQuery({
-    queryKey: ["taxes"],
-    queryFn: () => fetchTaxes(),
+    queryKey: ["taxes", currentPageTaxes],
+    queryFn: () => fetchTaxes(pageSize, currentPageTaxes * pageSize),
   });
 
   const deleteAllMutation = useMutation({
@@ -1075,6 +1295,26 @@ export default function Products() {
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Error al generar órdenes",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Mutation for creating purchase orders
+  const createOrderMutation = useMutation({
+    mutationFn: ({ userEmail, storeId }: { userEmail: string; storeId: string }) => 
+      createPurchaseOrder(userEmail, storeId),
+    onSuccess: (result) => {
+      toast({
+        title: "Orden de compra creada",
+        description: `Nueva orden ${result.purchase_order_id} creada correctamente`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["purchase-orders"] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Error al crear la orden de compra",
         variant: "destructive",
       });
     },
@@ -1665,6 +1905,18 @@ export default function Products() {
                   <p className="text-muted-foreground">No hay productos disponibles</p>
                 </div>
               )}
+              
+              {/* Paginación para productos */}
+              {productsData && (
+                <div className="mt-4">
+                  <PaginationComponent 
+                    currentPage={currentPageProducts}
+                    totalItems={productsData.total}
+                    pageSize={pageSize}
+                    onPageChange={setCurrentPageProducts}
+                  />
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -1718,6 +1970,18 @@ export default function Products() {
                 <div className="text-center py-8">
                   <Building2 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                   <p className="text-muted-foreground">No hay centros de distribución disponibles</p>
+                </div>
+              )}
+              
+              {/* Paginación para centros */}
+              {centersData && (
+                <div className="mt-4">
+                  <PaginationComponent 
+                    currentPage={currentPageCenters}
+                    totalItems={centersData.total}
+                    pageSize={pageSize}
+                    onPageChange={setCurrentPageCenters}
+                  />
                 </div>
               )}
             </CardContent>
@@ -1782,6 +2046,18 @@ export default function Products() {
                 <div className="text-center py-8">
                   <Store className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                   <p className="text-muted-foreground">No hay tiendas disponibles</p>
+                </div>
+              )}
+              
+              {/* Paginación para tiendas */}
+              {storesData && (
+                <div className="mt-4">
+                  <PaginationComponent 
+                    currentPage={currentPageStores}
+                    totalItems={storesData.total}
+                    pageSize={pageSize}
+                    onPageChange={setCurrentPageStores}
+                  />
                 </div>
               )}
             </CardContent>
@@ -1854,6 +2130,18 @@ export default function Products() {
                   <p className="text-muted-foreground">No hay usuarios disponibles</p>
                 </div>
               )}
+              
+              {/* Paginación para usuarios */}
+              {usersData && (
+                <div className="mt-4">
+                  <PaginationComponent 
+                    currentPage={currentPageUsers}
+                    totalItems={usersData.total}
+                    pageSize={pageSize}
+                    onPageChange={setCurrentPageUsers}
+                  />
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -1861,13 +2149,44 @@ export default function Products() {
         <TabsContent value="orders" className="mt-6">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                Órdenes de Compra ({ordersData?.total || 0})
-              </CardTitle>
-              <CardDescription>
-                Órdenes de compra realizadas por los usuarios
-              </CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="h-5 w-5" />
+                    Órdenes de Compra ({ordersData?.total || 0})
+                  </CardTitle>
+                  <CardDescription>
+                    Órdenes de compra realizadas por los usuarios
+                  </CardDescription>
+                </div>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      data-testid="button-create-order"
+                      disabled={!usersData?.data.length || !storesData?.data.length}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Nueva Orden
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Crear Nueva Orden de Compra</DialogTitle>
+                      <DialogDescription>
+                        Selecciona un usuario y una tienda para crear una nueva orden de compra.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <CreateOrderForm
+                      users={usersData?.data || []}
+                      stores={storesData?.data || []}
+                      onOrderCreate={(userEmail, storeId) => createOrderMutation.mutate({ userEmail, storeId })}
+                      isCreating={createOrderMutation.isPending}
+                    />
+                  </DialogContent>
+                </Dialog>
+              </div>
             </CardHeader>
             <CardContent>
               {ordersLoading ? (
@@ -1918,6 +2237,18 @@ export default function Products() {
                 <div className="text-center py-8">
                   <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                   <p className="text-muted-foreground">No hay órdenes de compra disponibles</p>
+                </div>
+              )}
+              
+              {/* Paginación para órdenes */}
+              {ordersData && (
+                <div className="mt-4">
+                  <PaginationComponent 
+                    currentPage={currentPageOrders}
+                    totalItems={ordersData.total}
+                    pageSize={pageSize}
+                    onPageChange={setCurrentPageOrders}
+                  />
                 </div>
               )}
             </CardContent>
@@ -1979,6 +2310,18 @@ export default function Products() {
                 <div className="text-center py-8">
                   <Receipt className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                   <p className="text-muted-foreground">No hay impuestos configurados</p>
+                </div>
+              )}
+              
+              {/* Paginación para impuestos */}
+              {taxesData && (
+                <div className="mt-4">
+                  <PaginationComponent 
+                    currentPage={currentPageTaxes}
+                    totalItems={taxesData.total}
+                    pageSize={pageSize}
+                    onPageChange={setCurrentPageTaxes}
+                  />
                 </div>
               )}
             </CardContent>
