@@ -55,41 +55,37 @@ interface Store {
   code: string;
   name: string;
   delivery_center_code: string;
-  address: string;
-  city: string;
-  region: string;
-  postal_code: string;
+  responsible_email: string;
   is_active: boolean;
   created_at: string;
   updated_at: string;
-  delivery_center?: {
+  deliveryCenter?: {
     code: string;
     name: string;
-    city: string;
   };
 }
 
 interface User {
-  id: string;
-  store_code: string;
-  name: string;
   email: string;
-  role: string;
+  store_id: string;
+  name: string;
   is_active: boolean;
   created_at: string;
   updated_at: string;
   store?: {
     code: string;
     name: string;
-    city: string;
   };
 }
 
 interface PurchaseOrder {
-  id: string;
-  user_id: string;
+  purchase_order_id: string;
+  user_email: string;
+  store_id: string;
   status: string;
-  total_amount: number;
+  subtotal: number;
+  tax_total: number;
+  final_total: number;
   created_at: string;
   updated_at: string;
   user?: {
@@ -99,6 +95,27 @@ interface PurchaseOrder {
       name: string;
     };
   };
+}
+
+interface Order {
+  order_id: string;
+  source_purchase_order_id: string | null;
+  user_email: string;
+  store_id: string;
+  observations: string | null;
+  subtotal: number;
+  tax_total: number;
+  final_total: number;
+  created_at: string;
+  updated_at: string;
+  user?: {
+    name: string;
+    email: string;
+    store?: {
+      name: string;
+    };
+  };
+  sourcePurchaseOrder?: PurchaseOrder | null;
 }
 
 interface Tax {
@@ -304,6 +321,67 @@ async function fetchUsers(limit: number = 20, offset: number = 0): Promise<Entit
   return {
     data: paginatedUsers,
     total: allUsers.length,
+    limit,
+    offset
+  };
+}
+
+// Función para obtener pedidos (orders) - simplificada sin paginación por ahora
+async function fetchOrders(limit: number = 10, offset: number = 0): Promise<EntitiesResponse<Order>> {
+  const query = `
+    query GetOrders {
+      orders {
+        order_id
+        source_purchase_order_id
+        user_email
+        store_id
+        observations
+        subtotal
+        tax_total
+        final_total
+        created_at
+        updated_at
+        user {
+          name
+          email
+          store {
+            name
+          }
+        }
+        sourcePurchaseOrder {
+          purchase_order_id
+          status
+        }
+      }
+    }
+  `;
+
+  const response = await fetch(GRAPHQL_ENDPOINT, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Apollo-Require-Preflight": "true",
+    },
+    body: JSON.stringify({ query }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const result = await response.json();
+  
+  if (result.errors) {
+    throw new Error(result.errors[0]?.message || "GraphQL error");
+  }
+
+  // Simular paginación en frontend
+  const allOrders = result.data.orders || [];
+  const paginatedOrders = allOrders.slice(offset, offset + limit);
+  
+  return {
+    data: paginatedOrders,
+    total: allOrders.length,
     limit,
     offset
   };
@@ -765,6 +843,61 @@ async function generatePurchaseOrders(count: number, clearExisting: boolean = fa
   return result.data.generatePurchaseOrders;
 }
 
+// Función para crear un pedido directo (sin orden de compra)
+async function createDirectOrder(userEmail: string, storeId: string): Promise<Order> {
+  const mutation = `
+    mutation CreateOrder($input: OrderInput!) {
+      createOrder(input: $input) {
+        order_id
+        source_purchase_order_id
+        user_email
+        store_id
+        observations
+        subtotal
+        tax_total
+        final_total
+        created_at
+        updated_at
+      }
+    }
+  `;
+
+  const orderData = {
+    order_id: `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    source_purchase_order_id: null, // Pedido directo sin orden de compra
+    user_email: userEmail,
+    store_id: storeId,
+    observations: "Pedido creado directamente",
+    subtotal: 0.0,
+    tax_total: 0.0,
+    final_total: 0.0
+  };
+
+  const response = await fetch(GRAPHQL_ENDPOINT, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Apollo-Require-Preflight": "true",
+    },
+    body: JSON.stringify({ 
+      query: mutation,
+      variables: { input: orderData }
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const result = await response.json();
+  
+  if (result.errors) {
+    throw new Error(result.errors[0]?.message || "GraphQL error");
+  }
+
+  return result.data.createOrder;
+}
+
 // Función para crear una orden de compra
 async function createPurchaseOrder(userEmail: string, storeId: string): Promise<PurchaseOrder> {
   const mutation = `
@@ -817,6 +950,8 @@ async function createPurchaseOrder(userEmail: string, storeId: string): Promise<
 
   return result.data.createPurchaseOrder;
 }
+
+
 
 // Componente para crear órdenes de compra
 function CreateOrderForm({ 
@@ -1071,6 +1206,7 @@ export default function Products() {
   const [currentPageCenters, setCurrentPageCenters] = useState(0);
   const [currentPageStores, setCurrentPageStores] = useState(0);
   const [currentPageUsers, setCurrentPageUsers] = useState(0);
+  const [currentPagePurchaseOrders, setCurrentPagePurchaseOrders] = useState(0);
   const [currentPageOrders, setCurrentPageOrders] = useState(0);
   const [currentPageTaxes, setCurrentPageTaxes] = useState(0);
   const pageSize = 10;
@@ -1099,9 +1235,14 @@ export default function Products() {
     queryFn: () => fetchUsers(pageSize, currentPageUsers * pageSize),
   });
 
+  const { data: purchaseOrdersData, isLoading: purchaseOrdersLoading } = useQuery({
+    queryKey: ["purchase-orders", currentPagePurchaseOrders],
+    queryFn: () => fetchPurchaseOrders(pageSize, currentPagePurchaseOrders * pageSize),
+  });
+
   const { data: ordersData, isLoading: ordersLoading } = useQuery({
-    queryKey: ["purchase-orders", currentPageOrders],
-    queryFn: () => fetchPurchaseOrders(pageSize, currentPageOrders * pageSize),
+    queryKey: ["orders", currentPageOrders],
+    queryFn: () => fetchOrders(pageSize, currentPageOrders * pageSize),
   });
 
   const { data: taxesData, isLoading: taxesLoading } = useQuery({
@@ -1315,6 +1456,26 @@ export default function Products() {
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Error al crear la orden de compra",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Mutation for creating direct orders (without purchase order)
+  const createDirectOrderMutation = useMutation({
+    mutationFn: ({ userEmail, storeId }: { userEmail: string; storeId: string }) => 
+      createDirectOrder(userEmail, storeId),
+    onSuccess: (result) => {
+      toast({
+        title: "Pedido directo creado",
+        description: `Nuevo pedido ${result.order_id} creado correctamente sin orden de compra`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Error al crear el pedido directo",
         variant: "destructive",
       });
     },
@@ -1807,7 +1968,7 @@ export default function Products() {
 
       {/* Entities Data Tables */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="products" className="flex items-center gap-2">
             <Package className="h-4 w-4" />
             <span>Productos</span>
@@ -1824,9 +1985,13 @@ export default function Products() {
             <Users className="h-4 w-4" />
             <span>Usuarios</span>
           </TabsTrigger>
-          <TabsTrigger value="orders" className="flex items-center gap-2">
+          <TabsTrigger value="purchase-orders" className="flex items-center gap-2">
             <FileText className="h-4 w-4" />
-            <span>Órdenes</span>
+            <span>Órdenes Compra</span>
+          </TabsTrigger>
+          <TabsTrigger value="orders" className="flex items-center gap-2">
+            <ShoppingCart className="h-4 w-4" />
+            <span>Pedidos</span>
           </TabsTrigger>
           <TabsTrigger value="taxes" className="flex items-center gap-2">
             <Receipt className="h-4 w-4" />

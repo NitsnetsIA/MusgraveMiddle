@@ -249,7 +249,7 @@ export const typeDefs = `#graphql
 
   input OrderInput {
     order_id: String!
-    source_purchase_order_id: String!
+    source_purchase_order_id: String  # Opcional - null para pedidos directos
     user_email: String!
     store_id: String!
     observations: String

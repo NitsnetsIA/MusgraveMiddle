@@ -96,7 +96,7 @@ export const purchaseOrderItems = pgTable("purchase_order_items", {
 // Tabla de Pedidos (Finales)
 export const orders = pgTable("orders", {
   order_id: text("order_id").primaryKey(),
-  source_purchase_order_id: text("source_purchase_order_id").notNull().unique().references(() => purchaseOrders.purchase_order_id),
+  source_purchase_order_id: text("source_purchase_order_id").references(() => purchaseOrders.purchase_order_id), // NULL permitido para pedidos directos
   user_email: text("user_email").notNull().references(() => users.email),
   store_id: text("store_id").notNull().references(() => stores.code),
   observations: text("observations"),
