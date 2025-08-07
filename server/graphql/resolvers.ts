@@ -218,6 +218,23 @@ export const resolvers = {
     },
 
     // Entity generation mutation
+    // Individual entity generation methods
+    generateDeliveryCenters: async (_: any, { count, clearExisting }: { count: number; clearExisting?: boolean }) => {
+      return await storage.generateDeliveryCenters(count, clearExisting || false);
+    },
+
+    generateStores: async (_: any, { storesPerCenter, clearExisting }: { storesPerCenter: number; clearExisting?: boolean }) => {
+      return await storage.generateStores(storesPerCenter, clearExisting || false);
+    },
+
+    generateUsers: async (_: any, { usersPerStore, clearExisting }: { usersPerStore: number; clearExisting?: boolean }) => {
+      return await storage.generateUsers(usersPerStore, clearExisting || false);
+    },
+
+    generatePurchaseOrders: async (_: any, { count, clearExisting }: { count: number; clearExisting?: boolean }) => {
+      return await storage.generatePurchaseOrders(count, clearExisting || false);
+    },
+
     generateEntities: async (_: any, { input }: { input: any }) => {
       return await storage.generateEntities(input);
     },

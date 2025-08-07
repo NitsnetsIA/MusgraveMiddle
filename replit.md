@@ -11,6 +11,9 @@ This is a headless GraphQL microservice for managing grocery products and Spanis
 - Products now include category-appropriate placeholder images with EAN codes
 - Simplified to headless-only GraphQL API for production (removed web interfaces)
 - GraphQL Playground available only in development environment via Apollo Server
+- **Created individual entity generation methods with dependency validation**
+- **Added Spanish-contextualized entity generation with coherent relationships**
+- **Implemented granular control for generating specific entity types**
 
 ## User Preferences
 
@@ -56,6 +59,9 @@ Preferred communication style: Simple, everyday language.
 - **Type-safe resolvers** with database relation queries
 - **Error handling** with formatted GraphQL errors and comprehensive logging
 - **Sync info endpoint** (`sync_info`) providing last updated timestamps for client synchronization across users, products, stores, delivery_centers, purchase_orders, and taxes entities
+- **Individual entity generation methods** with dependency validation for granular control
+- **Entity generation with Spanish context** using authentic Spanish names, cities, and business structures
+- **Dependency validation** preventing creation of child entities without required parent entities
 
 ### Development Environment
 - **Replit integration** with custom plugins for development banner and cartographer

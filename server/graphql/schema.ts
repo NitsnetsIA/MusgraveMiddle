@@ -378,6 +378,10 @@ export const typeDefs = `#graphql
     deleteOrderItem(item_id: Int!): Boolean!
     
     # Entity generation
+    generateDeliveryCenters(count: Int!, clearExisting: Boolean = false): SingleEntityGenerationResult!
+    generateStores(storesPerCenter: Int!, clearExisting: Boolean = false): SingleEntityGenerationResult!
+    generateUsers(usersPerStore: Int!, clearExisting: Boolean = false): SingleEntityGenerationResult!
+    generatePurchaseOrders(count: Int!, clearExisting: Boolean = false): SingleEntityGenerationResult!
     generateEntities(input: GenerateEntitiesInput!): GenerateEntitiesResult!
   }
 
@@ -424,5 +428,12 @@ export const typeDefs = `#graphql
     stores: Int!
     users: Int!
     purchaseOrders: Int!
+  }
+
+  type SingleEntityGenerationResult {
+    success: Boolean!
+    entityType: String!
+    createdCount: Int!
+    message: String!
   }
 `;

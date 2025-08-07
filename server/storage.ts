@@ -9,7 +9,7 @@ import {
 import { db } from "./db";
 import { eq, gte, desc, sql } from "drizzle-orm";
 import { generateRandomProduct } from "./product-generator.js";
-import { generateCoherentEntities } from './entity-generator';
+import { generateCoherentEntities, SPANISH_CITIES, SPANISH_NAMES, STORE_TYPES, PURCHASE_ORDER_STATUSES } from './entity-generator';
 
 export interface ProductConnection {
   products: Product[];
@@ -667,6 +667,260 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Entity generation implementation
+  // Individual entity generation methods with dependency validation
+  async generateDeliveryCenters(count: number, clearExisting: boolean = false): Promise<{
+    success: boolean;
+    entityType: string;
+    createdCount: number;
+    message: string;
+  }> {
+    try {
+      if (clearExisting) {
+        console.log("Clearing existing delivery centers...");
+        await db.execute(sql`DELETE FROM order_items;`);
+        await db.execute(sql`DELETE FROM orders;`);
+        await db.execute(sql`DELETE FROM purchase_order_items;`);
+        await db.execute(sql`DELETE FROM purchase_orders;`);
+        await db.execute(sql`DELETE FROM users;`);
+        await db.execute(sql`DELETE FROM stores;`);
+        await db.execute(sql`DELETE FROM delivery_centers;`);
+      }
+
+      const generatedDeliveryCenters = generateCoherentEntities({
+        deliveryCenters: count,
+        storesPerCenter: 0,
+        usersPerStore: 0,
+        purchaseOrders: 0
+      });
+
+      await db.insert(deliveryCenters).values(generatedDeliveryCenters.deliveryCenters);
+
+      return {
+        success: true,
+        entityType: "delivery_centers",
+        createdCount: generatedDeliveryCenters.deliveryCenters.length,
+        message: `Successfully created ${generatedDeliveryCenters.deliveryCenters.length} delivery centers.`
+      };
+    } catch (error) {
+      console.error('Error generating delivery centers:', error);
+      return {
+        success: false,
+        entityType: "delivery_centers",
+        createdCount: 0,
+        message: `Error generating delivery centers: ${error instanceof Error ? error.message : String(error)}`
+      };
+    }
+  }
+
+  async generateStores(storesPerCenter: number, clearExisting: boolean = false): Promise<{
+    success: boolean;
+    entityType: string;
+    createdCount: number;
+    message: string;
+  }> {
+    try {
+      // Check if delivery centers exist
+      const existingDeliveryCenters = await db.select().from(deliveryCenters).execute();
+      if (existingDeliveryCenters.length === 0) {
+        return {
+          success: false,
+          entityType: "stores",
+          createdCount: 0,
+          message: "Cannot create stores: No delivery centers found. Please create delivery centers first."
+        };
+      }
+
+      if (clearExisting) {
+        console.log("Clearing existing stores and dependent entities...");
+        await db.execute(sql`DELETE FROM order_items;`);
+        await db.execute(sql`DELETE FROM orders;`);
+        await db.execute(sql`DELETE FROM purchase_order_items;`);
+        await db.execute(sql`DELETE FROM purchase_orders;`);
+        await db.execute(sql`DELETE FROM users;`);
+        await db.execute(sql`DELETE FROM stores;`);
+      }
+
+      // Generate stores for existing delivery centers
+      const storesToCreate = [];
+      for (let i = 0; i < existingDeliveryCenters.length; i++) {
+        const deliveryCenter = existingDeliveryCenters[i];
+        for (let j = 0; j < storesPerCenter; j++) {
+          const storeNumber = (i * storesPerCenter) + j + 1;
+          const storeCode = `ST${storeNumber.toString().padStart(3, '0')}`;
+          const cityIndex = Math.floor(Math.random() * SPANISH_CITIES.length);
+          const storeTypeIndex = Math.floor(Math.random() * STORE_TYPES.length);
+          
+          storesToCreate.push({
+            code: storeCode,
+            name: `${STORE_TYPES[storeTypeIndex]} ${SPANISH_CITIES[cityIndex]} ${['Centro', 'Norte', 'Sur', 'Este', 'Oeste', 'Plaza Mayor', 'Avenida'][Math.floor(Math.random() * 7)]}`,
+            responsible_email: `gerente.${storeCode.toLowerCase()}@tiendas.com`,
+            delivery_center_code: deliveryCenter.code,
+            is_active: Math.random() > 0.1, // 90% active
+            created_at: new Date(),
+            updated_at: new Date()
+          });
+        }
+      }
+
+      await db.insert(stores).values(storesToCreate);
+
+      return {
+        success: true,
+        entityType: "stores",
+        createdCount: storesToCreate.length,
+        message: `Successfully created ${storesToCreate.length} stores across ${existingDeliveryCenters.length} delivery centers.`
+      };
+    } catch (error) {
+      console.error('Error generating stores:', error);
+      return {
+        success: false,
+        entityType: "stores",
+        createdCount: 0,
+        message: `Error generating stores: ${error instanceof Error ? error.message : String(error)}`
+      };
+    }
+  }
+
+  async generateUsers(usersPerStore: number, clearExisting: boolean = false): Promise<{
+    success: boolean;
+    entityType: string;
+    createdCount: number;
+    message: string;
+  }> {
+    try {
+      // Check if stores exist
+      const existingStores = await db.select().from(stores).execute();
+      if (existingStores.length === 0) {
+        return {
+          success: false,
+          entityType: "users",
+          createdCount: 0,
+          message: "Cannot create users: No stores found. Please create stores first."
+        };
+      }
+
+      if (clearExisting) {
+        console.log("Clearing existing users and dependent entities...");
+        await db.execute(sql`DELETE FROM order_items;`);
+        await db.execute(sql`DELETE FROM orders;`);
+        await db.execute(sql`DELETE FROM purchase_order_items;`);
+        await db.execute(sql`DELETE FROM purchase_orders;`);
+        await db.execute(sql`DELETE FROM users;`);
+      }
+
+      // Generate users for existing stores
+      const usersToCreate = [];
+      let userIndex = 0;
+      for (const store of existingStores) {
+        for (let j = 0; j < usersPerStore; j++) {
+          userIndex++;
+          const firstName = SPANISH_NAMES.firstNames[Math.floor(Math.random() * SPANISH_NAMES.firstNames.length)];
+          const lastName1 = SPANISH_NAMES.lastNames[Math.floor(Math.random() * SPANISH_NAMES.lastNames.length)];
+          const lastName2 = SPANISH_NAMES.lastNames[Math.floor(Math.random() * SPANISH_NAMES.lastNames.length)];
+          const fullName = `${firstName} ${lastName1} ${lastName2}`;
+          const emailName = `${firstName.toLowerCase()}.${lastName1.toLowerCase()}`;
+          
+          usersToCreate.push({
+            email: `${emailName}@${store.code.toLowerCase()}.tiendas.com`,
+            store_id: store.code,
+            name: fullName,
+            password_hash: `hashed_password_${userIndex}`,
+            is_active: Math.random() > 0.05, // 95% active
+            created_at: new Date(),
+            updated_at: new Date()
+          });
+        }
+      }
+
+      await db.insert(users).values(usersToCreate);
+
+      return {
+        success: true,
+        entityType: "users",
+        createdCount: usersToCreate.length,
+        message: `Successfully created ${usersToCreate.length} users across ${existingStores.length} stores.`
+      };
+    } catch (error) {
+      console.error('Error generating users:', error);
+      return {
+        success: false,
+        entityType: "users",
+        createdCount: 0,
+        message: `Error generating users: ${error instanceof Error ? error.message : String(error)}`
+      };
+    }
+  }
+
+  async generatePurchaseOrders(count: number, clearExisting: boolean = false): Promise<{
+    success: boolean;
+    entityType: string;
+    createdCount: number;
+    message: string;
+  }> {
+    try {
+      // Check if users exist
+      const existingUsers = await db.select().from(users).execute();
+      if (existingUsers.length === 0) {
+        return {
+          success: false,
+          entityType: "purchase_orders",
+          createdCount: 0,
+          message: "Cannot create purchase orders: No users found. Please create users first."
+        };
+      }
+
+      if (clearExisting) {
+        console.log("Clearing existing purchase orders and dependent entities...");
+        await db.execute(sql`DELETE FROM order_items;`);
+        await db.execute(sql`DELETE FROM orders;`);
+        await db.execute(sql`DELETE FROM purchase_order_items;`);
+        await db.execute(sql`DELETE FROM purchase_orders;`);
+      }
+
+      // Generate purchase orders using existing users
+      const purchaseOrdersToCreate = [];
+      for (let i = 0; i < count; i++) {
+        const randomUser = existingUsers[Math.floor(Math.random() * existingUsers.length)];
+        const timestamp = Date.now();
+        const randomId = Math.random().toString(36).substring(2, 8);
+        const orderId = `PO${timestamp}-${randomId}`;
+        
+        const subtotal = Math.floor(Math.random() * 200 + 50); // 50-250€
+        const taxTotal = Math.round(subtotal * 0.21 * 100) / 100; // 21% VAT
+        const finalTotal = Math.round((subtotal + taxTotal) * 100) / 100;
+        
+        purchaseOrdersToCreate.push({
+          purchase_order_id: orderId,
+          user_email: randomUser.email,
+          store_id: randomUser.store_id,
+          status: PURCHASE_ORDER_STATUSES[Math.floor(Math.random() * PURCHASE_ORDER_STATUSES.length)],
+          subtotal: subtotal,
+          tax_total: taxTotal,
+          final_total: finalTotal,
+          created_at: new Date(),
+          updated_at: new Date()
+        });
+      }
+
+      await db.insert(purchaseOrders).values(purchaseOrdersToCreate);
+
+      return {
+        success: true,
+        entityType: "purchase_orders",
+        createdCount: purchaseOrdersToCreate.length,
+        message: `Successfully created ${purchaseOrdersToCreate.length} purchase orders.`
+      };
+    } catch (error) {
+      console.error('Error generating purchase orders:', error);
+      return {
+        success: false,
+        entityType: "purchase_orders",
+        createdCount: 0,
+        message: `Error generating purchase orders: ${error instanceof Error ? error.message : String(error)}`
+      };
+    }
+  }
+
   async generateEntities(options: {
     deliveryCenters?: number;
     storesPerCenter?: number;
