@@ -661,38 +661,7 @@ async function deleteAllUsers() {
   return result.data.deleteAllUsers;
 }
 
-async function deleteAllPurchaseOrders() {
-  const mutation = `
-    mutation DeleteAllPurchaseOrders {
-      deleteAllPurchaseOrders {
-        success
-        deletedCount
-        message
-      }
-    }
-  `;
 
-  const response = await fetch(GRAPHQL_ENDPOINT, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Apollo-Require-Preflight": "true",
-    },
-    body: JSON.stringify({ query: mutation }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
-  }
-
-  const result = await response.json();
-  
-  if (result.errors) {
-    throw new Error(result.errors[0]?.message || "GraphQL error");
-  }
-
-  return result.data.deleteAllPurchaseOrders;
-}
 
 // Individual entity generation functions
 async function generateDeliveryCenters(count: number, clearExisting: boolean = false, timestampOffset?: string) {
@@ -1335,23 +1304,7 @@ export default function Products() {
     },
   });
 
-  const deleteAllOrdersMutation = useMutation({
-    mutationFn: deleteAllPurchaseOrders,
-    onSuccess: (result) => {
-      toast({
-        title: "Órdenes eliminadas",
-        description: result.message,
-      });
-      queryClient.invalidateQueries({ queryKey: ["purchase-orders"] });
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Error al eliminar órdenes",
-        variant: "destructive",
-      });
-    },
-  });
+
 
   // Individual entity generation mutations
   const generateDeliveryCentersMutation = useMutation({
@@ -1482,11 +1435,7 @@ export default function Products() {
     }
   };
 
-  const handleDeleteAllOrders = () => {
-    if (confirm("¿Estás seguro de que quieres eliminar TODAS las órdenes de compra? Esta acción no se puede deshacer.")) {
-      deleteAllOrdersMutation.mutate();
-    }
-  };
+
 
   const handleGenerateProducts = () => {
     if (productCount <= 0 || productCount > 1000) {
@@ -1866,32 +1815,16 @@ export default function Products() {
             </div>
           </div>
 
-          {/* Purchase Orders Section */}
+          {/* Purchase Orders Section - Solo para desarrollo */}
           <div className="p-4 border rounded-lg space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-medium flex items-center gap-2">
-                  <FileText className="h-4 w-4" />
-                  Órdenes de Compra
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  Pedidos del sistema - requiere usuarios existentes
-                </p>
-              </div>
-              <Button
-                onClick={handleDeleteAllOrders}
-                variant="destructive"
-                size="sm"
-                disabled={deleteAllOrdersMutation.isPending}
-                data-testid="button-delete-all-orders"
-              >
-                {deleteAllOrdersMutation.isPending ? (
-                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <Trash2 className="h-4 w-4 mr-2" />
-                )}
-                Eliminar Todas
-              </Button>
+            <div>
+              <h3 className="font-medium flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                Órdenes de Compra (Solo Desarrollo)
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Generación de datos de prueba - requiere usuarios existentes
+              </p>
             </div>
             
             <div className="flex items-center gap-4">
