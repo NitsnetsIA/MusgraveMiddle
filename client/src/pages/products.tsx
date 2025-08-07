@@ -877,6 +877,304 @@ async function generatePurchaseOrders(count: number, clearExisting: boolean = fa
 }
 
 // Función para crear un pedido directo (sin orden de compra)
+// Funciones para toggle status y delete individual
+async function toggleProductStatus(ean: string) {
+  const mutation = `
+    mutation ToggleProductStatus($ean: String!) {
+      toggleProductStatus(ean: $ean) {
+        ean
+        is_active
+      }
+    }
+  `;
+
+  const response = await fetch(GRAPHQL_ENDPOINT, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Apollo-Require-Preflight": "true",
+    },
+    body: JSON.stringify({ 
+      query: mutation,
+      variables: { ean }
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const result = await response.json();
+  
+  if (result.errors) {
+    throw new Error(result.errors[0]?.message || "GraphQL error");
+  }
+
+  return result.data.toggleProductStatus;
+}
+
+async function toggleStoreStatus(code: string) {
+  const mutation = `
+    mutation ToggleStoreStatus($code: String!) {
+      toggleStoreStatus(code: $code) {
+        code
+        is_active
+      }
+    }
+  `;
+
+  const response = await fetch(GRAPHQL_ENDPOINT, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Apollo-Require-Preflight": "true",
+    },
+    body: JSON.stringify({ 
+      query: mutation,
+      variables: { code }
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const result = await response.json();
+  
+  if (result.errors) {
+    throw new Error(result.errors[0]?.message || "GraphQL error");
+  }
+
+  return result.data.toggleStoreStatus;
+}
+
+async function toggleUserStatus(email: string) {
+  const mutation = `
+    mutation ToggleUserStatus($email: String!) {
+      toggleUserStatus(email: $email) {
+        email
+        is_active
+      }
+    }
+  `;
+
+  const response = await fetch(GRAPHQL_ENDPOINT, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Apollo-Require-Preflight": "true",
+    },
+    body: JSON.stringify({ 
+      query: mutation,
+      variables: { email }
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const result = await response.json();
+  
+  if (result.errors) {
+    throw new Error(result.errors[0]?.message || "GraphQL error");
+  }
+
+  return result.data.toggleUserStatus;
+}
+
+async function deleteProduct(ean: string) {
+  const mutation = `
+    mutation DeleteProduct($ean: String!) {
+      deleteProduct(ean: $ean)
+    }
+  `;
+
+  const response = await fetch(GRAPHQL_ENDPOINT, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Apollo-Require-Preflight": "true",
+    },
+    body: JSON.stringify({ 
+      query: mutation,
+      variables: { ean }
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const result = await response.json();
+  
+  if (result.errors) {
+    throw new Error(result.errors[0]?.message || "GraphQL error");
+  }
+
+  return result.data.deleteProduct;
+}
+
+async function deleteStore(code: string) {
+  const mutation = `
+    mutation DeleteStore($code: String!) {
+      deleteStore(code: $code)
+    }
+  `;
+
+  const response = await fetch(GRAPHQL_ENDPOINT, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Apollo-Require-Preflight": "true",
+    },
+    body: JSON.stringify({ 
+      query: mutation,
+      variables: { code }
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const result = await response.json();
+  
+  if (result.errors) {
+    throw new Error(result.errors[0]?.message || "GraphQL error");
+  }
+
+  return result.data.deleteStore;
+}
+
+async function deleteUser(email: string) {
+  const mutation = `
+    mutation DeleteUser($email: String!) {
+      deleteUser(email: $email)
+    }
+  `;
+
+  const response = await fetch(GRAPHQL_ENDPOINT, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Apollo-Require-Preflight": "true",
+    },
+    body: JSON.stringify({ 
+      query: mutation,
+      variables: { email }
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const result = await response.json();
+  
+  if (result.errors) {
+    throw new Error(result.errors[0]?.message || "GraphQL error");
+  }
+
+  return result.data.deleteUser;
+}
+
+async function deleteDeliveryCenter(code: string) {
+  const mutation = `
+    mutation DeleteDeliveryCenter($code: String!) {
+      deleteDeliveryCenter(code: $code)
+    }
+  `;
+
+  const response = await fetch(GRAPHQL_ENDPOINT, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Apollo-Require-Preflight": "true",
+    },
+    body: JSON.stringify({ 
+      query: mutation,
+      variables: { code }
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const result = await response.json();
+  
+  if (result.errors) {
+    throw new Error(result.errors[0]?.message || "GraphQL error");
+  }
+
+  return result.data.deleteDeliveryCenter;
+}
+
+async function deletePurchaseOrder(purchase_order_id: string) {
+  const mutation = `
+    mutation DeletePurchaseOrder($purchase_order_id: String!) {
+      deletePurchaseOrder(purchase_order_id: $purchase_order_id)
+    }
+  `;
+
+  const response = await fetch(GRAPHQL_ENDPOINT, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Apollo-Require-Preflight": "true",
+    },
+    body: JSON.stringify({ 
+      query: mutation,
+      variables: { purchase_order_id }
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const result = await response.json();
+  
+  if (result.errors) {
+    throw new Error(result.errors[0]?.message || "GraphQL error");
+  }
+
+  return result.data.deletePurchaseOrder;
+}
+
+async function deleteOrder(order_id: string) {
+  const mutation = `
+    mutation DeleteOrder($order_id: String!) {
+      deleteOrder(order_id: $order_id)
+    }
+  `;
+
+  const response = await fetch(GRAPHQL_ENDPOINT, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Apollo-Require-Preflight": "true",
+    },
+    body: JSON.stringify({ 
+      query: mutation,
+      variables: { order_id }
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const result = await response.json();
+  
+  if (result.errors) {
+    throw new Error(result.errors[0]?.message || "GraphQL error");
+  }
+
+  return result.data.deleteOrder;
+}
+
 async function createDirectOrder(userEmail: string, storeId: string): Promise<Order> {
   const mutation = `
     mutation CreateOrder($input: OrderInput!) {
@@ -1403,6 +1701,73 @@ export default function Products() {
       });
     },
   });
+
+  // Individual delete functions
+  const deletePurchaseOrder = async (purchase_order_id: string) => {
+    return await apiRequest('/graphql', {
+      query: `
+        mutation DeletePurchaseOrder($purchase_order_id: String!) {
+          deletePurchaseOrder(purchase_order_id: $purchase_order_id)
+        }
+      `,
+      variables: { purchase_order_id },
+    });
+  };
+
+  const deleteOrder = async (order_id: string) => {
+    return await apiRequest('/graphql', {
+      query: `
+        mutation DeleteOrder($order_id: String!) {
+          deleteOrder(order_id: $order_id)
+        }
+      `,
+      variables: { order_id },
+    });
+  };
+
+  const deleteUser = async (email: string) => {
+    return await apiRequest('/graphql', {
+      query: `
+        mutation DeleteUser($email: String!) {
+          deleteUser(email: $email)
+        }
+      `,
+      variables: { email },
+    });
+  };
+
+  const deleteStore = async (code: string) => {
+    return await apiRequest('/graphql', {
+      query: `
+        mutation DeleteStore($code: String!) {
+          deleteStore(code: $code)
+        }
+      `,
+      variables: { code },
+    });
+  };
+
+  const deleteDeliveryCenter = async (code: string) => {
+    return await apiRequest('/graphql', {
+      query: `
+        mutation DeleteDeliveryCenter($code: String!) {
+          deleteDeliveryCenter(code: $code)
+        }
+      `,
+      variables: { code },
+    });
+  };
+
+  const deleteProduct = async (ean: string) => {
+    return await apiRequest('/graphql', {
+      query: `
+        mutation DeleteProduct($ean: String!) {
+          deleteProduct(ean: $ean)
+        }
+      `,
+      variables: { ean },
+    });
+  };
 
 
 
@@ -2065,6 +2430,7 @@ export default function Products() {
                       <TableHead>Precio Final</TableHead>
                       <TableHead>Estado</TableHead>
                       <TableHead>Creado</TableHead>
+                      <TableHead>Acciones</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -2089,12 +2455,43 @@ export default function Products() {
                           </TableCell>
                           <TableCell className="font-medium">€{finalPrice.toFixed(2)}</TableCell>
                           <TableCell>
-                            <Badge variant={product.is_active ? "default" : "secondary"}>
+                            <Badge 
+                              variant={product.is_active ? "default" : "secondary"}
+                              className="cursor-pointer hover:bg-opacity-80"
+                              onClick={async () => {
+                                try {
+                                  await toggleProductStatus(product.ean);
+                                  refetchProducts();
+                                } catch (error) {
+                                  console.error('Error toggling product status:', error);
+                                }
+                              }}
+                              data-testid={`badge-toggle-product-${product.ean}`}
+                            >
                               {product.is_active ? "Activo" : "Inactivo"}
                             </Badge>
                           </TableCell>
                           <TableCell className="text-sm text-muted-foreground">
                             {new Date(product.created_at).toLocaleDateString('es-ES')}
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={async () => {
+                                if (confirm(`¿Estás seguro de que quieres eliminar el producto ${product.title}?`)) {
+                                  try {
+                                    await deleteProduct(product.ean);
+                                    refetchProducts();
+                                  } catch (error) {
+                                    console.error('Error deleting product:', error);
+                                  }
+                                }
+                              }}
+                              data-testid={`button-delete-product-${product.ean}`}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
                           </TableCell>
                         </TableRow>
                       );
@@ -2150,6 +2547,7 @@ export default function Products() {
                       <TableHead>Información</TableHead>
                       <TableHead>Estado</TableHead>
                       <TableHead>Creado</TableHead>
+                      <TableHead>Acciones</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -2163,6 +2561,25 @@ export default function Products() {
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
                           {new Date(center.created_at).toLocaleDateString('es-ES')}
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={async () => {
+                              if (confirm(`¿Estás seguro de que quieres eliminar el centro ${center.name}?`)) {
+                                try {
+                                  await deleteDeliveryCenter(center.code);
+                                  refetchCenters();
+                                } catch (error) {
+                                  console.error('Error deleting delivery center:', error);
+                                }
+                              }
+                            }}
+                            data-testid={`button-delete-center-${center.code}`}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -2217,6 +2634,7 @@ export default function Products() {
                       <TableHead>Centro/Email</TableHead>
                       <TableHead>Estado</TableHead>
                       <TableHead>Creado</TableHead>
+                      <TableHead>Acciones</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -2233,12 +2651,43 @@ export default function Products() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge variant={store.is_active ? "default" : "secondary"}>
+                          <Badge 
+                            variant={store.is_active ? "default" : "secondary"}
+                            className="cursor-pointer hover:bg-opacity-80"
+                            onClick={async () => {
+                              try {
+                                await toggleStoreStatus(store.code);
+                                refetchStores();
+                              } catch (error) {
+                                console.error('Error toggling store status:', error);
+                              }
+                            }}
+                            data-testid={`badge-toggle-store-${store.code}`}
+                          >
                             {store.is_active ? "Activo" : "Inactivo"}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
                           {new Date(store.created_at).toLocaleDateString('es-ES')}
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={async () => {
+                              if (confirm(`¿Estás seguro de que quieres eliminar la tienda ${store.name}?`)) {
+                                try {
+                                  await deleteStore(store.code);
+                                  refetchStores();
+                                } catch (error) {
+                                  console.error('Error deleting store:', error);
+                                }
+                              }
+                            }}
+                            data-testid={`button-delete-store-${store.code}`}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -2295,6 +2744,7 @@ export default function Products() {
                       <TableHead>Rol</TableHead>
                       <TableHead>Estado</TableHead>
                       <TableHead>Creado</TableHead>
+                      <TableHead>Acciones</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -2315,12 +2765,43 @@ export default function Products() {
                           <Badge variant="outline">Usuario</Badge>
                         </TableCell>
                         <TableCell>
-                          <Badge variant={user.is_active ? "default" : "secondary"}>
+                          <Badge 
+                            variant={user.is_active ? "default" : "secondary"}
+                            className="cursor-pointer hover:bg-opacity-80"
+                            onClick={async () => {
+                              try {
+                                await toggleUserStatus(user.email);
+                                refetchUsers();
+                              } catch (error) {
+                                console.error('Error toggling user status:', error);
+                              }
+                            }}
+                            data-testid={`badge-toggle-user-${user.email}`}
+                          >
                             {user.is_active ? "Activo" : "Inactivo"}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
                           {new Date(user.created_at).toLocaleDateString('es-ES')}
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={async () => {
+                              if (confirm(`¿Estás seguro de que quieres eliminar el usuario ${user.name || user.email}?`)) {
+                                try {
+                                  await deleteUser(user.email);
+                                  refetchUsers();
+                                } catch (error) {
+                                  console.error('Error deleting user:', error);
+                                }
+                              }
+                            }}
+                            data-testid={`button-delete-user-${user.email}`}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -2394,6 +2875,7 @@ export default function Products() {
                       <TableHead>Estado</TableHead>
                       <TableHead>Total</TableHead>
                       <TableHead>Creado</TableHead>
+                      <TableHead>Acciones</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -2417,6 +2899,25 @@ export default function Products() {
                         <TableCell className="font-medium">€{order.final_total.toFixed(2)}</TableCell>
                         <TableCell className="text-sm text-muted-foreground">
                           {new Date(order.created_at).toLocaleDateString('es-ES')}
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={async () => {
+                              if (confirm(`¿Estás seguro de que quieres eliminar la orden ${order.purchase_order_id.slice(-8)}?`)) {
+                                try {
+                                  await deletePurchaseOrder(order.purchase_order_id);
+                                  refetchPurchaseOrders();
+                                } catch (error) {
+                                  console.error('Error deleting purchase order:', error);
+                                }
+                              }
+                            }}
+                            data-testid={`button-delete-purchase-order-${order.purchase_order_id}`}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -2491,6 +2992,7 @@ export default function Products() {
                       <TableHead>Observaciones</TableHead>
                       <TableHead>Total</TableHead>
                       <TableHead>Creado</TableHead>
+                      <TableHead>Acciones</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -2523,6 +3025,25 @@ export default function Products() {
                         <TableCell className="font-medium">€{order.final_total?.toFixed(2) || '0.00'}</TableCell>
                         <TableCell className="text-sm text-muted-foreground">
                           {new Date(order.created_at).toLocaleDateString('es-ES')}
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={async () => {
+                              if (confirm(`¿Estás seguro de que quieres eliminar el pedido ${order.order_id?.slice(-8) || 'N/A'}?`)) {
+                                try {
+                                  await deleteOrder(order.order_id);
+                                  refetchOrders();
+                                } catch (error) {
+                                  console.error('Error deleting order:', error);
+                                }
+                              }
+                            }}
+                            data-testid={`button-delete-order-${order.order_id}`}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))}

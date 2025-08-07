@@ -110,6 +110,14 @@ export const resolvers = {
       return await storage.deleteAllProducts();
     },
 
+    toggleProductStatus: async (_: any, { ean }: { ean: string }) => {
+      return await storage.toggleProductStatus(ean);
+    },
+
+    deleteProduct: async (_: any, { ean }: { ean: string }) => {
+      return await storage.deleteProduct(ean);
+    },
+
     generateRandomProducts: async (_: any, { count, timestampOffset }: { count: number; timestampOffset?: string }) => {
       return await storage.generateRandomProducts(count, timestampOffset);
     },
@@ -164,6 +172,14 @@ export const resolvers = {
       return await storage.deleteAllStores();
     },
 
+    toggleStoreStatus: async (_: any, { code }: { code: string }) => {
+      return await storage.toggleStoreStatus(code);
+    },
+
+    deleteStore: async (_: any, { code }: { code: string }) => {
+      return await storage.deleteStore(code);
+    },
+
     // Users mutations
     createUser: async (_: any, { input }: { input: any }) => {
       return await storage.createUser(input);
@@ -179,6 +195,14 @@ export const resolvers = {
 
     deleteAllUsers: async () => {
       return await storage.deleteAllUsers();
+    },
+
+    toggleUserStatus: async (_: any, { email }: { email: string }) => {
+      return await storage.toggleUserStatus(email);
+    },
+
+    deleteUser: async (_: any, { email }: { email: string }) => {
+      return await storage.deleteUser(email);
     },
 
     // Purchase Orders mutations

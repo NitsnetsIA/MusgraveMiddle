@@ -343,6 +343,7 @@ export const typeDefs = `#graphql
     updateProduct(ean: String!, input: UpdateProductInput!): Product!
     deleteProduct(ean: String!): Boolean!
     deleteAllProducts: DeleteAllResult!
+    toggleProductStatus(ean: String!): Product!
     generateRandomProducts(count: Int!, timestampOffset: String): GenerateProductsResult!
     
     createTax(input: TaxInput!): Tax!
@@ -359,11 +360,13 @@ export const typeDefs = `#graphql
     updateStore(code: String!, input: UpdateStoreInput!): Store!
     deleteStore(code: String!): Boolean!
     deleteAllStores: DeleteAllResult!
+    toggleStoreStatus(code: String!): Store!
 
     createUser(input: UserInput!): User!
     updateUser(email: String!, input: UpdateUserInput!): User!
     deleteUser(email: String!): Boolean!
     deleteAllUsers: DeleteAllResult!
+    toggleUserStatus(email: String!): User!
 
     createPurchaseOrder(input: PurchaseOrderInput!): PurchaseOrder!
     updatePurchaseOrder(purchase_order_id: String!, input: UpdatePurchaseOrderInput!): PurchaseOrder!

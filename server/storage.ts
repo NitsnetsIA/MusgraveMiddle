@@ -179,6 +179,29 @@ export class DatabaseStorage implements IStorage {
     return updated;
   }
 
+  async toggleProductStatus(ean: string): Promise<Product> {
+    // Get current status
+    const currentProduct = await db.select().from(products).where(eq(products.ean, ean)).limit(1);
+    if (!currentProduct.length) {
+      throw new Error('Product not found');
+    }
+    
+    const [updated] = await db
+      .update(products)
+      .set({
+        is_active: !currentProduct[0].is_active,
+        updated_at: new Date(),
+      })
+      .where(eq(products.ean, ean))
+      .returning();
+    return updated;
+  }
+
+  async deleteProduct(ean: string): Promise<boolean> {
+    await db.delete(products).where(eq(products.ean, ean));
+    return true;
+  }
+
   async deleteProduct(ean: string): Promise<boolean> {
     const result = await db.delete(products).where(eq(products.ean, ean));
     return result.rowCount! > 0;
@@ -422,6 +445,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteDeliveryCenter(code: string): Promise<boolean> {
+    await db.delete(deliveryCenters).where(eq(deliveryCenters.code, code));
+    return true;
+  }
+
+  async deleteDeliveryCenter(code: string): Promise<boolean> {
     const result = await db.delete(deliveryCenters).where(eq(deliveryCenters.code, code));
     return result.rowCount! > 0;
   }
@@ -487,6 +515,29 @@ export class DatabaseStorage implements IStorage {
     return updated;
   }
 
+  async toggleStoreStatus(code: string): Promise<Store> {
+    // Get current status
+    const currentStore = await db.select().from(stores).where(eq(stores.code, code)).limit(1);
+    if (!currentStore.length) {
+      throw new Error('Store not found');
+    }
+    
+    const [updated] = await db
+      .update(stores)
+      .set({
+        is_active: !currentStore[0].is_active,
+        updated_at: new Date(),
+      })
+      .where(eq(stores.code, code))
+      .returning();
+    return updated;
+  }
+
+  async deleteStore(code: string): Promise<boolean> {
+    await db.delete(stores).where(eq(stores.code, code));
+    return true;
+  }
+
   async deleteStore(code: string): Promise<boolean> {
     const result = await db.delete(stores).where(eq(stores.code, code));
     return result.rowCount! > 0;
@@ -550,6 +601,29 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.email, email))
       .returning();
     return updated;
+  }
+
+  async toggleUserStatus(email: string): Promise<User> {
+    // Get current status
+    const currentUser = await db.select().from(users).where(eq(users.email, email)).limit(1);
+    if (!currentUser.length) {
+      throw new Error('User not found');
+    }
+    
+    const [updated] = await db
+      .update(users)
+      .set({
+        is_active: !currentUser[0].is_active,
+        updated_at: new Date(),
+      })
+      .where(eq(users.email, email))
+      .returning();
+    return updated;
+  }
+
+  async deleteUser(email: string): Promise<boolean> {
+    await db.delete(users).where(eq(users.email, email));
+    return true;
   }
 
   async deleteUser(email: string): Promise<boolean> {
@@ -1131,18 +1205,31 @@ export class DatabaseStorage implements IStorage {
       for (let i = 0; i < count; i++) {
         const randomUser = existingUsers[Math.floor(Math.random() * existingUsers.length)];
         
-        // Generate unique purchase order ID
+        // Generate unique purchase order ID with format: [CÓDIGO_TIENDA]-[TIMESTAMP]-[SUFIJO]
         let orderId: string;
         let attempts = 0;
         do {
-          const timestamp = Date.now() + Math.floor(Math.random() * 1000); // Add randomness to timestamp
-          const randomId = Math.random().toString(36).substring(2, 8);
-          orderId = `PO${timestamp}-${randomId}`;
+          const now = new Date();
+          // Format: YYMMDDHHMMSS
+          const year = now.getFullYear().toString().slice(-2);
+          const month = (now.getMonth() + 1).toString().padStart(2, '0');
+          const day = now.getDate().toString().padStart(2, '0');
+          const hour = now.getHours().toString().padStart(2, '0');
+          const minute = now.getMinutes().toString().padStart(2, '0');
+          const second = now.getSeconds().toString().padStart(2, '0');
+          const timestamp = `${year}${month}${day}${hour}${minute}${second}`;
+          
+          // Generate 3-character alphanumeric suffix
+          const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+          const suffix = Array.from({length: 3}, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+          
+          orderId = `${randomUser.store_id}-${timestamp}-${suffix}`;
           attempts++;
         } while (existingPOIds.has(orderId) && attempts < 10);
         
         if (attempts >= 10) {
-          orderId = `PO${Date.now()}-${nanoid(6)}`;
+          const fallbackSuffix = nanoid(3).toUpperCase();
+          orderId = `${randomUser.store_id}-${Date.now()}-${fallbackSuffix}`;
         }
         existingPOIds.add(orderId); // Add to set to avoid duplicates in this batch
         
