@@ -72,6 +72,14 @@ export const resolvers = {
       return await storage.getPurchaseOrderItem(item_id);
     },
 
+    // Order Items queries
+    orderItems: async (_: any, { order_id }: { order_id?: string }) => {
+      if (order_id) {
+        return await storage.getOrderItemsByOrderId(order_id);
+      }
+      return await storage.getOrderItems();
+    },
+
     // Orders queries
     orders: async () => {
       return await storage.getOrders();
@@ -292,6 +300,10 @@ export const resolvers = {
 
     generatePurchaseOrders: async (_: any, { count, clearExisting, timestampOffset }: { count: number; clearExisting?: boolean; timestampOffset?: string }) => {
       return await storage.generatePurchaseOrders(count, clearExisting || false, timestampOffset);
+    },
+
+    generateOrders: async (_: any, { count, clearExisting, timestampOffset }: { count: number; clearExisting?: boolean; timestampOffset?: string }) => {
+      return await storage.generateOrders(count, clearExisting || false, timestampOffset);
     },
 
     generateEntities: async (_: any, { input }: { input: any }) => {

@@ -313,12 +313,12 @@ export const typeDefs = `#graphql
     purchaseOrder(purchase_order_id: String!): PurchaseOrder
     
     purchaseOrderItems(purchase_order_id: String): [PurchaseOrderItem!]!
+    orderItems(order_id: String): [OrderItem!]!
     purchaseOrderItem(item_id: Int!): PurchaseOrderItem
     
     orders: [Order!]!
     order(order_id: String!): Order
     
-    orderItems: [OrderItem!]!
     orderItem(item_id: Int!): OrderItem
 
     sync_info: SyncInfoResult!
@@ -393,6 +393,7 @@ export const typeDefs = `#graphql
     generateStores(storesPerCenter: Int!, clearExisting: Boolean = false, timestampOffset: String): SingleEntityGenerationResult!
     generateUsers(usersPerStore: Int!, clearExisting: Boolean = false, timestampOffset: String): SingleEntityGenerationResult!
     generatePurchaseOrders(count: Int!, clearExisting: Boolean = false, timestampOffset: String): SingleEntityGenerationResult!
+    generateOrders(count: Int!, clearExisting: Boolean = false, timestampOffset: String): SingleEntityGenerationResult!
     generateEntities(input: GenerateEntitiesInput!): GenerateEntitiesResult!
   }
 

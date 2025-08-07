@@ -939,6 +939,44 @@ async function generatePurchaseOrders(count: number, clearExisting: boolean = fa
   return result.data.generatePurchaseOrders;
 }
 
+// Function to generate orders
+async function generateOrders(count: number, clearExisting: boolean = false, timestampOffset?: string) {
+  const mutation = `
+    mutation GenerateOrders($count: Int!, $clearExisting: Boolean, $timestampOffset: String) {
+      generateOrders(count: $count, clearExisting: $clearExisting, timestampOffset: $timestampOffset) {
+        success
+        entityType
+        createdCount
+        message
+      }
+    }
+  `;
+
+  const response = await fetch(GRAPHQL_ENDPOINT, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Apollo-Require-Preflight": "true",
+    },
+    body: JSON.stringify({ 
+      query: mutation,
+      variables: { count, clearExisting, timestampOffset: timestampOffset || null }
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const result = await response.json();
+  
+  if (result.errors) {
+    throw new Error(result.errors[0]?.message || "GraphQL error");
+  }
+
+  return result.data.generateOrders;
+}
+
 // Función para crear un pedido directo (sin orden de compra)
 // Funciones para toggle status y delete individual
 async function toggleProductStatus(ean: string) {
@@ -1587,6 +1625,7 @@ export default function Products() {
   const [storesPerCenter, setStoresPerCenter] = useState(2);
   const [usersPerStore, setUsersPerStore] = useState(2);
   const [purchaseOrdersCount, setPurchaseOrdersCount] = useState(10);
+  const [ordersCount, setOrdersCount] = useState(10);
   
   // Pagination states
   const [currentPageProducts, setCurrentPageProducts] = useState(0);
@@ -2035,6 +2074,26 @@ export default function Products() {
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Error al generar órdenes",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const generateOrdersMutation = useMutation({
+    mutationFn: ({ count, clearExisting, timestampOffset }: { count: number; clearExisting?: boolean; timestampOffset?: string }) => 
+      generateOrders(count, clearExisting, timestampOffset),
+    onSuccess: (result) => {
+      toast({
+        title: result.success ? "Pedidos creados" : "Error", 
+        description: result.message,
+        variant: result.success ? "default" : "destructive",
+      });
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Error al generar pedidos",
         variant: "destructive",
       });
     },
@@ -2548,6 +2607,80 @@ export default function Products() {
                 disabled={generatePurchaseOrdersMutation.isPending}
                 variant="outline"
                 data-testid="button-replace-purchase-orders"
+              >
+                Reemplazar Existentes
+              </Button>
+            </div>
+          </div>
+
+          {/* Orders Generation Section */}
+          <div className="p-4 border rounded-lg bg-green-50 dark:bg-green-950">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="font-medium flex items-center gap-2">
+                  <ShoppingCart className="h-4 w-4" />
+                  Pedidos (Solo Desarrollo)
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Generación de pedidos procesados - requiere usuarios existentes
+                </p>
+              </div>
+              <Button
+                onClick={handleDeleteAllOrders}
+                variant="destructive"
+                size="sm"
+                disabled={deleteAllOrdersMutation.isPending}
+                data-testid="button-delete-all-orders"
+              >
+                {deleteAllOrdersMutation.isPending ? (
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Trash2 className="h-4 w-4 mr-2" />
+                )}
+                Eliminar Todos
+              </Button>
+            </div>
+            
+            <div className="flex items-center gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="orders-count">Cantidad (1-50)</Label>
+                <Input
+                  id="orders-count"
+                  type="number"
+                  min="1"
+                  max="50"
+                  value={ordersCount}
+                  onChange={(e) => setOrdersCount(parseInt(e.target.value) || 0)}
+                  data-testid="input-orders-count"
+                  className="w-32"
+                />
+              </div>
+              
+              <Button
+                onClick={() => generateOrdersMutation.mutate({ 
+                  count: ordersCount, 
+                  timestampOffset 
+                })}
+                disabled={generateOrdersMutation.isPending}
+                data-testid="button-generate-orders"
+              >
+                {generateOrdersMutation.isPending ? (
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Plus className="h-4 w-4 mr-2" />
+                )}
+                Generar Pedidos
+              </Button>
+              
+              <Button
+                onClick={() => generateOrdersMutation.mutate({ 
+                  count: ordersCount, 
+                  clearExisting: true, 
+                  timestampOffset 
+                })}
+                disabled={generateOrdersMutation.isPending}
+                variant="outline"
+                data-testid="button-replace-orders"
               >
                 Reemplazar Existentes
               </Button>

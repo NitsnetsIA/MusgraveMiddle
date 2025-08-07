@@ -1208,8 +1208,21 @@ export class DatabaseStorage implements IStorage {
       const existingPOs = await db.select({ purchase_order_id: purchaseOrders.purchase_order_id }).from(purchaseOrders).execute();
       const existingPOIds = new Set(existingPOs.map(po => po.purchase_order_id));
 
+      // Get existing products for line items
+      const existingProducts = await db.select().from(products).limit(100).execute();
+      if (existingProducts.length === 0) {
+        return {
+          success: false,
+          entityType: "purchase_orders",
+          createdCount: 0,
+          message: "Cannot create purchase orders: No products found. Please create products first."
+        };
+      }
+
       // Generate purchase orders using existing users
       const purchaseOrdersToCreate = [];
+      const purchaseOrderItemsToCreate = [];
+      
       for (let i = 0; i < count; i++) {
         const randomUser = existingUsers[Math.floor(Math.random() * existingUsers.length)];
         
@@ -1241,8 +1254,66 @@ export class DatabaseStorage implements IStorage {
         }
         existingPOIds.add(orderId); // Add to set to avoid duplicates in this batch
         
-        const subtotal = Math.floor(Math.random() * 200 + 50); // 50-250€
-        const taxTotal = Math.round(subtotal * 0.21 * 100) / 100; // 21% VAT
+        // Generate line items for this purchase order (30-50 items)
+        const numItems = Math.floor(Math.random() * 21) + 30; // 30-50 items
+        const selectedProducts = [];
+        const usedProducts = new Set();
+        
+        // Select random products without repeating
+        for (let j = 0; j < numItems && selectedProducts.length < existingProducts.length; j++) {
+          let product;
+          let productAttempts = 0;
+          do {
+            product = existingProducts[Math.floor(Math.random() * existingProducts.length)];
+            productAttempts++;
+          } while (usedProducts.has(product.ean) && productAttempts < 20);
+          
+          if (!usedProducts.has(product.ean)) {
+            usedProducts.add(product.ean);
+            selectedProducts.push(product);
+          }
+        }
+
+        // Calculate totals based on actual line items
+        let subtotal = 0;
+        let taxTotal = 0;
+        
+        for (const product of selectedProducts) {
+          const quantity = Math.floor(Math.random() * 10) + 1; // 1-10 units
+          const unitPrice = product.base_price;
+          const lineSubtotal = quantity * unitPrice;
+          
+          // Get tax rate for this product
+          const taxRate = await db
+            .select({ tax_rate: taxes.tax_rate })
+            .from(taxes)
+            .where(eq(taxes.code, product.tax_code))
+            .limit(1)
+            .execute();
+          
+          const productTaxRate = taxRate.length > 0 ? taxRate[0].tax_rate : 0.21; // Default to 21%
+          const lineTaxTotal = lineSubtotal * productTaxRate;
+          
+          subtotal += lineSubtotal;
+          taxTotal += lineTaxTotal;
+          
+          // Add line item to create
+          purchaseOrderItemsToCreate.push({
+            purchase_order_id: orderId,
+            item_ean: product.ean,
+            item_title: product.title,
+            item_description: product.description,
+            unit_of_measure: product.unit_of_measure,
+            quantity_measure: product.quantity_measure,
+            image_url: product.image_url,
+            quantity,
+            base_price_at_order: unitPrice,
+            tax_rate_at_order: productTaxRate,
+            created_at: new Date(),
+            updated_at: new Date()
+          });
+        }
+        
         const finalTotal = Math.round((subtotal + taxTotal) * 100) / 100;
         
         purchaseOrdersToCreate.push({
@@ -1258,13 +1329,17 @@ export class DatabaseStorage implements IStorage {
         });
       }
 
+      // Insert purchase orders and their items
       await db.insert(purchaseOrders).values(purchaseOrdersToCreate);
+      if (purchaseOrderItemsToCreate.length > 0) {
+        await db.insert(purchaseOrderItems).values(purchaseOrderItemsToCreate);
+      }
 
       return {
         success: true,
         entityType: "purchase_orders",
         createdCount: purchaseOrdersToCreate.length,
-        message: `Successfully created ${purchaseOrdersToCreate.length} purchase orders.`
+        message: `Successfully created ${purchaseOrdersToCreate.length} purchase orders with ${purchaseOrderItemsToCreate.length} line items.`
       };
     } catch (error) {
       console.error('Error generating purchase orders:', error);
@@ -1273,6 +1348,202 @@ export class DatabaseStorage implements IStorage {
         entityType: "purchase_orders",
         createdCount: 0,
         message: `Error generating purchase orders: ${error instanceof Error ? error.message : String(error)}`
+      };
+    }
+  }
+
+  // Order Items by Order ID
+  async getOrderItemsByOrderId(orderId: string): Promise<OrderItem[]> {
+    return await db
+      .select()
+      .from(orderItems)
+      .where(eq(orderItems.order_id, orderId))
+      .orderBy(desc(orderItems.updated_at));
+  }
+
+  // Orders generation
+  async generateOrders(count: number, clearExisting: boolean = false, timestampOffset?: string): Promise<{
+    success: boolean;
+    entityType: string;
+    createdCount: number;
+    message: string;
+  }> {
+    try {
+      // Check if users and purchase orders exist
+      const existingUsers = await db.select().from(users).execute();
+      if (existingUsers.length === 0) {
+        return {
+          success: false,
+          entityType: "orders",
+          createdCount: 0,
+          message: "Cannot create orders: No users found. Please create users first."
+        };
+      }
+
+      const existingPOs = await db.select().from(purchaseOrders).execute();
+      if (existingPOs.length === 0) {
+        return {
+          success: false,
+          entityType: "orders",
+          createdCount: 0,
+          message: "Cannot create orders: No purchase orders found. Please create purchase orders first."
+        };
+      }
+
+      if (clearExisting) {
+        console.log("Clearing existing orders and order items...");
+        await db.execute(sql`DELETE FROM order_items;`);
+        await db.execute(sql`DELETE FROM orders;`);
+      }
+
+      // Get existing products and delivery centers for line items
+      const existingProducts = await db.select().from(products).limit(100).execute();
+      const existingDeliveryCenters = await db.select().from(deliveryCenters).execute();
+      
+      if (existingProducts.length === 0 || existingDeliveryCenters.length === 0) {
+        return {
+          success: false,
+          entityType: "orders",
+          createdCount: 0,
+          message: "Cannot create orders: Missing products or delivery centers."
+        };
+      }
+
+      // Get existing orders to avoid duplicate IDs
+      const existingOrderIds = await db.select({ order_id: orders.order_id }).from(orders).execute();
+      const existingOrderIdSet = new Set(existingOrderIds.map(o => o.order_id));
+
+      const ordersToCreate = [];
+      const orderItemsToCreate = [];
+      
+      for (let i = 0; i < count; i++) {
+        const randomUser = existingUsers[Math.floor(Math.random() * existingUsers.length)];
+        const randomPO = existingPOs[Math.floor(Math.random() * existingPOs.length)];
+        const randomDC = existingDeliveryCenters[Math.floor(Math.random() * existingDeliveryCenters.length)];
+        
+        // Generate unique order ID with format: [DELIVERY_CENTER_CODE]-[TIMESTAMP]-[SUFIJO]
+        let orderId: string;
+        let attempts = 0;
+        do {
+          const now = new Date();
+          // Format: YYMMDDHHMMSS
+          const year = now.getFullYear().toString().slice(-2);
+          const month = (now.getMonth() + 1).toString().padStart(2, '0');
+          const day = now.getDate().toString().padStart(2, '0');
+          const hour = now.getHours().toString().padStart(2, '0');
+          const minute = now.getMinutes().toString().padStart(2, '0');
+          const second = now.getSeconds().toString().padStart(2, '0');
+          const timestamp = `${year}${month}${day}${hour}${minute}${second}`;
+          
+          // Generate 3-character alphanumeric suffix
+          const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+          const suffix = Array.from({length: 3}, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+          
+          orderId = `${randomDC.code}-${timestamp}-${suffix}`;
+          attempts++;
+        } while (existingOrderIdSet.has(orderId) && attempts < 10);
+        
+        if (attempts >= 10) {
+          const fallbackSuffix = nanoid(3).toUpperCase();
+          orderId = `${randomDC.code}-${Date.now()}-${fallbackSuffix}`;
+        }
+        existingOrderIdSet.add(orderId);
+        
+        // Generate line items for this order (30-50 items)
+        const numItems = Math.floor(Math.random() * 21) + 30; // 30-50 items
+        const selectedProducts = [];
+        const usedProducts = new Set();
+        
+        // Select random products without repeating
+        for (let j = 0; j < numItems && selectedProducts.length < existingProducts.length; j++) {
+          let product;
+          let productAttempts = 0;
+          do {
+            product = existingProducts[Math.floor(Math.random() * existingProducts.length)];
+            productAttempts++;
+          } while (usedProducts.has(product.ean) && productAttempts < 20);
+          
+          if (!usedProducts.has(product.ean)) {
+            usedProducts.add(product.ean);
+            selectedProducts.push(product);
+          }
+        }
+
+        // Calculate totals based on actual line items
+        let subtotal = 0;
+        let taxTotal = 0;
+        
+        for (const product of selectedProducts) {
+          const quantity = Math.floor(Math.random() * 10) + 1; // 1-10 units
+          const unitPrice = product.base_price;
+          const lineSubtotal = quantity * unitPrice;
+          
+          // Get tax rate for this product
+          const taxRate = await db
+            .select({ tax_rate: taxes.tax_rate })
+            .from(taxes)
+            .where(eq(taxes.code, product.tax_code))
+            .limit(1)
+            .execute();
+          
+          const productTaxRate = taxRate.length > 0 ? taxRate[0].tax_rate : 0.21; // Default to 21%
+          const lineTaxTotal = lineSubtotal * productTaxRate;
+          
+          subtotal += lineSubtotal;
+          taxTotal += lineTaxTotal;
+          
+          // Add line item to create
+          orderItemsToCreate.push({
+            order_id: orderId,
+            item_ean: product.ean,
+            item_title: product.title,
+            item_description: product.description,
+            unit_of_measure: product.unit_of_measure,
+            quantity_measure: product.quantity_measure,
+            image_url: product.image_url,
+            quantity,
+            base_price_at_order: unitPrice,
+            tax_rate_at_order: productTaxRate,
+            created_at: new Date(),
+            updated_at: new Date()
+          });
+        }
+        
+        const finalTotal = Math.round((subtotal + taxTotal) * 100) / 100;
+        
+        ordersToCreate.push({
+          order_id: orderId,
+          source_purchase_order_id: randomPO.purchase_order_id,
+          user_email: randomUser.email,
+          store_id: randomUser.store_id,
+          observations: `Pedido procesado automáticamente desde ${randomPO.purchase_order_id}`,
+          subtotal: Math.round(subtotal * 100) / 100,
+          tax_total: Math.round(taxTotal * 100) / 100,
+          final_total: finalTotal,
+          created_at: new Date(),
+          updated_at: new Date()
+        });
+      }
+
+      // Insert orders and their items
+      await db.insert(orders).values(ordersToCreate);
+      if (orderItemsToCreate.length > 0) {
+        await db.insert(orderItems).values(orderItemsToCreate);
+      }
+
+      return {
+        success: true,
+        entityType: "orders",
+        createdCount: ordersToCreate.length,
+        message: `Successfully created ${ordersToCreate.length} orders with ${orderItemsToCreate.length} line items.`
+      };
+    } catch (error) {
+      console.error('Error generating orders:', error);
+      return {
+        success: false,
+        entityType: "orders",
+        createdCount: 0,
+        message: `Error generating orders: ${error instanceof Error ? error.message : String(error)}`
       };
     }
   }
