@@ -899,143 +899,12 @@ async function createDirectOrder(userEmail: string, storeId: string): Promise<Or
 }
 
 // Función para crear una orden de compra
-async function createPurchaseOrder(userEmail: string, storeId: string): Promise<PurchaseOrder> {
-  const mutation = `
-    mutation CreatePurchaseOrder($input: PurchaseOrderInput!) {
-      createPurchaseOrder(input: $input) {
-        purchase_order_id
-        user_email
-        store_id
-        status
-        subtotal
-        tax_total
-        final_total
-        created_at
-        updated_at
-      }
-    }
-  `;
 
-  const purchaseOrderData = {
-    purchase_order_id: `PO-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-    user_email: userEmail,
-    store_id: storeId,
-    status: "pending",
-    subtotal: 0.0,
-    tax_total: 0.0,
-    final_total: 0.0
-  };
-
-  const response = await fetch(GRAPHQL_ENDPOINT, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Apollo-Require-Preflight": "true",
-    },
-    body: JSON.stringify({ 
-      query: mutation,
-      variables: { input: purchaseOrderData }
-    }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
-  }
-
-  const result = await response.json();
-  
-  if (result.errors) {
-    throw new Error(result.errors[0]?.message || "GraphQL error");
-  }
-
-  return result.data.createPurchaseOrder;
-}
 
 
 
 // Componente para crear órdenes de compra
-function CreateOrderForm({ 
-  users, 
-  stores, 
-  onOrderCreate, 
-  isCreating 
-}: { 
-  users: User[]; 
-  stores: Store[]; 
-  onOrderCreate: (userEmail: string, storeId: string) => void;
-  isCreating: boolean;
-}) {
-  const [selectedUser, setSelectedUser] = useState<string>("");
-  const [selectedStore, setSelectedStore] = useState<string>("");
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (selectedUser && selectedStore) {
-      onOrderCreate(selectedUser, selectedStore);
-      setSelectedUser("");
-      setSelectedStore("");
-    }
-  };
-
-  const availableUsers = users.filter(user => user.is_active);
-  const availableStores = stores.filter(store => store.is_active);
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <Label htmlFor="user">Usuario</Label>
-        <Select value={selectedUser} onValueChange={setSelectedUser}>
-          <SelectTrigger>
-            <SelectValue placeholder="Seleccionar usuario..." />
-          </SelectTrigger>
-          <SelectContent>
-            {availableUsers.map((user) => (
-              <SelectItem key={user.email} value={user.email}>
-                {user.name} ({user.email})
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {availableUsers.length === 0 && (
-          <p className="text-sm text-muted-foreground mt-1">
-            No hay usuarios activos disponibles
-          </p>
-        )}
-      </div>
-      
-      <div>
-        <Label htmlFor="store">Tienda</Label>
-        <Select value={selectedStore} onValueChange={setSelectedStore}>
-          <SelectTrigger>
-            <SelectValue placeholder="Seleccionar tienda..." />
-          </SelectTrigger>
-          <SelectContent>
-            {availableStores.map((store) => (
-              <SelectItem key={store.code} value={store.code}>
-                {store.name} ({store.code})
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {availableStores.length === 0 && (
-          <p className="text-sm text-muted-foreground mt-1">
-            No hay tiendas activas disponibles
-          </p>
-        )}
-      </div>
-      
-      <div className="flex justify-end space-x-2">
-        <Button 
-          type="submit" 
-          disabled={!selectedUser || !selectedStore || isCreating}
-          data-testid="button-submit-order"
-        >
-          {isCreating ? "Creando..." : "Crear Orden"}
-        </Button>
-      </div>
-    </form>
-  );
-}
 
 // Componente de paginación
 function PaginationComponent({ 
@@ -1566,24 +1435,7 @@ export default function Products() {
   });
 
   // Mutation for creating purchase orders
-  const createOrderMutation = useMutation({
-    mutationFn: ({ userEmail, storeId }: { userEmail: string; storeId: string }) => 
-      createPurchaseOrder(userEmail, storeId),
-    onSuccess: (result) => {
-      toast({
-        title: "Orden de compra creada",
-        description: `Nueva orden ${result.purchase_order_id} creada correctamente`,
-      });
-      queryClient.invalidateQueries({ queryKey: ["purchase-orders"] });
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Error al crear la orden de compra",
-        variant: "destructive",
-      });
-    },
-  });
+
 
   // Mutation for creating direct orders (without purchase order)
   const createDirectOrderMutation = useMutation({
@@ -2435,56 +2287,25 @@ export default function Products() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="orders" className="mt-6">
+        <TabsContent value="purchase-orders" className="mt-6">
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <FileText className="h-5 w-5" />
-                    Órdenes de Compra ({ordersData?.total || 0})
-                  </CardTitle>
-                  <CardDescription>
-                    Órdenes de compra realizadas por los usuarios
-                  </CardDescription>
-                </div>
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      data-testid="button-create-order"
-                      disabled={!usersData?.data.length || !storesData?.data.length}
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Nueva Orden
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Crear Nueva Orden de Compra</DialogTitle>
-                      <DialogDescription>
-                        Selecciona un usuario y una tienda para crear una nueva orden de compra.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <CreateOrderForm
-                      users={usersData?.data || []}
-                      stores={storesData?.data || []}
-                      onOrderCreate={(userEmail, storeId) => createOrderMutation.mutate({ userEmail, storeId })}
-                      isCreating={createOrderMutation.isPending}
-                    />
-                  </DialogContent>
-                </Dialog>
-              </div>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Órdenes de Compra ({purchaseOrdersData?.total || 0})
+              </CardTitle>
+              <CardDescription>
+                Órdenes de compra realizadas por los usuarios
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              {ordersLoading ? (
+              {purchaseOrdersLoading ? (
                 <div className="space-y-4">
                   {Array.from({ length: 5 }).map((_, i) => (
                     <Skeleton key={i} className="h-12 w-full" />
                   ))}
                 </div>
-              ) : ordersData?.data.length ? (
+              ) : purchaseOrdersData?.data.length ? (
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -2497,7 +2318,7 @@ export default function Products() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {ordersData.data.map((order) => (
+                    {purchaseOrdersData.data.map((order) => (
                       <TableRow key={order.purchase_order_id}>
                         <TableCell className="font-mono text-sm">{order.purchase_order_id.slice(-8)}</TableCell>
                         <TableCell>
@@ -2529,7 +2350,95 @@ export default function Products() {
                 </div>
               )}
               
-              {/* Paginación para órdenes */}
+              {/* Paginación para órdenes de compra */}
+              {purchaseOrdersData && (
+                <div className="mt-4">
+                  <PaginationComponent 
+                    currentPage={currentPagePurchaseOrders}
+                    totalItems={purchaseOrdersData.total}
+                    pageSize={pageSize}
+                    onPageChange={setCurrentPagePurchaseOrders}
+                  />
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="orders" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Pedidos ({ordersData?.total || 0})
+              </CardTitle>
+              <CardDescription>
+                Pedidos procesados del sistema (con o sin orden de compra previa)
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {ordersLoading ? (
+                <div className="space-y-4">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Skeleton key={i} className="h-12 w-full" />
+                  ))}
+                </div>
+              ) : ordersData?.data.length ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>ID Pedido</TableHead>
+                      <TableHead>Orden de Compra</TableHead>
+                      <TableHead>Usuario</TableHead>
+                      <TableHead>Tienda</TableHead>
+                      <TableHead>Observaciones</TableHead>
+                      <TableHead>Total</TableHead>
+                      <TableHead>Creado</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {ordersData.data.map((order) => (
+                      <TableRow key={order.order_id}>
+                        <TableCell className="font-mono text-sm">{order.order_id?.slice(-8) || 'N/A'}</TableCell>
+                        <TableCell>
+                          {order.source_purchase_order_id ? (
+                            <Badge variant="outline" className="font-mono text-xs">
+                              {order.source_purchase_order_id.slice(-8)}
+                            </Badge>
+                          ) : (
+                            <Badge variant="secondary">Directo</Badge>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <div className="font-medium">{order.user?.name || "Sin nombre"}</div>
+                            <div className="text-sm text-muted-foreground">
+                              {order.user?.email || order.user_email}
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>{order.user?.store?.name || order.store_id}</TableCell>
+                        <TableCell className="max-w-xs">
+                          <div className="truncate text-sm">
+                            {order.observations || "Sin observaciones"}
+                          </div>
+                        </TableCell>
+                        <TableCell className="font-medium">€{order.final_total?.toFixed(2) || '0.00'}</TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {new Date(order.created_at).toLocaleDateString('es-ES')}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <div className="text-center py-8">
+                  <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">No hay pedidos disponibles</p>
+                </div>
+              )}
+              
+              {/* Paginación para pedidos */}
               {ordersData && (
                 <div className="mt-4">
                   <PaginationComponent 
