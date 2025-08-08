@@ -794,8 +794,8 @@ async function deleteAllData(): Promise<{ success: boolean; message: string }> {
 // Fetch order details
 async function fetchPurchaseOrderItems(purchaseOrderId: string) {
   const query = `
-    query GetPurchaseOrderItems($purchaseOrderId: String!) {
-      purchaseOrderItems(purchaseOrderId: $purchaseOrderId) {
+    query GetPurchaseOrderItems($purchase_order_id: String!) {
+      purchaseOrderItems(purchase_order_id: $purchase_order_id) {
         item_ean
         item_title
         item_description
@@ -818,7 +818,7 @@ async function fetchPurchaseOrderItems(purchaseOrderId: string) {
     },
     body: JSON.stringify({ 
       query,
-      variables: { purchaseOrderId }
+      variables: { purchase_order_id: purchaseOrderId }
     }),
   });
 
@@ -1275,10 +1275,10 @@ export default function Products() {
 
   // Toggle active status mutations
   const toggleProductActiveMutation = useMutation({
-    mutationFn: async ({ ean, is_active }: { ean: string; is_active: boolean }) => {
+    mutationFn: async (ean: string) => {
       const query = `
-        mutation UpdateProduct($ean: String!, $product: UpdateProductInput!) {
-          updateProduct(ean: $ean, product: $product) {
+        mutation ToggleProductStatus($ean: String!) {
+          toggleProductStatus(ean: $ean) {
             ean
             is_active
           }
@@ -1292,10 +1292,7 @@ export default function Products() {
         },
         body: JSON.stringify({ 
           query, 
-          variables: { 
-            ean, 
-            product: { is_active } 
-          } 
+          variables: { ean } 
         }),
       });
 
@@ -1303,7 +1300,7 @@ export default function Products() {
       if (result.errors) {
         throw new Error(result.errors[0]?.message || "Error al actualizar producto");
       }
-      return result.data.updateProduct;
+      return result.data.toggleProductStatus;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
@@ -1312,6 +1309,86 @@ export default function Products() {
       toast({ 
         title: "Error", 
         description: error instanceof Error ? error.message : "Error al actualizar producto",
+        variant: "destructive" 
+      });
+    },
+  });
+
+  const toggleStoreActiveMutation = useMutation({
+    mutationFn: async (code: string) => {
+      const query = `
+        mutation ToggleStoreStatus($code: String!) {
+          toggleStoreStatus(code: $code) {
+            code
+            is_active
+          }
+        }
+      `;
+      const response = await fetch(GRAPHQL_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Apollo-Require-Preflight": "true",
+        },
+        body: JSON.stringify({ 
+          query, 
+          variables: { code } 
+        }),
+      });
+
+      const result = await response.json();
+      if (result.errors) {
+        throw new Error(result.errors[0]?.message || "Error al actualizar tienda");
+      }
+      return result.data.toggleStoreStatus;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["stores"] });
+    },
+    onError: (error) => {
+      toast({ 
+        title: "Error", 
+        description: error instanceof Error ? error.message : "Error al actualizar tienda",
+        variant: "destructive" 
+      });
+    },
+  });
+
+  const toggleUserActiveMutation = useMutation({
+    mutationFn: async (email: string) => {
+      const query = `
+        mutation ToggleUserStatus($email: String!) {
+          toggleUserStatus(email: $email) {
+            email
+            is_active
+          }
+        }
+      `;
+      const response = await fetch(GRAPHQL_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Apollo-Require-Preflight": "true",
+        },
+        body: JSON.stringify({ 
+          query, 
+          variables: { email } 
+        }),
+      });
+
+      const result = await response.json();
+      if (result.errors) {
+        throw new Error(result.errors[0]?.message || "Error al actualizar usuario");
+      }
+      return result.data.toggleUserStatus;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+    },
+    onError: (error) => {
+      toast({ 
+        title: "Error", 
+        description: error instanceof Error ? error.message : "Error al actualizar usuario",
         variant: "destructive" 
       });
     },
@@ -1520,10 +1597,7 @@ export default function Products() {
                                   <Button
                                     variant="ghost"
                                     size="sm"
-                                    onClick={() => toggleProductActiveMutation.mutate({ 
-                                      ean: product.ean, 
-                                      is_active: !product.is_active 
-                                    })}
+                                    onClick={() => toggleProductActiveMutation.mutate(product.ean)}
                                     className="h-6"
                                     data-testid={`toggle-active-${product.ean}`}
                                   >
@@ -1650,6 +1724,7 @@ export default function Products() {
                           <TableHead>Centro</TableHead>
                           <TableHead>Responsable</TableHead>
                           <TableHead>Estado</TableHead>
+                          <TableHead className="w-20">Acciones</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -1665,9 +1740,28 @@ export default function Products() {
                             </TableCell>
                             <TableCell>{store.responsible_email}</TableCell>
                             <TableCell>
-                              <Badge variant={store.is_active ? "default" : "secondary"}>
-                                {store.is_active ? "Activa" : "Inactiva"}
-                              </Badge>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => toggleStoreActiveMutation.mutate(store.code)}
+                                className="h-6"
+                                data-testid={`toggle-store-active-${store.code}`}
+                              >
+                                <Badge variant={store.is_active ? "default" : "secondary"}>
+                                  {store.is_active ? "Activa" : "Inactiva"}
+                                </Badge>
+                              </Button>
+                            </TableCell>
+                            <TableCell>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {/* TODO: Add delete store */}}
+                                className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                                data-testid={`delete-store-${store.code}`}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
                             </TableCell>
                           </TableRow>
                         ))}
@@ -1710,6 +1804,7 @@ export default function Products() {
                           <TableHead>Nombre</TableHead>
                           <TableHead>Tienda</TableHead>
                           <TableHead>Estado</TableHead>
+                          <TableHead className="w-20">Acciones</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -1724,9 +1819,28 @@ export default function Products() {
                               </div>
                             </TableCell>
                             <TableCell>
-                              <Badge variant={user.is_active ? "default" : "secondary"}>
-                                {user.is_active ? "Activo" : "Inactivo"}
-                              </Badge>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => toggleUserActiveMutation.mutate(user.email)}
+                                className="h-6"
+                                data-testid={`toggle-user-active-${user.email}`}
+                              >
+                                <Badge variant={user.is_active ? "default" : "secondary"}>
+                                  {user.is_active ? "Activo" : "Inactivo"}
+                                </Badge>
+                              </Button>
+                            </TableCell>
+                            <TableCell>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {/* TODO: Add delete user */}}
+                                className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                                data-testid={`delete-user-${user.email}`}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
                             </TableCell>
                           </TableRow>
                         ))}
