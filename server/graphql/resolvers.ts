@@ -89,10 +89,7 @@ export const resolvers = {
       return await storage.getOrder(order_id);
     },
 
-    // Order Items queries
-    orderItems: async () => {
-      return await storage.getOrderItems();
-    },
+
     
     orderItem: async (_: any, { item_id }: { item_id: number }) => {
       return await storage.getOrderItem(item_id);
@@ -123,10 +120,6 @@ export const resolvers = {
 
     toggleProductStatus: async (_: any, { ean }: { ean: string }) => {
       return await storage.toggleProductStatus(ean);
-    },
-
-    deleteProduct: async (_: any, { ean }: { ean: string }) => {
-      return await storage.deleteProduct(ean);
     },
 
     generateRandomProducts: async (_: any, { count, timestampOffset }: { count: number; timestampOffset?: string }) => {
@@ -187,10 +180,6 @@ export const resolvers = {
       return await storage.toggleStoreStatus(code);
     },
 
-    deleteStore: async (_: any, { code }: { code: string }) => {
-      return await storage.deleteStore(code);
-    },
-
     // Users mutations
     createUser: async (_: any, { input }: { input: any }) => {
       return await storage.createUser(input);
@@ -210,10 +199,6 @@ export const resolvers = {
 
     toggleUserStatus: async (_: any, { email }: { email: string }) => {
       return await storage.toggleUserStatus(email);
-    },
-
-    deleteUser: async (_: any, { email }: { email: string }) => {
-      return await storage.deleteUser(email);
     },
 
     // Purchase Orders mutations
@@ -308,6 +293,11 @@ export const resolvers = {
 
     generateEntities: async (_: any, { input }: { input: any }) => {
       return await storage.generateEntities(input);
+    },
+
+    // Delete all data
+    deleteAllData: async () => {
+      return await storage.deleteAllData();
     },
   },
 

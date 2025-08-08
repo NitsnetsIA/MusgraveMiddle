@@ -395,11 +395,19 @@ export const typeDefs = `#graphql
     generatePurchaseOrders(count: Int!, clearExisting: Boolean = false, timestampOffset: String): SingleEntityGenerationResult!
     generateOrders(count: Int!, clearExisting: Boolean = false, timestampOffset: String): SingleEntityGenerationResult!
     generateEntities(input: GenerateEntitiesInput!): GenerateEntitiesResult!
+    
+    # Delete all data
+    deleteAllData: DeleteAllDataResult!
   }
 
   type DeleteAllResult {
     success: Boolean!
     deletedCount: Int!
+    message: String!
+  }
+
+  type DeleteAllDataResult {
+    success: Boolean!
     message: String!
   }
 

@@ -1270,8 +1270,8 @@ export class DatabaseStorage implements IStorage {
         }
         existingPOIds.add(orderId); // Add to set to avoid duplicates in this batch
         
-        // Generate line items for this purchase order (30-50 items)
-        const numItems = Math.floor(Math.random() * 21) + 30; // 30-50 items
+        // Generate line items for this purchase order (5-15 items to avoid database size issues)
+        const numItems = Math.floor(Math.random() * 11) + 5; // 5-15 items
         const selectedProducts = [];
         const usedProducts = new Set();
         
@@ -1656,6 +1656,37 @@ export class DatabaseStorage implements IStorage {
           purchaseOrders: 0
         },
         message: `Error generating entities: ${error instanceof Error ? error.message : 'Unknown error'}`
+      };
+    }
+  }
+
+  // Delete all data method
+  async deleteAllData(): Promise<{ success: boolean; message: string }> {
+    try {
+      console.log("Deleting all data from database...");
+      
+      // Delete in dependency order (child tables first)
+      await db.execute(sql`DELETE FROM order_items;`);
+      await db.execute(sql`DELETE FROM orders;`);
+      await db.execute(sql`DELETE FROM purchase_order_items;`);
+      await db.execute(sql`DELETE FROM purchase_orders;`);
+      await db.execute(sql`DELETE FROM users;`);
+      await db.execute(sql`DELETE FROM stores;`);
+      await db.execute(sql`DELETE FROM delivery_centers;`);
+      await db.execute(sql`DELETE FROM products;`);
+      await db.execute(sql`DELETE FROM taxes;`);
+      
+      console.log("All data deleted successfully");
+      
+      return {
+        success: true,
+        message: "Todos los datos han sido eliminados correctamente."
+      };
+    } catch (error) {
+      console.error('Error deleting all data:', error);
+      return {
+        success: false,
+        message: `Error al eliminar los datos: ${error instanceof Error ? error.message : String(error)}`
       };
     }
   }
