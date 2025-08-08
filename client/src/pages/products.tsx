@@ -1011,9 +1011,9 @@ export default function Products() {
       await generateTaxes(true, timestampOffset);
       queryClient.invalidateQueries({ queryKey: ["taxes"] });
 
-      // Step 2: Generate 10,000 products
-      toast({ title: "Paso 2/7", description: "Generando 10,000 productos..." });
-      const productsResult = await generateProducts(10000, timestampOffset);
+      // Step 2: Generate 1,000 products
+      toast({ title: "Paso 2/7", description: "Generando 1,000 productos..." });
+      const productsResult = await generateProducts(1000, timestampOffset);
       if (!productsResult.success) {
         throw new Error(productsResult.message);
       }
@@ -1046,7 +1046,7 @@ export default function Products() {
 
       toast({
         title: "¡Datos completos generados!",
-        description: "Se han creado 4 impuestos IVA, 10,000 productos, 20 centros, 40 tiendas, 80 usuarios, 1,000 órdenes de compra y 1,000 pedidos.",
+        description: "Se han creado 4 impuestos IVA, 1,000 productos, 20 centros, 40 tiendas, 80 usuarios, 1,000 órdenes de compra y 1,000 pedidos.",
       });
 
     } catch (error) {
