@@ -1491,6 +1491,217 @@ export default function Products() {
     },
   });
 
+  // Delete mutations for individual entities
+  const deleteDeliveryCenterMutation = useMutation({
+    mutationFn: async (code: string) => {
+      const query = `
+        mutation DeleteDeliveryCenter($code: String!) {
+          deleteDeliveryCenter(code: $code)
+        }
+      `;
+      const response = await fetch(GRAPHQL_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Apollo-Require-Preflight": "true",
+        },
+        body: JSON.stringify({ query, variables: { code } }),
+      });
+
+      const result = await response.json();
+      if (result.errors) {
+        throw new Error(result.errors[0]?.message || "Error al eliminar centro");
+      }
+      return result.data.deleteDeliveryCenter;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["delivery-centers"] });
+      toast({ title: "Centro eliminado", description: "Centro de distribución eliminado exitosamente" });
+    },
+    onError: (error) => {
+      toast({ 
+        title: "Error", 
+        description: error instanceof Error ? error.message : "Error al eliminar centro",
+        variant: "destructive" 
+      });
+    },
+  });
+
+  const deleteStoreMutation = useMutation({
+    mutationFn: async (code: string) => {
+      const query = `
+        mutation DeleteStore($code: String!) {
+          deleteStore(code: $code)
+        }
+      `;
+      const response = await fetch(GRAPHQL_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Apollo-Require-Preflight": "true",
+        },
+        body: JSON.stringify({ query, variables: { code } }),
+      });
+
+      const result = await response.json();
+      if (result.errors) {
+        throw new Error(result.errors[0]?.message || "Error al eliminar tienda");
+      }
+      return result.data.deleteStore;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["stores"] });
+      toast({ title: "Tienda eliminada", description: "Tienda eliminada exitosamente" });
+    },
+    onError: (error) => {
+      toast({ 
+        title: "Error", 
+        description: error instanceof Error ? error.message : "Error al eliminar tienda",
+        variant: "destructive" 
+      });
+    },
+  });
+
+  const deleteUserMutation = useMutation({
+    mutationFn: async (email: string) => {
+      const query = `
+        mutation DeleteUser($email: String!) {
+          deleteUser(email: $email)
+        }
+      `;
+      const response = await fetch(GRAPHQL_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Apollo-Require-Preflight": "true",
+        },
+        body: JSON.stringify({ query, variables: { email } }),
+      });
+
+      const result = await response.json();
+      if (result.errors) {
+        throw new Error(result.errors[0]?.message || "Error al eliminar usuario");
+      }
+      return result.data.deleteUser;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      toast({ title: "Usuario eliminado", description: "Usuario eliminado exitosamente" });
+    },
+    onError: (error) => {
+      toast({ 
+        title: "Error", 
+        description: error instanceof Error ? error.message : "Error al eliminar usuario",
+        variant: "destructive" 
+      });
+    },
+  });
+
+  const deletePurchaseOrderMutation = useMutation({
+    mutationFn: async (purchaseOrderId: string) => {
+      const query = `
+        mutation DeletePurchaseOrder($purchaseOrderId: String!) {
+          deletePurchaseOrder(purchaseOrderId: $purchaseOrderId)
+        }
+      `;
+      const response = await fetch(GRAPHQL_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Apollo-Require-Preflight": "true",
+        },
+        body: JSON.stringify({ query, variables: { purchaseOrderId } }),
+      });
+
+      const result = await response.json();
+      if (result.errors) {
+        throw new Error(result.errors[0]?.message || "Error al eliminar orden de compra");
+      }
+      return result.data.deletePurchaseOrder;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["purchase-orders"] });
+      toast({ title: "Orden eliminada", description: "Orden de compra eliminada exitosamente" });
+    },
+    onError: (error) => {
+      toast({ 
+        title: "Error", 
+        description: error instanceof Error ? error.message : "Error al eliminar orden de compra",
+        variant: "destructive" 
+      });
+    },
+  });
+
+  const deleteOrderMutation = useMutation({
+    mutationFn: async (orderId: string) => {
+      const query = `
+        mutation DeleteOrder($orderId: String!) {
+          deleteOrder(orderId: $orderId)
+        }
+      `;
+      const response = await fetch(GRAPHQL_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Apollo-Require-Preflight": "true",
+        },
+        body: JSON.stringify({ query, variables: { orderId } }),
+      });
+
+      const result = await response.json();
+      if (result.errors) {
+        throw new Error(result.errors[0]?.message || "Error al eliminar pedido");
+      }
+      return result.data.deleteOrder;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+      toast({ title: "Pedido eliminado", description: "Pedido eliminado exitosamente" });
+    },
+    onError: (error) => {
+      toast({ 
+        title: "Error", 
+        description: error instanceof Error ? error.message : "Error al eliminar pedido",
+        variant: "destructive" 
+      });
+    },
+  });
+
+  const deleteTaxMutation = useMutation({
+    mutationFn: async (code: string) => {
+      const query = `
+        mutation DeleteTax($code: String!) {
+          deleteTax(code: $code)
+        }
+      `;
+      const response = await fetch(GRAPHQL_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Apollo-Require-Preflight": "true",
+        },
+        body: JSON.stringify({ query, variables: { code } }),
+      });
+
+      const result = await response.json();
+      if (result.errors) {
+        throw new Error(result.errors[0]?.message || "Error al eliminar impuesto");
+      }
+      return result.data.deleteTax;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["taxes"] });
+      toast({ title: "Impuesto eliminado", description: "Impuesto eliminado exitosamente" });
+    },
+    onError: (error) => {
+      toast({ 
+        title: "Error", 
+        description: error instanceof Error ? error.message : "Error al eliminar impuesto",
+        variant: "destructive" 
+      });
+    },
+  });
+
   // Delete all data mutation
   const deleteAllDataMutation = useMutation({
     mutationFn: deleteAllData,
@@ -1807,7 +2018,7 @@ export default function Products() {
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  onClick={() => {/* TODO: Add delete center */}}
+                                  onClick={() => deleteDeliveryCenterMutation.mutate(center.code)}
                                   className="h-8 w-8 p-0 text-destructive hover:text-destructive"
                                   data-testid={`delete-center-${center.code}`}
                                 >
@@ -1910,7 +2121,7 @@ export default function Products() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => {/* TODO: Add delete store */}}
+                                onClick={() => deleteStoreMutation.mutate(store.code)}
                                 className="h-8 w-8 p-0 text-destructive hover:text-destructive"
                                 data-testid={`delete-store-${store.code}`}
                               >
@@ -2011,7 +2222,7 @@ export default function Products() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => {/* TODO: Add delete user */}}
+                                onClick={() => deleteUserMutation.mutate(user.email)}
                                 className="h-8 w-8 p-0 text-destructive hover:text-destructive"
                                 data-testid={`delete-user-${user.email}`}
                               >
@@ -2120,7 +2331,7 @@ export default function Products() {
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  onClick={() => {/* TODO: Add delete purchase order */}}
+                                  onClick={() => deletePurchaseOrderMutation.mutate(order.purchase_order_id)}
                                   className="h-8 w-8 p-0 text-destructive hover:text-destructive"
                                   data-testid={`delete-purchase-order-${order.purchase_order_id}`}
                                 >
@@ -2228,7 +2439,7 @@ export default function Products() {
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  onClick={() => {/* TODO: Add delete order */}}
+                                  onClick={() => deleteOrderMutation.mutate(order.order_id)}
                                   className="h-8 w-8 p-0 text-destructive hover:text-destructive"
                                   data-testid={`delete-order-${order.order_id}`}
                                 >
@@ -2292,6 +2503,7 @@ export default function Products() {
                             <TableHead>Tipo IVA</TableHead>
                             <TableHead>Creado</TableHead>
                             <TableHead>Actualizado</TableHead>
+                            <TableHead className="w-20">Acciones</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -2309,6 +2521,17 @@ export default function Products() {
                               </TableCell>
                               <TableCell className="text-sm text-muted-foreground">
                                 {new Date(tax.updated_at).toLocaleString('es-ES')}
+                              </TableCell>
+                              <TableCell>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => deleteTaxMutation.mutate(tax.code)}
+                                  className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                                  data-testid={`delete-tax-${tax.code}`}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
                               </TableCell>
                             </TableRow>
                           ))}
