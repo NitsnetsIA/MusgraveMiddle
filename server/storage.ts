@@ -1281,8 +1281,24 @@ export class DatabaseStorage implements IStorage {
       const existingPOs = await db.select({ purchase_order_id: purchaseOrders.purchase_order_id }).from(purchaseOrders).execute();
       const existingPOIds = new Set(existingPOs.map(po => po.purchase_order_id));
 
-      // Get existing products for line items
-      const existingProducts = await db.select().from(products).limit(100).execute();
+      // Get existing products for line items WITH TAX DATA (optimized with join)
+      const existingProducts = await db
+        .select({
+          ean: products.ean,
+          title: products.title,
+          description: products.description,
+          base_price: products.base_price,
+          tax_code: products.tax_code,
+          unit_of_measure: products.unit_of_measure,
+          quantity_measure: products.quantity_measure,
+          image_url: products.image_url,
+          tax_rate: taxes.tax_rate
+        })
+        .from(products)
+        .leftJoin(taxes, eq(products.tax_code, taxes.code))
+        .limit(100)
+        .execute();
+        
       if (existingProducts.length === 0) {
         return {
           success: false,
@@ -1299,72 +1315,22 @@ export class DatabaseStorage implements IStorage {
       for (let i = 0; i < count; i++) {
         const randomUser = existingUsers[Math.floor(Math.random() * existingUsers.length)];
         
-        // Generate unique purchase order ID with format: [CÓDIGO_TIENDA]-[TIMESTAMP]-[SUFIJO]
-        let orderId: string;
-        let attempts = 0;
-        do {
-          const now = new Date();
-          // Format: YYMMDDHHMMSS
-          const year = now.getFullYear().toString().slice(-2);
-          const month = (now.getMonth() + 1).toString().padStart(2, '0');
-          const day = now.getDate().toString().padStart(2, '0');
-          const hour = now.getHours().toString().padStart(2, '0');
-          const minute = now.getMinutes().toString().padStart(2, '0');
-          const second = now.getSeconds().toString().padStart(2, '0');
-          const timestamp = `${year}${month}${day}${hour}${minute}${second}`;
-          
-          // Generate 3-character alphanumeric suffix
-          const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-          const suffix = Array.from({length: 3}, () => chars[Math.floor(Math.random() * chars.length)]).join('');
-          
-          orderId = `${randomUser.store_id}-${timestamp}-${suffix}`;
-          attempts++;
-        } while (existingPOIds.has(orderId) && attempts < 10);
+        // Optimized ID generation - simpler and faster
+        const orderId = `${randomUser.store_id}-${Date.now()}-${nanoid(3).toUpperCase()}${i.toString().padStart(3, '0')}`;
         
-        if (attempts >= 10) {
-          const fallbackSuffix = nanoid(3).toUpperCase();
-          orderId = `${randomUser.store_id}-${Date.now()}-${fallbackSuffix}`;
-        }
-        existingPOIds.add(orderId); // Add to set to avoid duplicates in this batch
-        
-        // Generate line items for this purchase order (5-15 items to avoid database size issues)
+        // Generate 5-15 line items (optimized - no individual tax queries)
         const numItems = Math.floor(Math.random() * 11) + 5; // 5-15 items
-        const selectedProducts = [];
-        const usedProducts = new Set();
-        
-        // Select random products without repeating
-        for (let j = 0; j < numItems && selectedProducts.length < existingProducts.length; j++) {
-          let product;
-          let productAttempts = 0;
-          do {
-            product = existingProducts[Math.floor(Math.random() * existingProducts.length)];
-            productAttempts++;
-          } while (usedProducts.has(product.ean) && productAttempts < 20);
-          
-          if (!usedProducts.has(product.ean)) {
-            usedProducts.add(product.ean);
-            selectedProducts.push(product);
-          }
-        }
-
-        // Calculate totals based on actual line items
         let subtotal = 0;
         let taxTotal = 0;
         
-        for (const product of selectedProducts) {
+        for (let j = 0; j < numItems; j++) {
+          const product = existingProducts[Math.floor(Math.random() * existingProducts.length)];
           const quantity = Math.floor(Math.random() * 10) + 1; // 1-10 units
           const unitPrice = product.base_price;
           const lineSubtotal = quantity * unitPrice;
           
-          // Get tax rate for this product
-          const taxRate = await db
-            .select({ tax_rate: taxes.tax_rate })
-            .from(taxes)
-            .where(eq(taxes.code, product.tax_code))
-            .limit(1)
-            .execute();
-          
-          const productTaxRate = taxRate.length > 0 ? taxRate[0].tax_rate : 0.21; // Default to 21%
+          // Tax rate already loaded in the join query above
+          const productTaxRate = product.tax_rate || 0.21; // Default to 21%
           const lineTaxTotal = lineSubtotal * productTaxRate;
           
           subtotal += lineSubtotal;
@@ -1382,8 +1348,8 @@ export class DatabaseStorage implements IStorage {
             quantity,
             base_price_at_order: unitPrice,
             tax_rate_at_order: productTaxRate,
-            created_at: new Date(),
-            updated_at: new Date()
+            created_at: timestampOffset ? new Date(Date.now() - this.parseTimestampOffset(timestampOffset)) : new Date(),
+            updated_at: timestampOffset ? new Date(Date.now() - this.parseTimestampOffset(timestampOffset)) : new Date()
           });
         }
         
@@ -1394,11 +1360,11 @@ export class DatabaseStorage implements IStorage {
           user_email: randomUser.email,
           store_id: randomUser.store_id,
           status: PURCHASE_ORDER_STATUSES[Math.floor(Math.random() * PURCHASE_ORDER_STATUSES.length)],
-          subtotal: subtotal,
-          tax_total: taxTotal,
+          subtotal: Math.round(subtotal * 100) / 100,
+          tax_total: Math.round(taxTotal * 100) / 100,
           final_total: finalTotal,
-          created_at: new Date(),
-          updated_at: new Date()
+          created_at: timestampOffset ? new Date(Date.now() - this.parseTimestampOffset(timestampOffset)) : new Date(),
+          updated_at: timestampOffset ? new Date(Date.now() - this.parseTimestampOffset(timestampOffset)) : new Date()
         });
       }
 
@@ -1469,8 +1435,23 @@ export class DatabaseStorage implements IStorage {
         await db.execute(sql`DELETE FROM orders;`);
       }
 
-      // Get existing products and delivery centers for line items
-      const existingProducts = await db.select().from(products).limit(100).execute();
+      // Get existing products WITH TAX DATA and delivery centers (optimized)
+      const existingProducts = await db
+        .select({
+          ean: products.ean,
+          title: products.title,
+          description: products.description,
+          base_price: products.base_price,
+          tax_code: products.tax_code,
+          unit_of_measure: products.unit_of_measure,
+          quantity_measure: products.quantity_measure,
+          image_url: products.image_url,
+          tax_rate: taxes.tax_rate
+        })
+        .from(products)
+        .leftJoin(taxes, eq(products.tax_code, taxes.code))
+        .limit(100)
+        .execute();
       const existingDeliveryCenters = await db.select().from(deliveryCenters).execute();
       
       if (existingProducts.length === 0 || existingDeliveryCenters.length === 0) {
@@ -1494,72 +1475,24 @@ export class DatabaseStorage implements IStorage {
         const randomPO = existingPOs[Math.floor(Math.random() * existingPOs.length)];
         const randomDC = existingDeliveryCenters[Math.floor(Math.random() * existingDeliveryCenters.length)];
         
-        // Generate unique order ID with format: [DELIVERY_CENTER_CODE]-[TIMESTAMP]-[SUFIJO]
-        let orderId: string;
-        let attempts = 0;
-        do {
-          const now = new Date();
-          // Format: YYMMDDHHMMSS
-          const year = now.getFullYear().toString().slice(-2);
-          const month = (now.getMonth() + 1).toString().padStart(2, '0');
-          const day = now.getDate().toString().padStart(2, '0');
-          const hour = now.getHours().toString().padStart(2, '0');
-          const minute = now.getMinutes().toString().padStart(2, '0');
-          const second = now.getSeconds().toString().padStart(2, '0');
-          const timestamp = `${year}${month}${day}${hour}${minute}${second}`;
-          
-          // Generate 3-character alphanumeric suffix
-          const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-          const suffix = Array.from({length: 3}, () => chars[Math.floor(Math.random() * chars.length)]).join('');
-          
-          orderId = `${randomDC.code}-${timestamp}-${suffix}`;
-          attempts++;
-        } while (existingOrderIdSet.has(orderId) && attempts < 10);
+        // Optimized ID generation - simpler and faster
+        const orderId = `${randomDC.code}-${Date.now()}-${nanoid(3).toUpperCase()}${i.toString().padStart(3, '0')}`;
         
-        if (attempts >= 10) {
-          const fallbackSuffix = nanoid(3).toUpperCase();
-          orderId = `${randomDC.code}-${Date.now()}-${fallbackSuffix}`;
-        }
-        existingOrderIdSet.add(orderId);
+        // Generate 5-15 line items (reduced for performance)
+        const numItems = Math.floor(Math.random() * 11) + 5; // 5-15 items
         
-        // Generate line items for this order (30-50 items)
-        const numItems = Math.floor(Math.random() * 21) + 30; // 30-50 items
-        const selectedProducts = [];
-        const usedProducts = new Set();
-        
-        // Select random products without repeating
-        for (let j = 0; j < numItems && selectedProducts.length < existingProducts.length; j++) {
-          let product;
-          let productAttempts = 0;
-          do {
-            product = existingProducts[Math.floor(Math.random() * existingProducts.length)];
-            productAttempts++;
-          } while (usedProducts.has(product.ean) && productAttempts < 20);
-          
-          if (!usedProducts.has(product.ean)) {
-            usedProducts.add(product.ean);
-            selectedProducts.push(product);
-          }
-        }
-
-        // Calculate totals based on actual line items
+        // Generate line items (optimized - no individual tax queries)
         let subtotal = 0;
         let taxTotal = 0;
         
-        for (const product of selectedProducts) {
+        for (let j = 0; j < numItems; j++) {
+          const product = existingProducts[Math.floor(Math.random() * existingProducts.length)];
           const quantity = Math.floor(Math.random() * 10) + 1; // 1-10 units
           const unitPrice = product.base_price;
           const lineSubtotal = quantity * unitPrice;
           
-          // Get tax rate for this product
-          const taxRate = await db
-            .select({ tax_rate: taxes.tax_rate })
-            .from(taxes)
-            .where(eq(taxes.code, product.tax_code))
-            .limit(1)
-            .execute();
-          
-          const productTaxRate = taxRate.length > 0 ? taxRate[0].tax_rate : 0.21; // Default to 21%
+          // Tax rate already loaded in the join query above
+          const productTaxRate = product.tax_rate || 0.21; // Default to 21%
           const lineTaxTotal = lineSubtotal * productTaxRate;
           
           subtotal += lineSubtotal;
@@ -1577,8 +1510,8 @@ export class DatabaseStorage implements IStorage {
             quantity,
             base_price_at_order: unitPrice,
             tax_rate_at_order: productTaxRate,
-            created_at: new Date(),
-            updated_at: new Date()
+            created_at: timestampOffset ? new Date(Date.now() - this.parseTimestampOffset(timestampOffset)) : new Date(),
+            updated_at: timestampOffset ? new Date(Date.now() - this.parseTimestampOffset(timestampOffset)) : new Date()
           });
         }
         
@@ -1593,8 +1526,8 @@ export class DatabaseStorage implements IStorage {
           subtotal: Math.round(subtotal * 100) / 100,
           tax_total: Math.round(taxTotal * 100) / 100,
           final_total: finalTotal,
-          created_at: new Date(),
-          updated_at: new Date()
+          created_at: timestampOffset ? new Date(Date.now() - this.parseTimestampOffset(timestampOffset)) : new Date(),
+          updated_at: timestampOffset ? new Date(Date.now() - this.parseTimestampOffset(timestampOffset)) : new Date()
         });
       }
 
