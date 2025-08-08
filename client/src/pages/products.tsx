@@ -2076,7 +2076,7 @@ export default function Products() {
                             <TableHead>Total</TableHead>
                             <TableHead>Creado</TableHead>
                             <TableHead>Actualizado</TableHead>
-                            <TableHead className="w-20">Acciones</TableHead>
+                            <TableHead className="w-24">Acciones</TableHead>
                           </TableRow>
                         </TableHeader>
                       <TableBody>
@@ -2103,19 +2103,30 @@ export default function Products() {
                               {new Date(order.updated_at).toLocaleString('es-ES')}
                             </TableCell>
                             <TableCell>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                  setSelectedOrder(order);
-                                  setOrderType('purchase');
-                                  setOrderDetailsOpen(true);
-                                }}
-                                className="h-8 w-8 p-0"
-                                data-testid={`view-purchase-order-${order.purchase_order_id}`}
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Button>
+                              <div className="flex items-center gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    setSelectedOrder(order);
+                                    setOrderType('purchase');
+                                    setOrderDetailsOpen(true);
+                                  }}
+                                  className="h-8 w-8 p-0"
+                                  data-testid={`view-purchase-order-${order.purchase_order_id}`}
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {/* TODO: Add delete purchase order */}}
+                                  className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                                  data-testid={`delete-purchase-order-${order.purchase_order_id}`}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
                             </TableCell>
                           </TableRow>
                         ))}
@@ -2176,7 +2187,7 @@ export default function Products() {
                             <TableHead>Total</TableHead>
                             <TableHead>Creado</TableHead>
                             <TableHead>Actualizado</TableHead>
-                            <TableHead className="w-20">Acciones</TableHead>
+                            <TableHead className="w-24">Acciones</TableHead>
                           </TableRow>
                         </TableHeader>
                       <TableBody>
@@ -2200,19 +2211,30 @@ export default function Products() {
                               {new Date(order.updated_at).toLocaleString('es-ES')}
                             </TableCell>
                             <TableCell>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                  setSelectedOrder(order);
-                                  setOrderType('order');
-                                  setOrderDetailsOpen(true);
-                                }}
-                                className="h-8 w-8 p-0"
-                                data-testid={`view-order-${order.order_id}`}
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Button>
+                              <div className="flex items-center gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    setSelectedOrder(order);
+                                    setOrderType('order');
+                                    setOrderDetailsOpen(true);
+                                  }}
+                                  className="h-8 w-8 p-0"
+                                  data-testid={`view-order-${order.order_id}`}
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {/* TODO: Add delete order */}}
+                                  className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                                  data-testid={`delete-order-${order.order_id}`}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
                             </TableCell>
                           </TableRow>
                         ))}
