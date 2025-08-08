@@ -79,6 +79,7 @@ export interface IStorage {
   deleteUser(email: string): Promise<boolean>;
   deleteAllUsers(): Promise<DeleteAllResult>;
   toggleUserStatus(email: string): Promise<User>;
+  loginUser(email: string, password: string): Promise<User>;
 
   // Purchase Orders methods
   getPurchaseOrders(timestamp?: string, limit?: number, offset?: number): Promise<PurchaseOrderConnection>;
@@ -750,6 +751,37 @@ export class DatabaseStorage implements IStorage {
         message: `Error deleting users: ${error instanceof Error ? error.message : 'Unknown error'}`
       };
     }
+  }
+
+  async loginUser(email: string, password: string): Promise<User> {
+    // Get user from database
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    if (!user) {
+      throw new Error('Invalid credentials');
+    }
+
+    // Check if user is active
+    if (!user.is_active) {
+      throw new Error('User account is disabled');
+    }
+
+    // Hash the provided password with email as salt and compare
+    const hashedPassword = hashPassword(password, email);
+    if (hashedPassword !== user.password_hash) {
+      throw new Error('Invalid credentials');
+    }
+
+    // Update last_login timestamp
+    const [updatedUser] = await db
+      .update(users)
+      .set({
+        last_login: new Date(),
+        updated_at: new Date(),
+      })
+      .where(eq(users.email, email))
+      .returning();
+
+    return updatedUser;
   }
 
   // Purchase Orders CRUD

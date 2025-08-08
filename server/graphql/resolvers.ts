@@ -205,6 +205,10 @@ export const resolvers = {
       return await storage.toggleUserStatus(email);
     },
 
+    loginUser: async (_: any, { input }: { input: { email: string; password: string } }) => {
+      return await storage.loginUser(input.email, input.password);
+    },
+
     // Purchase Orders mutations
     createPurchaseOrder: async (_: any, { input }: { input: any }) => {
       return await storage.createPurchaseOrder(input);

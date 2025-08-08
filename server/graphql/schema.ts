@@ -54,6 +54,7 @@ export const typeDefs = `#graphql
     name: String
     password_hash: String!
     is_active: Boolean!
+    last_login: DateTime
     created_at: DateTime!
     updated_at: DateTime!
     store: Store
@@ -203,6 +204,11 @@ export const typeDefs = `#graphql
     name: String
     password_hash: String
     is_active: Boolean
+  }
+
+  input LoginInput {
+    email: String!
+    password: String!
   }
 
   input PurchaseOrderInput {
@@ -413,6 +419,7 @@ export const typeDefs = `#graphql
     deleteUser(email: String!): Boolean!
     deleteAllUsers: DeleteAllResult!
     toggleUserStatus(email: String!): User!
+    loginUser(input: LoginInput!): User!
 
     createPurchaseOrder(input: PurchaseOrderInput!): PurchaseOrder!
     updatePurchaseOrder(purchase_order_id: String!, input: UpdatePurchaseOrderInput!): PurchaseOrder!
