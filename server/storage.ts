@@ -786,8 +786,21 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deletePurchaseOrder(purchase_order_id: string): Promise<boolean> {
-    const result = await db.delete(purchaseOrders).where(eq(purchaseOrders.purchase_order_id, purchase_order_id));
-    return result.rowCount! > 0;
+    try {
+      // Delete dependent orders first
+      await db.delete(orderItems).where(sql`order_id IN (SELECT order_id FROM orders WHERE source_purchase_order_id = ${purchase_order_id})`);
+      await db.delete(orders).where(eq(orders.source_purchase_order_id, purchase_order_id));
+      
+      // Delete purchase order items
+      await db.delete(purchaseOrderItems).where(eq(purchaseOrderItems.purchase_order_id, purchase_order_id));
+      
+      // Finally delete the purchase order
+      const result = await db.delete(purchaseOrders).where(eq(purchaseOrders.purchase_order_id, purchase_order_id));
+      return result.rowCount! > 0;
+    } catch (error) {
+      console.error("Error deleting purchase order with cascade:", error);
+      return false;
+    }
   }
 
   async deleteAllPurchaseOrders(): Promise<DeleteAllResult> {
@@ -936,8 +949,17 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteOrder(order_id: string): Promise<boolean> {
-    const result = await db.delete(orders).where(eq(orders.order_id, order_id));
-    return result.rowCount! > 0;
+    try {
+      // Delete order items first
+      await db.delete(orderItems).where(eq(orderItems.order_id, order_id));
+      
+      // Delete the order
+      const result = await db.delete(orders).where(eq(orders.order_id, order_id));
+      return result.rowCount! > 0;
+    } catch (error) {
+      console.error("Error deleting order with cascade:", error);
+      return false;
+    }
   }
 
   async deleteAllOrders(): Promise<DeleteAllResult> {
