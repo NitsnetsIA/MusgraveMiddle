@@ -586,6 +586,39 @@ async function generateDeliveryCenters(count: number, clearExisting?: boolean, t
   return result.data.generateDeliveryCenters;
 }
 
+async function generateTaxes(clearExisting?: boolean, timestampOffset?: string): Promise<{ success: boolean; message: string }> {
+  const response = await fetch(GRAPHQL_ENDPOINT, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Apollo-Require-Preflight": "true",
+    },
+    body: JSON.stringify({
+      query: `
+        mutation GenerateTaxes($clearExisting: Boolean, $timestampOffset: String) {
+          generateTaxes(clearExisting: $clearExisting, timestampOffset: $timestampOffset) {
+            success
+            message
+          }
+        }
+      `,
+      variables: { clearExisting, timestampOffset },
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const result = await response.json();
+  
+  if (result.errors) {
+    throw new Error(result.errors[0]?.message || "GraphQL error");
+  }
+
+  return result.data.generateTaxes;
+}
+
 async function generateStores(storesPerCenter: number, clearExisting?: boolean, timestampOffset?: string): Promise<{ success: boolean; message: string }> {
   const response = await fetch(GRAPHQL_ENDPOINT, {
     method: "POST",
@@ -919,6 +952,26 @@ export default function Products() {
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Error al generar pedidos",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const generateTaxesMutation = useMutation({
+    mutationFn: ({ clearExisting, timestampOffset }: { clearExisting?: boolean; timestampOffset?: string }) => 
+      generateTaxes(clearExisting, timestampOffset),
+    onSuccess: (result) => {
+      toast({
+        title: result.success ? "Impuestos creados" : "Error",
+        description: result.message,
+        variant: result.success ? "default" : "destructive",
+      });
+      queryClient.invalidateQueries({ queryKey: ["taxes"] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Error al generar impuestos",
         variant: "destructive",
       });
     },
@@ -1593,6 +1646,34 @@ export default function Products() {
                     Use formato como "-7d" (7 días atrás), "-2h" (2 horas atrás), o "-30m" (30 minutos atrás)
                   </p>
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* Taxes Generation */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Receipt className="h-5 w-5" />
+                  Impuestos IVA
+                </CardTitle>
+                <CardDescription>
+                  Genera los 4 tipos de IVA español (General, Reducido, Superreducido, Exento)
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button
+                  onClick={() => generateTaxesMutation.mutate({ timestampOffset })}
+                  disabled={generateTaxesMutation.isPending}
+                  data-testid="button-generate-taxes"
+                  className="w-full"
+                >
+                  {generateTaxesMutation.isPending ? (
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Plus className="h-4 w-4 mr-2" />
+                  )}
+                  Generar Impuestos IVA
+                </Button>
               </CardContent>
             </Card>
 

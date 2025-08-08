@@ -56,6 +56,12 @@ export interface IStorage {
   updateTax(code: string, tax: Partial<InsertTax>): Promise<Tax>;
   deleteTax(code: string): Promise<boolean>;
   deleteAllTaxes(): Promise<DeleteAllResult>;
+  generateTaxes(clearExisting?: boolean, timestampOffset?: string): Promise<{
+    success: boolean;
+    entityType: string;
+    createdCount: number;
+    message: string;
+  }>;
 
   // Delivery Centers methods
   getDeliveryCenters(): Promise<DeliveryCenter[]>;
@@ -923,6 +929,57 @@ export class DatabaseStorage implements IStorage {
 
   // Entity generation implementation
   // Individual entity generation methods with dependency validation
+  async generateTaxes(clearExisting: boolean = false, timestampOffset?: string): Promise<{
+    success: boolean;
+    entityType: string;
+    createdCount: number;
+    message: string;
+  }> {
+    try {
+      if (clearExisting) {
+        console.log("Clearing existing taxes...");
+        await db.execute(sql`DELETE FROM taxes;`);
+      }
+
+      // Spanish IVA taxes for grocery - Fixed set of 4 taxes
+      const taxesToCreate = [
+        { code: 'IVA_GENERAL', name: 'IVA General', tax_rate: 0.21 },
+        { code: 'IVA_REDUCIDO', name: 'IVA Reducido', tax_rate: 0.10 },
+        { code: 'IVA_SUPERREDUCIDO', name: 'IVA Superreducido', tax_rate: 0.04 },
+        { code: 'IVA_EXENTO', name: 'IVA Exento', tax_rate: 0.00 }
+      ].map(tax => ({
+        ...tax,
+        created_at: new Date(),
+        updated_at: new Date()
+      }));
+
+      // Check for existing taxes to avoid duplicates
+      const existingTaxes = await db.select({ code: taxes.code }).from(taxes).execute();
+      const existingCodes = new Set(existingTaxes.map(tax => tax.code));
+
+      // Filter out existing taxes
+      const newTaxes = taxesToCreate.filter(tax => !existingCodes.has(tax.code));
+
+      if (newTaxes.length > 0) {
+        await db.insert(taxes).values(newTaxes);
+      }
+
+      return {
+        success: true,
+        entityType: "taxes",
+        createdCount: newTaxes.length,
+        message: `Successfully created ${newTaxes.length} Spanish IVA tax types. ${existingCodes.size > 0 ? `${existingCodes.size} taxes already existed.` : ''}`
+      };
+    } catch (error) {
+      console.error('Error generating taxes:', error);
+      return {
+        success: false,
+        entityType: "taxes",
+        createdCount: 0,
+        message: `Error generating taxes: ${error instanceof Error ? error.message : String(error)}`
+      };
+    }
+  }
   async generateDeliveryCenters(count: number, clearExisting: boolean = false, timestampOffset?: string): Promise<{
     success: boolean;
     entityType: string;

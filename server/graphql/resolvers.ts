@@ -271,6 +271,10 @@ export const resolvers = {
 
     // Entity generation mutation
     // Individual entity generation methods
+    generateTaxes: async (_: any, { clearExisting, timestampOffset }: { clearExisting?: boolean; timestampOffset?: string }) => {
+      return await storage.generateTaxes(clearExisting || false, timestampOffset);
+    },
+
     generateDeliveryCenters: async (_: any, { count, clearExisting, timestampOffset }: { count: number; clearExisting?: boolean; timestampOffset?: string }) => {
       return await storage.generateDeliveryCenters(count, clearExisting || false, timestampOffset);
     },
