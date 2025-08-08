@@ -248,6 +248,7 @@ async function fetchDeliveryCenters(): Promise<EntitiesResponse<DeliveryCenter>>
       deliveryCenters {
         code
         name
+        is_active
         created_at
         updated_at
       }
@@ -1394,6 +1395,46 @@ export default function Products() {
     },
   });
 
+  const toggleDeliveryCenterActiveMutation = useMutation({
+    mutationFn: async (code: string) => {
+      const query = `
+        mutation ToggleDeliveryCenterStatus($code: String!) {
+          toggleDeliveryCenterStatus(code: $code) {
+            code
+            is_active
+          }
+        }
+      `;
+      const response = await fetch(GRAPHQL_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Apollo-Require-Preflight": "true",
+        },
+        body: JSON.stringify({ 
+          query, 
+          variables: { code } 
+        }),
+      });
+
+      const result = await response.json();
+      if (result.errors) {
+        throw new Error(result.errors[0]?.message || "Error al actualizar centro");
+      }
+      return result.data.toggleDeliveryCenterStatus;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["delivery-centers"] });
+    },
+    onError: (error) => {
+      toast({ 
+        title: "Error", 
+        description: error instanceof Error ? error.message : "Error al actualizar centro",
+        variant: "destructive" 
+      });
+    },
+  });
+
   // Delete all data mutation
   const deleteAllDataMutation = useMutation({
     mutationFn: deleteAllData,
@@ -1667,8 +1708,8 @@ export default function Products() {
                         <TableRow>
                           <TableHead>Código</TableHead>
                           <TableHead>Nombre</TableHead>
-                          <TableHead>Fecha Creación</TableHead>
-                          <TableHead>Última Actualización</TableHead>
+                          <TableHead>Estado</TableHead>
+                          <TableHead className="w-20">Acciones</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -1676,11 +1717,29 @@ export default function Products() {
                           <TableRow key={center.code}>
                             <TableCell className="font-mono">{center.code}</TableCell>
                             <TableCell className="font-medium">{center.name}</TableCell>
-                            <TableCell className="text-sm text-muted-foreground">
-                              {new Date(center.created_at).toLocaleDateString('es-ES')}
+                            <TableCell>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => toggleDeliveryCenterActiveMutation.mutate(center.code)}
+                                className="h-6"
+                                data-testid={`toggle-center-active-${center.code}`}
+                              >
+                                <Badge variant={center.is_active ? "default" : "secondary"}>
+                                  {center.is_active ? "Activo" : "Inactivo"}
+                                </Badge>
+                              </Button>
                             </TableCell>
-                            <TableCell className="text-sm text-muted-foreground">
-                              {new Date(center.updated_at).toLocaleDateString('es-ES')}
+                            <TableCell>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {/* TODO: Add delete center */}}
+                                className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                                data-testid={`delete-center-${center.code}`}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
                             </TableCell>
                           </TableRow>
                         ))}

@@ -37,6 +37,7 @@ export const productsRelations = relations(products, ({ one }) => ({
 export const deliveryCenters = pgTable("delivery_centers", {
   code: text("code").primaryKey(),
   name: text("name").notNull(),
+  is_active: boolean("is_active").notNull().default(true),
   created_at: timestamp("created_at", { withTimezone: true }).notNull().default(sql`CURRENT_TIMESTAMP`),
   updated_at: timestamp("updated_at", { withTimezone: true }).notNull().default(sql`CURRENT_TIMESTAMP`)
 });

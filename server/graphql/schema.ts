@@ -28,6 +28,7 @@ export const typeDefs = `#graphql
   type DeliveryCenter {
     code: String!
     name: String!
+    is_active: Boolean!
     created_at: DateTime!
     updated_at: DateTime!
     stores: [Store!]
@@ -166,10 +167,12 @@ export const typeDefs = `#graphql
   input DeliveryCenterInput {
     code: String!
     name: String!
+    is_active: Boolean
   }
 
   input UpdateDeliveryCenterInput {
     name: String
+    is_active: Boolean
   }
 
   input StoreInput {
@@ -355,6 +358,7 @@ export const typeDefs = `#graphql
     updateDeliveryCenter(code: String!, input: UpdateDeliveryCenterInput!): DeliveryCenter!
     deleteDeliveryCenter(code: String!): Boolean!
     deleteAllDeliveryCenters: DeleteAllResult!
+    toggleDeliveryCenterStatus(code: String!): DeliveryCenter!
 
     createStore(input: StoreInput!): Store!
     updateStore(code: String!, input: UpdateStoreInput!): Store!

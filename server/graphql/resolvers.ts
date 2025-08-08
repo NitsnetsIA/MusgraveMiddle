@@ -159,6 +159,10 @@ export const resolvers = {
       return await storage.deleteAllDeliveryCenters();
     },
 
+    toggleDeliveryCenterStatus: async (_: any, { code }: { code: string }) => {
+      return await storage.toggleDeliveryCenterStatus(code);
+    },
+
     // Stores mutations
     createStore: async (_: any, { input }: { input: any }) => {
       return await storage.createStore(input);

@@ -413,7 +413,7 @@ export class DatabaseStorage implements IStorage {
 
   // Delivery Centers CRUD
   async getDeliveryCenters(): Promise<DeliveryCenter[]> {
-    return await db.select().from(deliveryCenters).orderBy(desc(deliveryCenters.updated_at));
+    return await db.select().from(deliveryCenters).orderBy(deliveryCenters.code);
   }
 
   async getDeliveryCenter(code: string): Promise<DeliveryCenter | undefined> {
@@ -477,9 +477,27 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  async toggleDeliveryCenterStatus(code: string): Promise<DeliveryCenter> {
+    // Get current status
+    const currentCenter = await db.select().from(deliveryCenters).where(eq(deliveryCenters.code, code)).limit(1);
+    if (!currentCenter.length) {
+      throw new Error('Delivery center not found');
+    }
+    
+    const [updated] = await db
+      .update(deliveryCenters)
+      .set({
+        is_active: !currentCenter[0].is_active,
+        updated_at: new Date(),
+      })
+      .where(eq(deliveryCenters.code, code))
+      .returning();
+    return updated;
+  }
+
   // Stores CRUD
   async getStores(): Promise<Store[]> {
-    return await db.select().from(stores).orderBy(desc(stores.updated_at));
+    return await db.select().from(stores).orderBy(stores.code);
   }
 
   async getStore(code: string): Promise<Store | undefined> {
@@ -562,7 +580,7 @@ export class DatabaseStorage implements IStorage {
 
   // Users CRUD
   async getUsers(): Promise<User[]> {
-    return await db.select().from(users).orderBy(desc(users.updated_at));
+    return await db.select().from(users).orderBy(users.email);
   }
 
   async getUser(email: string): Promise<User | undefined> {
