@@ -1,4 +1,11 @@
 import { nanoid } from "nanoid";
+import { createHash } from "crypto";
+
+// Función para generar hash SHA3 usando email como salt
+export function hashPassword(password: string, email: string): string {
+  const saltedPassword = email + password;
+  return createHash('sha3-256').update(saltedPassword).digest('hex');
+}
 
 // Datos realistas españoles para generar entidades coherentes
 
@@ -91,6 +98,18 @@ export function generateStores(deliveryCenters: any[], storesPerCenter: number =
   const stores = [];
   let storeCounter = 1;
   
+  // Primero crear la tienda ES001 para el usuario por defecto
+  const firstCenter = deliveryCenters[0];
+  if (firstCenter) {
+    stores.push({
+      code: 'ES001',
+      name: 'Supermercado Madrid Centro',
+      delivery_center_code: firstCenter.code,
+      responsible_email: 'luis@esgranvia.es',
+      is_active: true
+    });
+  }
+  
   for (const center of deliveryCenters) {
     const numStores = Math.floor(Math.random() * storesPerCenter) + 1;
     
@@ -99,8 +118,16 @@ export function generateStores(deliveryCenters: any[], storesPerCenter: number =
       const neighborhood = generateNeighborhood();
       const centerCity = center.name.split(' ').pop() || 'Centro';
       
+      const storeCode = `ST${String(storeCounter).padStart(3, '0')}`;
+      
+      // Evitar duplicar ES001
+      if (storeCode === 'ES001') {
+        storeCounter++;
+        continue;
+      }
+      
       stores.push({
-        code: `ST${String(storeCounter).padStart(3, '0')}`,
+        code: storeCode,
         name: `${storeType} ${centerCity} ${neighborhood}`,
         delivery_center_code: center.code,
         responsible_email: null,
@@ -117,6 +144,20 @@ export function generateStores(deliveryCenters: any[], storesPerCenter: number =
 export function generateUsers(stores: any[], usersPerStore: number = 4) {
   const users = [];
   
+  // Primero, agregar el usuario por defecto Luis Romero Pérez
+  const defaultStore = stores.find(store => store.code === 'ES001') || stores[0];
+  if (defaultStore) {
+    const defaultEmail = 'luis@esgranvia.es';
+    users.push({
+      email: defaultEmail,
+      store_id: defaultStore.code,
+      name: 'Luis Romero Pérez',
+      password_hash: hashPassword('password123', defaultEmail),
+      is_active: true
+    });
+  }
+  
+  // Luego generar el resto de usuarios
   for (const store of stores) {
     const numUsers = Math.floor(Math.random() * usersPerStore) + 1;
     
@@ -124,15 +165,19 @@ export function generateUsers(stores: any[], usersPerStore: number = 4) {
       const firstName = SPANISH_NAMES.firstNames[Math.floor(Math.random() * SPANISH_NAMES.firstNames.length)];
       const lastName1 = SPANISH_NAMES.lastNames[Math.floor(Math.random() * SPANISH_NAMES.lastNames.length)];
       const lastName2 = SPANISH_NAMES.lastNames[Math.floor(Math.random() * SPANISH_NAMES.lastNames.length)];
-      const role = USER_ROLES[Math.floor(Math.random() * USER_ROLES.length)];
       
       const email = `${firstName.toLowerCase()}.${lastName1.toLowerCase()}@${store.code.toLowerCase()}.tiendas.com`;
+      
+      // Evitar duplicar el email del usuario por defecto
+      if (email === 'luis@esgranvia.es') {
+        continue;
+      }
       
       users.push({
         email,
         store_id: store.code,
         name: `${firstName} ${lastName1} ${lastName2}`,
-        password_hash: `hash_${nanoid(16)}`, // En producción sería bcrypt
+        password_hash: hashPassword('password123', email),
         is_active: Math.random() > 0.1 // 90% activos
       });
     }

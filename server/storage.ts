@@ -9,7 +9,7 @@ import {
 import { db } from "./db";
 import { eq, gte, desc, sql } from "drizzle-orm";
 import { generateRandomProduct } from "./product-generator.js";
-import { generateCoherentEntities, SPANISH_CITIES, SPANISH_NAMES, STORE_TYPES, PURCHASE_ORDER_STATUSES, DELIVERY_CENTER_TYPES } from './entity-generator';
+import { generateCoherentEntities, hashPassword, SPANISH_CITIES, SPANISH_NAMES, STORE_TYPES, PURCHASE_ORDER_STATUSES, DELIVERY_CENTER_TYPES } from './entity-generator';
 import { nanoid } from 'nanoid';
 
 export interface ProductConnection {
@@ -195,11 +195,6 @@ export class DatabaseStorage implements IStorage {
       .where(eq(products.ean, ean))
       .returning();
     return updated;
-  }
-
-  async deleteProduct(ean: string): Promise<boolean> {
-    await db.delete(products).where(eq(products.ean, ean));
-    return true;
   }
 
   async deleteProduct(ean: string): Promise<boolean> {
@@ -445,11 +440,6 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteDeliveryCenter(code: string): Promise<boolean> {
-    await db.delete(deliveryCenters).where(eq(deliveryCenters.code, code));
-    return true;
-  }
-
-  async deleteDeliveryCenter(code: string): Promise<boolean> {
     const result = await db.delete(deliveryCenters).where(eq(deliveryCenters.code, code));
     return result.rowCount! > 0;
   }
@@ -534,11 +524,6 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteStore(code: string): Promise<boolean> {
-    await db.delete(stores).where(eq(stores.code, code));
-    return true;
-  }
-
-  async deleteStore(code: string): Promise<boolean> {
     const result = await db.delete(stores).where(eq(stores.code, code));
     return result.rowCount! > 0;
   }
@@ -619,11 +604,6 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.email, email))
       .returning();
     return updated;
-  }
-
-  async deleteUser(email: string): Promise<boolean> {
-    await db.delete(users).where(eq(users.email, email));
-    return true;
   }
 
   async deleteUser(email: string): Promise<boolean> {
@@ -1129,6 +1109,25 @@ export class DatabaseStorage implements IStorage {
       const usersToCreate = [];
       let userIndex = 0;
       
+      // Primero agregar el usuario por defecto Luis Romero Pérez si no existe
+      const luisEmail = 'luis@esgranvia.es';
+      if (!existingEmails.has(luisEmail)) {
+        // Buscar tienda ES001 o usar la primera disponible
+        const defaultStore = existingStores.find(s => s.code === 'ES001') || existingStores[0];
+        if (defaultStore) {
+          usersToCreate.push({
+            email: luisEmail,
+            store_id: defaultStore.code,
+            name: 'Luis Romero Pérez',
+            password_hash: hashPassword('password123', luisEmail),
+            is_active: true,
+            created_at: new Date(),
+            updated_at: new Date()
+          });
+          existingEmails.add(luisEmail);
+        }
+      }
+      
       for (const store of existingStores) {
         for (let j = 0; j < usersPerStore; j++) {
           userIndex++;
@@ -1151,7 +1150,7 @@ export class DatabaseStorage implements IStorage {
             email,
             store_id: store.code,
             name: fullName,
-            password_hash: `hashed_password_${userIndex}`,
+            password_hash: hashPassword('password123', email),
             is_active: Math.random() > 0.05, // 95% active
             created_at: new Date(),
             updated_at: new Date()
