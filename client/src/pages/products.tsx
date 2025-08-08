@@ -520,7 +520,7 @@ async function fetchTaxes(): Promise<EntitiesResponse<Tax>> {
 }
 
 // Functions for generating random data
-async function generateRandomProducts(count: number, timestamp?: string): Promise<{ message: string }> {
+async function generateProducts(count: number, timestampOffset?: string): Promise<{ message: string }> {
   const response = await fetch(GRAPHQL_ENDPOINT, {
     method: "POST",
     headers: {
@@ -529,14 +529,14 @@ async function generateRandomProducts(count: number, timestamp?: string): Promis
     },
     body: JSON.stringify({
       query: `
-        mutation GenerateProducts($count: Int!, $timestampOffset: String) {
-          generateProducts(count: $count, timestampOffset: $timestampOffset) {
+        mutation GenerateRandomProducts($count: Int!, $timestampOffset: String) {
+          generateRandomProducts(count: $count, timestampOffset: $timestampOffset) {
             success
             message
           }
         }
       `,
-      variables: { count, timestampOffset: timestamp },
+      variables: { count, timestampOffset },
     }),
   });
 
@@ -550,7 +550,7 @@ async function generateRandomProducts(count: number, timestamp?: string): Promis
     throw new Error(result.errors[0]?.message || "GraphQL error");
   }
 
-  return { message: result.data.generateProducts.message };
+  return { message: result.data.generateRandomProducts.message };
 }
 
 async function generateDeliveryCenters(count: number, clearExisting?: boolean, timestampOffset?: string): Promise<{ success: boolean; message: string }> {
@@ -806,9 +806,9 @@ export default function Products() {
 
   // Mutations for entity generation
   const generateMutation = useMutation({
-    mutationFn: ({ count, timestamp }: { count: number; timestamp?: string }) => 
-      generateRandomProducts(count, timestamp),
-    onSuccess: (result) => {
+    mutationFn: ({ count, timestampOffset }: { count: number; timestampOffset?: string }) => 
+      generateProducts(count, timestampOffset),
+    onSuccess: (result: { message: string }) => {
       toast({
         title: "Productos generados",
         description: result.message,
@@ -954,7 +954,7 @@ export default function Products() {
     try {
       // Step 1: Generate 10,000 products
       toast({ title: "Iniciando generación masiva", description: "Generando 10,000 productos..." });
-      await generateRandomProducts(10000, timestampOffset);
+      await generateProducts(10000, timestampOffset);
       queryClient.invalidateQueries({ queryKey: ["products"] });
 
       // Step 2: Generate 20 delivery centers
@@ -1626,7 +1626,7 @@ export default function Products() {
                   <Button
                     onClick={() => generateMutation.mutate({ 
                       count: productCount, 
-                      timestamp: timestampOffset 
+                      timestampOffset 
                     })}
                     disabled={generateMutation.isPending}
                     data-testid="button-generate-products"
