@@ -882,8 +882,8 @@ async function fetchPurchaseOrderItems(purchaseOrderId: string) {
 
 async function fetchOrderItems(orderId: string) {
   const query = `
-    query GetOrderItems($orderId: String!) {
-      orderItems(orderId: $orderId) {
+    query GetOrderItems($order_id: String!) {
+      orderItems(order_id: $order_id) {
         item_ean
         item_title
         item_description
@@ -906,7 +906,7 @@ async function fetchOrderItems(orderId: string) {
     },
     body: JSON.stringify({ 
       query,
-      variables: { orderId }
+      variables: { order_id: orderId }
     }),
   });
 
@@ -998,11 +998,11 @@ function OrderDetailsContent({ order, orderType }: OrderDetailsContentProps) {
         {orderType === 'purchase' && (
           <div>
             <span className="text-sm text-muted-foreground">Estado:</span>
-            <p>
+            <div>
               <Badge variant={(order as PurchaseOrder).status === 'pending' ? 'secondary' : 'default'}>
                 {(order as PurchaseOrder).status}
               </Badge>
-            </p>
+            </div>
           </div>
         )}
         {orderType === 'order' && (
@@ -1038,13 +1038,13 @@ function OrderDetailsContent({ order, orderType }: OrderDetailsContentProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {orderItems.map((item: OrderItem) => {
+            {orderItems.map((item: OrderItem, index: number) => {
               const lineSubtotal = item.quantity * item.base_price_at_order;
               const lineTax = lineSubtotal * item.tax_rate_at_order;
               const lineTotal = lineSubtotal + lineTax;
               
               return (
-                <TableRow key={item.item_ean}>
+                <TableRow key={`${item.item_ean}-${index}`}>
                   <TableCell className="font-mono">{item.item_ean}</TableCell>
                   <TableCell>
                     <div>
@@ -1662,6 +1662,8 @@ export default function Products() {
                             <TableHead>IVA</TableHead>
                             <TableHead>Precio Final</TableHead>
                             <TableHead>Estado</TableHead>
+                            <TableHead>Creado</TableHead>
+                            <TableHead>Actualizado</TableHead>
                             <TableHead className="w-20">Acciones</TableHead>
                           </TableRow>
                         </TableHeader>
@@ -1698,6 +1700,12 @@ export default function Products() {
                                       {product.is_active ? "Activo" : "Inactivo"}
                                     </Badge>
                                   </Button>
+                                </TableCell>
+                                <TableCell className="text-sm text-muted-foreground">
+                                  {new Date(product.created_at).toLocaleString('es-ES')}
+                                </TableCell>
+                                <TableCell className="text-sm text-muted-foreground">
+                                  {new Date(product.updated_at).toLocaleString('es-ES')}
                                 </TableCell>
                                 <TableCell>
                                   <Button
@@ -1762,6 +1770,8 @@ export default function Products() {
                             <TableHead>Código</TableHead>
                             <TableHead>Nombre</TableHead>
                             <TableHead>Estado</TableHead>
+                            <TableHead>Creado</TableHead>
+                            <TableHead>Actualizado</TableHead>
                             <TableHead className="w-20">Acciones</TableHead>
                           </TableRow>
                         </TableHeader>
@@ -1782,6 +1792,12 @@ export default function Products() {
                                     {(center as any).is_active ? "Activo" : "Inactivo"}
                                   </Badge>
                                 </Button>
+                              </TableCell>
+                              <TableCell className="text-sm text-muted-foreground">
+                                {new Date(center.created_at).toLocaleString('es-ES')}
+                              </TableCell>
+                              <TableCell className="text-sm text-muted-foreground">
+                                {new Date(center.updated_at).toLocaleString('es-ES')}
                               </TableCell>
                               <TableCell>
                                 <Button
@@ -1850,6 +1866,8 @@ export default function Products() {
                           <TableHead>Centro</TableHead>
                           <TableHead>Responsable</TableHead>
                           <TableHead>Estado</TableHead>
+                          <TableHead>Creado</TableHead>
+                          <TableHead>Actualizado</TableHead>
                           <TableHead className="w-20">Acciones</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -1877,6 +1895,12 @@ export default function Products() {
                                   {store.is_active ? "Activa" : "Inactiva"}
                                 </Badge>
                               </Button>
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {new Date(store.created_at).toLocaleString('es-ES')}
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {new Date(store.updated_at).toLocaleString('es-ES')}
                             </TableCell>
                             <TableCell>
                               <Button
@@ -1944,6 +1968,8 @@ export default function Products() {
                             <TableHead>Nombre</TableHead>
                             <TableHead>Tienda</TableHead>
                             <TableHead>Estado</TableHead>
+                            <TableHead>Creado</TableHead>
+                            <TableHead>Actualizado</TableHead>
                             <TableHead className="w-20">Acciones</TableHead>
                           </TableRow>
                         </TableHeader>
@@ -1970,6 +1996,12 @@ export default function Products() {
                                   {user.is_active ? "Activo" : "Inactivo"}
                                 </Badge>
                               </Button>
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {new Date(user.created_at).toLocaleString('es-ES')}
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {new Date(user.updated_at).toLocaleString('es-ES')}
                             </TableCell>
                             <TableCell>
                               <Button
@@ -2038,7 +2070,8 @@ export default function Products() {
                             <TableHead>Tienda</TableHead>
                             <TableHead>Estado</TableHead>
                             <TableHead>Total</TableHead>
-                            <TableHead>Fecha</TableHead>
+                            <TableHead>Creado</TableHead>
+                            <TableHead>Actualizado</TableHead>
                             <TableHead className="w-20">Acciones</TableHead>
                           </TableRow>
                         </TableHeader>
@@ -2060,7 +2093,10 @@ export default function Products() {
                             </TableCell>
                             <TableCell className="font-medium">€{order.final_total.toFixed(2)}</TableCell>
                             <TableCell className="text-sm text-muted-foreground">
-                              {new Date(order.created_at).toLocaleDateString('es-ES')}
+                              {new Date(order.created_at).toLocaleString('es-ES')}
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {new Date(order.updated_at).toLocaleString('es-ES')}
                             </TableCell>
                             <TableCell>
                               <Button
@@ -2134,7 +2170,8 @@ export default function Products() {
                             <TableHead>Subtotal</TableHead>
                             <TableHead>IVA</TableHead>
                             <TableHead>Total</TableHead>
-                            <TableHead>Fecha</TableHead>
+                            <TableHead>Creado</TableHead>
+                            <TableHead>Actualizado</TableHead>
                             <TableHead className="w-20">Acciones</TableHead>
                           </TableRow>
                         </TableHeader>
@@ -2153,7 +2190,10 @@ export default function Products() {
                             <TableCell>€{order.tax_total.toFixed(2)}</TableCell>
                             <TableCell className="font-medium">€{order.final_total.toFixed(2)}</TableCell>
                             <TableCell className="text-sm text-muted-foreground">
-                              {new Date(order.created_at).toLocaleDateString('es-ES')}
+                              {new Date(order.created_at).toLocaleString('es-ES')}
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {new Date(order.updated_at).toLocaleString('es-ES')}
                             </TableCell>
                             <TableCell>
                               <Button
@@ -2224,6 +2264,8 @@ export default function Products() {
                             <TableHead>Código</TableHead>
                             <TableHead>Nombre</TableHead>
                             <TableHead>Tipo IVA</TableHead>
+                            <TableHead>Creado</TableHead>
+                            <TableHead>Actualizado</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -2235,6 +2277,12 @@ export default function Products() {
                                 <Badge variant="outline">
                                   {(tax.tax_rate * 100).toFixed(0)}%
                                 </Badge>
+                              </TableCell>
+                              <TableCell className="text-sm text-muted-foreground">
+                                {new Date(tax.created_at).toLocaleString('es-ES')}
+                              </TableCell>
+                              <TableCell className="text-sm text-muted-foreground">
+                                {new Date(tax.updated_at).toLocaleString('es-ES')}
                               </TableCell>
                             </TableRow>
                           ))}
