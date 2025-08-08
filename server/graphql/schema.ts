@@ -303,23 +303,23 @@ export const typeDefs = `#graphql
     taxes(timestamp: String, limit: Int, offset: Int): TaxConnection!
     tax(code: String!): Tax
     
-    deliveryCenters: [DeliveryCenter!]!
+    deliveryCenters(limit: Int, offset: Int): DeliveryCenterConnection!
     deliveryCenter(code: String!): DeliveryCenter
     
-    stores: [Store!]!
+    stores(limit: Int, offset: Int): StoreConnection!
     store(code: String!): Store
     
-    users: [User!]!
+    users(limit: Int, offset: Int): UserConnection!
     user(email: String!): User
     
-    purchaseOrders: [PurchaseOrder!]!
+    purchaseOrders(limit: Int, offset: Int): PurchaseOrderConnection!
     purchaseOrder(purchase_order_id: String!): PurchaseOrder
     
     purchaseOrderItems(purchase_order_id: String): [PurchaseOrderItem!]!
     orderItems(order_id: String): [OrderItem!]!
     purchaseOrderItem(item_id: Int!): PurchaseOrderItem
     
-    orders: [Order!]!
+    orders(limit: Int, offset: Int): OrderConnection!
     order(order_id: String!): Order
     
     orderItem(item_id: Int!): OrderItem
@@ -329,6 +329,48 @@ export const typeDefs = `#graphql
 
   type ProductConnection {
     products: [Product!]!
+    total: Int!
+    limit: Int!
+    offset: Int!
+  }
+
+  type TaxConnection {
+    taxes: [Tax!]!
+    total: Int!
+    limit: Int!
+    offset: Int!
+  }
+
+  type DeliveryCenterConnection {
+    deliveryCenters: [DeliveryCenter!]!
+    total: Int!
+    limit: Int!
+    offset: Int!
+  }
+
+  type StoreConnection {
+    stores: [Store!]!
+    total: Int!
+    limit: Int!
+    offset: Int!
+  }
+
+  type UserConnection {
+    users: [User!]!
+    total: Int!
+    limit: Int!
+    offset: Int!
+  }
+
+  type PurchaseOrderConnection {
+    purchaseOrders: [PurchaseOrder!]!
+    total: Int!
+    limit: Int!
+    offset: Int!
+  }
+
+  type OrderConnection {
+    orders: [Order!]!
     total: Int!
     limit: Int!
     offset: Int!

@@ -242,15 +242,20 @@ async function fetchProducts(): Promise<ProductsResponse> {
   return fetchProductsPaginated(0, 20);
 }
 
-async function fetchDeliveryCenters(): Promise<EntitiesResponse<DeliveryCenter>> {
+async function fetchDeliveryCentersPaginated(offset: number, limit: number): Promise<EntitiesResponse<DeliveryCenter>> {
   const query = `
-    query GetDeliveryCenters {
-      deliveryCenters {
-        code
-        name
-        is_active
-        created_at
-        updated_at
+    query GetDeliveryCenters($limit: Int, $offset: Int) {
+      deliveryCenters(limit: $limit, offset: $offset) {
+        deliveryCenters {
+          code
+          name
+          is_active
+          created_at
+          updated_at
+        }
+        total
+        limit
+        offset
       }
     }
   `;
@@ -261,7 +266,7 @@ async function fetchDeliveryCenters(): Promise<EntitiesResponse<DeliveryCenter>>
       "Content-Type": "application/json",
       "Apollo-Require-Preflight": "true",
     },
-    body: JSON.stringify({ query }),
+    body: JSON.stringify({ query, variables: { limit, offset } }),
   });
 
   if (!response.ok) {
@@ -274,30 +279,92 @@ async function fetchDeliveryCenters(): Promise<EntitiesResponse<DeliveryCenter>>
     throw new Error(result.errors[0]?.message || "GraphQL error");
   }
 
-  const centers = result.data.deliveryCenters || [];
   return {
-    data: centers,
-    total: centers.length,
-    limit: 100,
-    offset: 0
+    data: result.data.deliveryCenters.deliveryCenters,
+    total: result.data.deliveryCenters.total,
+    limit: result.data.deliveryCenters.limit,
+    offset: result.data.deliveryCenters.offset
+  };
+}
+
+async function fetchDeliveryCenters(): Promise<EntitiesResponse<DeliveryCenter>> {
+  return fetchDeliveryCentersPaginated(0, 20);
+}
+
+async function fetchStoresPaginated(offset: number, limit: number): Promise<EntitiesResponse<Store>> {
+  const query = `
+    query GetStores($limit: Int, $offset: Int) {
+      stores(limit: $limit, offset: $offset) {
+        stores {
+          code
+          name
+          delivery_center_code
+          responsible_email
+          is_active
+          created_at
+          updated_at
+          deliveryCenter {
+            code
+            name
+          }
+        }
+        total
+        limit
+        offset
+      }
+    }
+  `;
+
+  const response = await fetch(GRAPHQL_ENDPOINT, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Apollo-Require-Preflight": "true",
+    },
+    body: JSON.stringify({ query, variables: { limit, offset } }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const result = await response.json();
+  
+  if (result.errors) {
+    throw new Error(result.errors[0]?.message || "GraphQL error");
+  }
+
+  return {
+    data: result.data.stores.stores,
+    total: result.data.stores.total,
+    limit: result.data.stores.limit,
+    offset: result.data.stores.offset
   };
 }
 
 async function fetchStores(): Promise<EntitiesResponse<Store>> {
+  return fetchStoresPaginated(0, 20);
+}
+
+async function fetchUsersPaginated(offset: number, limit: number): Promise<EntitiesResponse<User>> {
   const query = `
-    query GetStores {
-      stores {
-        code
-        name
-        delivery_center_code
-        responsible_email
-        is_active
-        created_at
-        updated_at
-        deliveryCenter {
-          code
+    query GetUsers($limit: Int, $offset: Int) {
+      users(limit: $limit, offset: $offset) {
+        users {
+          email
+          store_id
           name
+          is_active
+          created_at
+          updated_at
+          store {
+            code
+            name
+          }
         }
+        total
+        limit
+        offset
       }
     }
   `;
@@ -308,7 +375,7 @@ async function fetchStores(): Promise<EntitiesResponse<Store>> {
       "Content-Type": "application/json",
       "Apollo-Require-Preflight": "true",
     },
-    body: JSON.stringify({ query }),
+    body: JSON.stringify({ query, variables: { limit, offset } }),
   });
 
   if (!response.ok) {
@@ -321,29 +388,41 @@ async function fetchStores(): Promise<EntitiesResponse<Store>> {
     throw new Error(result.errors[0]?.message || "GraphQL error");
   }
 
-  const stores = result.data.stores || [];
   return {
-    data: stores,
-    total: stores.length,
-    limit: 100,
-    offset: 0
+    data: result.data.users.users,
+    total: result.data.users.total,
+    limit: result.data.users.limit,
+    offset: result.data.users.offset
   };
 }
 
 async function fetchUsers(): Promise<EntitiesResponse<User>> {
+  return fetchUsersPaginated(0, 20);
+}
+
+async function fetchPurchaseOrdersPaginated(offset: number, limit: number): Promise<EntitiesResponse<PurchaseOrder>> {
   const query = `
-    query GetUsers {
-      users {
-        email
-        store_id
-        name
-        is_active
-        created_at
-        updated_at
-        store {
-          code
-          name
+    query GetPurchaseOrders($limit: Int, $offset: Int) {
+      purchaseOrders(limit: $limit, offset: $offset) {
+        purchaseOrders {
+          purchase_order_id
+          user_email
+          store_id
+          status
+          final_total
+          created_at
+          updated_at
+          user {
+            name
+            email
+            store {
+              name
+            }
+          }
         }
+        total
+        limit
+        offset
       }
     }
   `;
@@ -354,7 +433,7 @@ async function fetchUsers(): Promise<EntitiesResponse<User>> {
       "Content-Type": "application/json",
       "Apollo-Require-Preflight": "true",
     },
-    body: JSON.stringify({ query }),
+    body: JSON.stringify({ query, variables: { limit, offset } }),
   });
 
   if (!response.ok) {
@@ -367,33 +446,48 @@ async function fetchUsers(): Promise<EntitiesResponse<User>> {
     throw new Error(result.errors[0]?.message || "GraphQL error");
   }
 
-  const users = result.data.users || [];
   return {
-    data: users,
-    total: users.length,
-    limit: 100,
-    offset: 0
+    data: result.data.purchaseOrders.purchaseOrders,
+    total: result.data.purchaseOrders.total,
+    limit: result.data.purchaseOrders.limit,
+    offset: result.data.purchaseOrders.offset
   };
 }
 
 async function fetchPurchaseOrders(): Promise<EntitiesResponse<PurchaseOrder>> {
+  return fetchPurchaseOrdersPaginated(0, 20);
+}
+
+async function fetchOrdersPaginated(offset: number, limit: number): Promise<EntitiesResponse<Order>> {
   const query = `
-    query GetPurchaseOrders {
-      purchaseOrders {
-        purchase_order_id
-        user_email
-        store_id
-        status
-        final_total
-        created_at
-        updated_at
-        user {
-          name
-          email
-          store {
+    query GetOrders($limit: Int, $offset: Int) {
+      orders(limit: $limit, offset: $offset) {
+        orders {
+          order_id
+          source_purchase_order_id
+          user_email
+          store_id
+          observations
+          subtotal
+          tax_total
+          final_total
+          created_at
+          updated_at
+          user {
             name
+            email
+            store {
+              name
+            }
+          }
+          sourcePurchaseOrder {
+            purchase_order_id
+            status
           }
         }
+        total
+        limit
+        offset
       }
     }
   `;
@@ -404,7 +498,7 @@ async function fetchPurchaseOrders(): Promise<EntitiesResponse<PurchaseOrder>> {
       "Content-Type": "application/json",
       "Apollo-Require-Preflight": "true",
     },
-    body: JSON.stringify({ query }),
+    body: JSON.stringify({ query, variables: { limit, offset } }),
   });
 
   if (!response.ok) {
@@ -417,70 +511,16 @@ async function fetchPurchaseOrders(): Promise<EntitiesResponse<PurchaseOrder>> {
     throw new Error(result.errors[0]?.message || "GraphQL error");
   }
 
-  const orders = result.data.purchaseOrders || [];
   return {
-    data: orders,
-    total: orders.length,
-    limit: 100,
-    offset: 0
+    data: result.data.orders.orders,
+    total: result.data.orders.total,
+    limit: result.data.orders.limit,
+    offset: result.data.orders.offset
   };
 }
 
 async function fetchOrders(): Promise<EntitiesResponse<Order>> {
-  const query = `
-    query GetOrders {
-      orders {
-        order_id
-        source_purchase_order_id
-        user_email
-        store_id
-        observations
-        subtotal
-        tax_total
-        final_total
-        created_at
-        updated_at
-        user {
-          name
-          email
-          store {
-            name
-          }
-        }
-        sourcePurchaseOrder {
-          purchase_order_id
-          status
-        }
-      }
-    }
-  `;
-
-  const response = await fetch(GRAPHQL_ENDPOINT, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Apollo-Require-Preflight": "true",
-    },
-    body: JSON.stringify({ query }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
-  }
-
-  const result = await response.json();
-  
-  if (result.errors) {
-    throw new Error(result.errors[0]?.message || "GraphQL error");
-  }
-
-  const orders = result.data.orders || [];
-  return {
-    data: orders,
-    total: orders.length,
-    limit: 100,
-    offset: 0
-  };
+  return fetchOrdersPaginated(0, 20);
 }
 
 async function fetchTaxes(): Promise<EntitiesResponse<Tax>> {
@@ -1556,27 +1596,27 @@ export default function Products() {
               </TabsTrigger>
               <TabsTrigger value="delivery-centers" className="flex items-center gap-2">
                 <Building2 className="h-4 w-4" />
-                <span>Centros ({centersData?.data?.length || 0})</span>
+                <span>Centros ({centersData?.total || 0})</span>
               </TabsTrigger>
               <TabsTrigger value="stores" className="flex items-center gap-2">
                 <Store className="h-4 w-4" />
-                <span>Tiendas ({storesData?.data?.length || 0})</span>
+                <span>Tiendas ({storesData?.total || 0})</span>
               </TabsTrigger>
               <TabsTrigger value="users" className="flex items-center gap-2">
                 <Users className="h-4 w-4" />
-                <span>Usuarios ({usersData?.data?.length || 0})</span>
+                <span>Usuarios ({usersData?.total || 0})</span>
               </TabsTrigger>
               <TabsTrigger value="purchase-orders" className="flex items-center gap-2">
                 <FileText className="h-4 w-4" />
-                <span>Órdenes Compra ({purchaseOrdersData?.data?.length || 0})</span>
+                <span>Órdenes Compra ({purchaseOrdersData?.total || 0})</span>
               </TabsTrigger>
               <TabsTrigger value="orders" className="flex items-center gap-2">
                 <FileText className="h-4 w-4" />
-                <span>Pedidos ({ordersData?.data?.length || 0})</span>
+                <span>Pedidos ({ordersData?.total || 0})</span>
               </TabsTrigger>
               <TabsTrigger value="taxes" className="flex items-center gap-2">
                 <Receipt className="h-4 w-4" />
-                <span>Impuestos ({taxesData?.data?.length || 0})</span>
+                <span>Impuestos ({taxesData?.total || 0})</span>
               </TabsTrigger>
             </TabsList>
 

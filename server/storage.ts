@@ -4,7 +4,9 @@ import {
   type DeliveryCenter, type InsertDeliveryCenter, type Store, type InsertStore,
   type User, type InsertUser, type PurchaseOrder, type InsertPurchaseOrder,
   type PurchaseOrderItem, type InsertPurchaseOrderItem, type Order, type InsertOrder,
-  type OrderItem, type InsertOrderItem
+  type OrderItem, type InsertOrderItem, type ProductConnection, type TaxConnection,
+  type DeliveryCenterConnection, type StoreConnection, type UserConnection,
+  type PurchaseOrderConnection, type OrderConnection
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, gte, desc, sql } from "drizzle-orm";
@@ -12,19 +14,7 @@ import { generateRandomProduct } from "./product-generator.js";
 import { generateCoherentEntities, hashPassword, SPANISH_CITIES, SPANISH_NAMES, STORE_TYPES, PURCHASE_ORDER_STATUSES, DELIVERY_CENTER_TYPES } from './entity-generator';
 import { nanoid } from 'nanoid';
 
-export interface ProductConnection {
-  products: Product[];
-  total: number;
-  limit: number;
-  offset: number;
-}
 
-export interface TaxConnection {
-  taxes: Tax[];
-  total: number;
-  limit: number;
-  offset: number;
-}
 
 export interface DeleteAllResult {
   success: boolean;
@@ -64,31 +54,34 @@ export interface IStorage {
   }>;
 
   // Delivery Centers methods
-  getDeliveryCenters(): Promise<DeliveryCenter[]>;
+  getDeliveryCenters(limit?: number, offset?: number): Promise<DeliveryCenterConnection>;
   getDeliveryCenter(code: string): Promise<DeliveryCenter | undefined>;
   createDeliveryCenter(deliveryCenter: InsertDeliveryCenter): Promise<DeliveryCenter>;
   updateDeliveryCenter(code: string, deliveryCenter: Partial<InsertDeliveryCenter>): Promise<DeliveryCenter>;
   deleteDeliveryCenter(code: string): Promise<boolean>;
   deleteAllDeliveryCenters(): Promise<DeleteAllResult>;
+  toggleDeliveryCenterStatus(code: string): Promise<DeliveryCenter>;
 
   // Stores methods
-  getStores(): Promise<Store[]>;
+  getStores(limit?: number, offset?: number): Promise<StoreConnection>;
   getStore(code: string): Promise<Store | undefined>;
   createStore(store: InsertStore): Promise<Store>;
   updateStore(code: string, store: Partial<InsertStore>): Promise<Store>;
   deleteStore(code: string): Promise<boolean>;
   deleteAllStores(): Promise<DeleteAllResult>;
+  toggleStoreStatus(code: string): Promise<Store>;
 
   // Users methods
-  getUsers(): Promise<User[]>;
+  getUsers(limit?: number, offset?: number): Promise<UserConnection>;
   getUser(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(email: string, user: Partial<InsertUser>): Promise<User>;
   deleteUser(email: string): Promise<boolean>;
   deleteAllUsers(): Promise<DeleteAllResult>;
+  toggleUserStatus(email: string): Promise<User>;
 
   // Purchase Orders methods
-  getPurchaseOrders(): Promise<PurchaseOrder[]>;
+  getPurchaseOrders(limit?: number, offset?: number): Promise<PurchaseOrderConnection>;
   getPurchaseOrder(purchase_order_id: string): Promise<PurchaseOrder | undefined>;
   createPurchaseOrder(order: InsertPurchaseOrder): Promise<PurchaseOrder>;
   updatePurchaseOrder(purchase_order_id: string, order: Partial<InsertPurchaseOrder>): Promise<PurchaseOrder>;
@@ -104,7 +97,7 @@ export interface IStorage {
   deleteAllPurchaseOrderItems(): Promise<DeleteAllResult>;
 
   // Orders methods
-  getOrders(): Promise<Order[]>;
+  getOrders(limit?: number, offset?: number): Promise<OrderConnection>;
   getOrder(order_id: string): Promise<Order | undefined>;
   createOrder(order: InsertOrder): Promise<Order>;
   updateOrder(order_id: string, order: Partial<InsertOrder>): Promise<Order>;
@@ -144,7 +137,7 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(products)
       .where(whereClause || sql`TRUE`)
-      .orderBy(desc(products.updated_at))
+      .orderBy(products.ean)
       .limit(limit)
       .offset(offset);
 
@@ -412,8 +405,28 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Delivery Centers CRUD
-  async getDeliveryCenters(): Promise<DeliveryCenter[]> {
-    return await db.select().from(deliveryCenters).orderBy(deliveryCenters.code);
+  async getDeliveryCenters(limit: number = 100, offset: number = 0): Promise<DeliveryCenterConnection> {
+    try {
+      const totalQuery = await db.select({ count: sql<number>`cast(count(*) as integer)` }).from(deliveryCenters);
+      const total = totalQuery[0]?.count || 0;
+
+      const deliveryCentersList = await db
+        .select()
+        .from(deliveryCenters)
+        .limit(limit)
+        .offset(offset)
+        .orderBy(deliveryCenters.code);
+
+      return {
+        deliveryCenters: deliveryCentersList,
+        total,
+        limit,
+        offset
+      };
+    } catch (error) {
+      console.error("Error fetching delivery centers:", error);
+      throw new Error("Failed to fetch delivery centers");
+    }
   }
 
   async getDeliveryCenter(code: string): Promise<DeliveryCenter | undefined> {
@@ -496,8 +509,28 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Stores CRUD
-  async getStores(): Promise<Store[]> {
-    return await db.select().from(stores).orderBy(stores.code);
+  async getStores(limit: number = 100, offset: number = 0): Promise<StoreConnection> {
+    try {
+      const totalQuery = await db.select({ count: sql<number>`cast(count(*) as integer)` }).from(stores);
+      const total = totalQuery[0]?.count || 0;
+
+      const storesList = await db
+        .select()
+        .from(stores)
+        .limit(limit)
+        .offset(offset)
+        .orderBy(stores.code);
+
+      return {
+        stores: storesList,
+        total,
+        limit,
+        offset
+      };
+    } catch (error) {
+      console.error("Error fetching stores:", error);
+      throw new Error("Failed to fetch stores");
+    }
   }
 
   async getStore(code: string): Promise<Store | undefined> {
@@ -578,9 +611,47 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  async toggleStoreStatus(code: string): Promise<Store> {
+    // Get current status
+    const currentStore = await db.select().from(stores).where(eq(stores.code, code)).limit(1);
+    if (!currentStore.length) {
+      throw new Error('Store not found');
+    }
+    
+    const [updated] = await db
+      .update(stores)
+      .set({
+        is_active: !currentStore[0].is_active,
+        updated_at: new Date(),
+      })
+      .where(eq(stores.code, code))
+      .returning();
+    return updated;
+  }
+
   // Users CRUD
-  async getUsers(): Promise<User[]> {
-    return await db.select().from(users).orderBy(users.email);
+  async getUsers(limit: number = 100, offset: number = 0): Promise<UserConnection> {
+    try {
+      const totalQuery = await db.select({ count: sql<number>`cast(count(*) as integer)` }).from(users);
+      const total = totalQuery[0]?.count || 0;
+
+      const usersList = await db
+        .select()
+        .from(users)
+        .limit(limit)
+        .offset(offset)
+        .orderBy(users.email);
+
+      return {
+        users: usersList,
+        total,
+        limit,
+        offset
+      };
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      throw new Error("Failed to fetch users");
+    }
   }
 
   async getUser(email: string): Promise<User | undefined> {
@@ -661,8 +732,28 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Purchase Orders CRUD
-  async getPurchaseOrders(): Promise<PurchaseOrder[]> {
-    return await db.select().from(purchaseOrders).orderBy(desc(purchaseOrders.updated_at));
+  async getPurchaseOrders(limit: number = 100, offset: number = 0): Promise<PurchaseOrderConnection> {
+    try {
+      const totalQuery = await db.select({ count: sql<number>`cast(count(*) as integer)` }).from(purchaseOrders);
+      const total = totalQuery[0]?.count || 0;
+
+      const purchaseOrdersList = await db
+        .select()
+        .from(purchaseOrders)
+        .limit(limit)
+        .offset(offset)
+        .orderBy(purchaseOrders.purchase_order_id);
+
+      return {
+        purchaseOrders: purchaseOrdersList,
+        total,
+        limit,
+        offset
+      };
+    } catch (error) {
+      console.error("Error fetching purchase orders:", error);
+      throw new Error("Failed to fetch purchase orders");
+    }
   }
 
   async getPurchaseOrder(purchase_order_id: string): Promise<PurchaseOrder | undefined> {
@@ -791,8 +882,28 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Orders CRUD
-  async getOrders(): Promise<Order[]> {
-    return await db.select().from(orders).orderBy(desc(orders.updated_at));
+  async getOrders(limit: number = 100, offset: number = 0): Promise<OrderConnection> {
+    try {
+      const totalQuery = await db.select({ count: sql<number>`cast(count(*) as integer)` }).from(orders);
+      const total = totalQuery[0]?.count || 0;
+
+      const ordersList = await db
+        .select()
+        .from(orders)
+        .limit(limit)
+        .offset(offset)
+        .orderBy(orders.order_id);
+
+      return {
+        orders: ordersList,
+        total,
+        limit,
+        offset
+      };
+    } catch (error) {
+      console.error("Error fetching orders:", error);
+      throw new Error("Failed to fetch orders");
+    }
   }
 
   async getOrder(order_id: string): Promise<Order | undefined> {

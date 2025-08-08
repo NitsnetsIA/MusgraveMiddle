@@ -267,3 +267,53 @@ export type InsertOrder = z.infer<typeof insertOrderSchema>;
 export type Order = typeof orders.$inferSelect;
 export type InsertOrderItem = z.infer<typeof insertOrderItemSchema>;
 export type OrderItem = typeof orderItems.$inferSelect;
+
+// Connection types for pagination
+export type ProductConnection = {
+  products: Product[];
+  total: number;
+  limit: number;
+  offset: number;
+};
+
+export type TaxConnection = {
+  taxes: Tax[];
+  total: number;
+  limit: number;
+  offset: number;
+};
+
+export type DeliveryCenterConnection = {
+  deliveryCenters: DeliveryCenter[];
+  total: number;
+  limit: number;
+  offset: number;
+};
+
+export type StoreConnection = {
+  stores: Store[];
+  total: number;
+  limit: number;
+  offset: number;
+};
+
+export type UserConnection = {
+  users: User[];
+  total: number;
+  limit: number;
+  offset: number;
+};
+
+export type PurchaseOrderConnection = {
+  purchaseOrders: PurchaseOrder[];
+  total: number;
+  limit: number;
+  offset: number;
+};
+
+export type OrderConnection = {
+  orders: Order[];
+  total: number;
+  limit: number;
+  offset: number;
+};

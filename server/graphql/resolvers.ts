@@ -25,8 +25,8 @@ export const resolvers = {
     },
 
     // Delivery Centers queries
-    deliveryCenters: async () => {
-      return await storage.getDeliveryCenters();
+    deliveryCenters: async (_: any, { limit = 100, offset = 0 }: { limit?: number; offset?: number }) => {
+      return await storage.getDeliveryCenters(limit, offset);
     },
     
     deliveryCenter: async (_: any, { code }: { code: string }) => {
@@ -34,8 +34,8 @@ export const resolvers = {
     },
 
     // Stores queries
-    stores: async () => {
-      return await storage.getStores();
+    stores: async (_: any, { limit = 100, offset = 0 }: { limit?: number; offset?: number }) => {
+      return await storage.getStores(limit, offset);
     },
     
     store: async (_: any, { code }: { code: string }) => {
@@ -43,8 +43,8 @@ export const resolvers = {
     },
 
     // Users queries
-    users: async () => {
-      return await storage.getUsers();
+    users: async (_: any, { limit = 100, offset = 0 }: { limit?: number; offset?: number }) => {
+      return await storage.getUsers(limit, offset);
     },
     
     user: async (_: any, { email }: { email: string }) => {
@@ -52,8 +52,8 @@ export const resolvers = {
     },
 
     // Purchase Orders queries
-    purchaseOrders: async () => {
-      return await storage.getPurchaseOrders();
+    purchaseOrders: async (_: any, { limit = 100, offset = 0 }: { limit?: number; offset?: number }) => {
+      return await storage.getPurchaseOrders(limit, offset);
     },
     
     purchaseOrder: async (_: any, { purchase_order_id }: { purchase_order_id: string }) => {
@@ -81,8 +81,8 @@ export const resolvers = {
     },
 
     // Orders queries
-    orders: async () => {
-      return await storage.getOrders();
+    orders: async (_: any, { limit = 100, offset = 0 }: { limit?: number; offset?: number }) => {
+      return await storage.getOrders(limit, offset);
     },
     
     order: async (_: any, { order_id }: { order_id: string }) => {
