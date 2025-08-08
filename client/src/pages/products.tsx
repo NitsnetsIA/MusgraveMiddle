@@ -520,7 +520,7 @@ async function fetchTaxes(): Promise<EntitiesResponse<Tax>> {
 }
 
 // Functions for generating random data
-async function generateProducts(count: number, timestampOffset?: string): Promise<{ message: string }> {
+async function generateProducts(count: number, timestampOffset?: string): Promise<{ success: boolean; message: string }> {
   const response = await fetch(GRAPHQL_ENDPOINT, {
     method: "POST",
     headers: {
@@ -550,7 +550,7 @@ async function generateProducts(count: number, timestampOffset?: string): Promis
     throw new Error(result.errors[0]?.message || "GraphQL error");
   }
 
-  return { message: result.data.generateRandomProducts.message };
+  return result.data.generateRandomProducts;
 }
 
 async function generateDeliveryCenters(count: number, clearExisting?: boolean, timestampOffset?: string): Promise<{ success: boolean; message: string }> {
@@ -841,10 +841,11 @@ export default function Products() {
   const generateMutation = useMutation({
     mutationFn: ({ count, timestampOffset }: { count: number; timestampOffset?: string }) => 
       generateProducts(count, timestampOffset),
-    onSuccess: (result: { message: string }) => {
+    onSuccess: (result) => {
       toast({
-        title: "Productos generados",
+        title: result.success ? "Productos creados" : "Error",
         description: result.message,
+        variant: result.success ? "default" : "destructive",
       });
       queryClient.invalidateQueries({ queryKey: ["products"] });
     },
@@ -1012,7 +1013,10 @@ export default function Products() {
 
       // Step 2: Generate 10,000 products
       toast({ title: "Paso 2/7", description: "Generando 10,000 productos..." });
-      await generateProducts(10000, timestampOffset);
+      const productsResult = await generateProducts(10000, timestampOffset);
+      if (!productsResult.success) {
+        throw new Error(productsResult.message);
+      }
       queryClient.invalidateQueries({ queryKey: ["products"] });
 
       // Step 3: Generate 20 delivery centers
