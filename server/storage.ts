@@ -1030,6 +1030,23 @@ export class DatabaseStorage implements IStorage {
       const storesToCreate = [];
       let storeIndex = 1;
 
+      // Primero crear la tienda ES001 para el usuario por defecto si no existe
+      if (!existingStoreCodes.has('ES001')) {
+        const firstCenter = existingDeliveryCenters[0];
+        if (firstCenter) {
+          storesToCreate.push({
+            code: 'ES001',
+            name: 'Supermercado Madrid Centro',
+            delivery_center_code: firstCenter.code,
+            responsible_email: 'luis@esgranvia.es',
+            is_active: true,
+            created_at: new Date(),
+            updated_at: new Date()
+          });
+          existingStoreCodes.add('ES001'); // Add to set to avoid conflicts
+        }
+      }
+
       // Find the next available store index
       while (existingStoreCodes.has(`ST${storeIndex.toString().padStart(3, '0')}`)) {
         storeIndex++;

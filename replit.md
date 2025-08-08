@@ -14,6 +14,10 @@ This is a headless GraphQL microservice for managing grocery products and Spanis
 - **Created individual entity generation methods with dependency validation**
 - **Added Spanish-contextualized entity generation with coherent relationships**
 - **Implemented granular control for generating specific entity types**
+- **Added eye button functionality for viewing order details in both purchase orders and processed orders**
+- **Implemented SHA3 password hashing with individual email as salt for enhanced security**
+- **Enforced default user Luis Romero Pérez (luis@esgranvia.es) with store ES001 and password 'password123'**
+- **Guaranteed ES001 store creation as first store for default user assignment**
 
 ## User Preferences
 
@@ -41,14 +45,15 @@ Preferred communication style: Simple, everyday language.
 - **Products table**: Stores grocery items with EAN codes, pricing, descriptions, and tax associations
 - **Taxes table**: Manages Spanish VAT tax rates (General, Reducido, Superreducido, Alimentación, Exento)
 - **Delivery Centers table**: Manages distribution centers for order fulfillment
-- **Stores table**: Individual store locations linked to delivery centers
-- **Users table**: Store personnel with authentication and role management
+- **Stores table**: Individual store locations linked to delivery centers, ES001 guaranteed as first store
+- **Users table**: Store personnel with SHA3 authentication using email as salt, Luis Romero Pérez as default user
 - **Purchase Orders table**: Customer orders before processing and confirmation
 - **Purchase Order Items table**: Individual line items within purchase orders
 - **Orders table**: Final processed orders derived from purchase orders
 - **Order Items table**: Line items for final processed orders
 - **Foreign key relationships**: Complete referential integrity across all entities
 - **Timestamps**: Automatic created_at and updated_at tracking for all entities
+- **Security**: SHA3-256 password hashing with individual email salt for each user
 
 ### API Architecture
 - **GraphQL schema** with queries for products and taxes, including timestamp-based filtering
