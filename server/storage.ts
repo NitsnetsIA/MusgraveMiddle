@@ -54,7 +54,7 @@ export interface IStorage {
   }>;
 
   // Delivery Centers methods
-  getDeliveryCenters(limit?: number, offset?: number): Promise<DeliveryCenterConnection>;
+  getDeliveryCenters(timestamp?: string, limit?: number, offset?: number): Promise<DeliveryCenterConnection>;
   getDeliveryCenter(code: string): Promise<DeliveryCenter | undefined>;
   createDeliveryCenter(deliveryCenter: InsertDeliveryCenter): Promise<DeliveryCenter>;
   updateDeliveryCenter(code: string, deliveryCenter: Partial<InsertDeliveryCenter>): Promise<DeliveryCenter>;
@@ -63,7 +63,7 @@ export interface IStorage {
   toggleDeliveryCenterStatus(code: string): Promise<DeliveryCenter>;
 
   // Stores methods
-  getStores(limit?: number, offset?: number): Promise<StoreConnection>;
+  getStores(timestamp?: string, limit?: number, offset?: number): Promise<StoreConnection>;
   getStore(code: string): Promise<Store | undefined>;
   createStore(store: InsertStore): Promise<Store>;
   updateStore(code: string, store: Partial<InsertStore>): Promise<Store>;
@@ -72,7 +72,7 @@ export interface IStorage {
   toggleStoreStatus(code: string): Promise<Store>;
 
   // Users methods
-  getUsers(limit?: number, offset?: number): Promise<UserConnection>;
+  getUsers(timestamp?: string, limit?: number, offset?: number): Promise<UserConnection>;
   getUser(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(email: string, user: Partial<InsertUser>): Promise<User>;
@@ -81,7 +81,7 @@ export interface IStorage {
   toggleUserStatus(email: string): Promise<User>;
 
   // Purchase Orders methods
-  getPurchaseOrders(limit?: number, offset?: number): Promise<PurchaseOrderConnection>;
+  getPurchaseOrders(timestamp?: string, limit?: number, offset?: number): Promise<PurchaseOrderConnection>;
   getPurchaseOrder(purchase_order_id: string): Promise<PurchaseOrder | undefined>;
   createPurchaseOrder(order: InsertPurchaseOrder): Promise<PurchaseOrder>;
   updatePurchaseOrder(purchase_order_id: string, order: Partial<InsertPurchaseOrder>): Promise<PurchaseOrder>;
@@ -97,7 +97,7 @@ export interface IStorage {
   deleteAllPurchaseOrderItems(): Promise<DeleteAllResult>;
 
   // Orders methods
-  getOrders(limit?: number, offset?: number): Promise<OrderConnection>;
+  getOrders(timestamp?: string, limit?: number, offset?: number): Promise<OrderConnection>;
   getOrder(order_id: string): Promise<Order | undefined>;
   createOrder(order: InsertOrder): Promise<Order>;
   updateOrder(order_id: string, order: Partial<InsertOrder>): Promise<Order>;
@@ -405,14 +405,21 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Delivery Centers CRUD
-  async getDeliveryCenters(limit: number = 100, offset: number = 0): Promise<DeliveryCenterConnection> {
+  async getDeliveryCenters(timestamp?: string, limit: number = 100, offset: number = 0): Promise<DeliveryCenterConnection> {
     try {
-      const totalQuery = await db.select({ count: sql<number>`cast(count(*) as integer)` }).from(deliveryCenters);
-      const total = totalQuery[0]?.count || 0;
+      let totalQuery = db.select({ count: sql<number>`cast(count(*) as integer)` }).from(deliveryCenters);
+      let query = db.select().from(deliveryCenters);
 
-      const deliveryCentersList = await db
-        .select()
-        .from(deliveryCenters)
+      if (timestamp) {
+        const timestampDate = new Date(timestamp);
+        totalQuery = totalQuery.where(sql`${deliveryCenters.created_at} >= ${timestampDate} OR ${deliveryCenters.updated_at} >= ${timestampDate}`);
+        query = query.where(sql`${deliveryCenters.created_at} >= ${timestampDate} OR ${deliveryCenters.updated_at} >= ${timestampDate}`);
+      }
+
+      const totalResult = await totalQuery;
+      const total = totalResult[0]?.count || 0;
+
+      const deliveryCentersList = await query
         .limit(limit)
         .offset(offset)
         .orderBy(deliveryCenters.code);
@@ -509,14 +516,21 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Stores CRUD
-  async getStores(limit: number = 100, offset: number = 0): Promise<StoreConnection> {
+  async getStores(timestamp?: string, limit: number = 100, offset: number = 0): Promise<StoreConnection> {
     try {
-      const totalQuery = await db.select({ count: sql<number>`cast(count(*) as integer)` }).from(stores);
-      const total = totalQuery[0]?.count || 0;
+      let totalQuery = db.select({ count: sql<number>`cast(count(*) as integer)` }).from(stores);
+      let query = db.select().from(stores);
 
-      const storesList = await db
-        .select()
-        .from(stores)
+      if (timestamp) {
+        const timestampDate = new Date(timestamp);
+        totalQuery = totalQuery.where(sql`${stores.created_at} >= ${timestampDate} OR ${stores.updated_at} >= ${timestampDate}`);
+        query = query.where(sql`${stores.created_at} >= ${timestampDate} OR ${stores.updated_at} >= ${timestampDate}`);
+      }
+
+      const totalResult = await totalQuery;
+      const total = totalResult[0]?.count || 0;
+
+      const storesList = await query
         .limit(limit)
         .offset(offset)
         .orderBy(stores.code);
@@ -630,14 +644,21 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Users CRUD
-  async getUsers(limit: number = 100, offset: number = 0): Promise<UserConnection> {
+  async getUsers(timestamp?: string, limit: number = 100, offset: number = 0): Promise<UserConnection> {
     try {
-      const totalQuery = await db.select({ count: sql<number>`cast(count(*) as integer)` }).from(users);
-      const total = totalQuery[0]?.count || 0;
+      let totalQuery = db.select({ count: sql<number>`cast(count(*) as integer)` }).from(users);
+      let query = db.select().from(users);
 
-      const usersList = await db
-        .select()
-        .from(users)
+      if (timestamp) {
+        const timestampDate = new Date(timestamp);
+        totalQuery = totalQuery.where(sql`${users.created_at} >= ${timestampDate} OR ${users.updated_at} >= ${timestampDate}`);
+        query = query.where(sql`${users.created_at} >= ${timestampDate} OR ${users.updated_at} >= ${timestampDate}`);
+      }
+
+      const totalResult = await totalQuery;
+      const total = totalResult[0]?.count || 0;
+
+      const usersList = await query
         .limit(limit)
         .offset(offset)
         .orderBy(users.email);
@@ -732,14 +753,21 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Purchase Orders CRUD
-  async getPurchaseOrders(limit: number = 100, offset: number = 0): Promise<PurchaseOrderConnection> {
+  async getPurchaseOrders(timestamp?: string, limit: number = 100, offset: number = 0): Promise<PurchaseOrderConnection> {
     try {
-      const totalQuery = await db.select({ count: sql<number>`cast(count(*) as integer)` }).from(purchaseOrders);
-      const total = totalQuery[0]?.count || 0;
+      let totalQuery = db.select({ count: sql<number>`cast(count(*) as integer)` }).from(purchaseOrders);
+      let query = db.select().from(purchaseOrders);
 
-      const purchaseOrdersList = await db
-        .select()
-        .from(purchaseOrders)
+      if (timestamp) {
+        const timestampDate = new Date(timestamp);
+        totalQuery = totalQuery.where(sql`${purchaseOrders.created_at} >= ${timestampDate} OR ${purchaseOrders.updated_at} >= ${timestampDate}`);
+        query = query.where(sql`${purchaseOrders.created_at} >= ${timestampDate} OR ${purchaseOrders.updated_at} >= ${timestampDate}`);
+      }
+
+      const totalResult = await totalQuery;
+      const total = totalResult[0]?.count || 0;
+
+      const purchaseOrdersList = await query
         .limit(limit)
         .offset(offset)
         .orderBy(purchaseOrders.purchase_order_id);
@@ -895,14 +923,21 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Orders CRUD
-  async getOrders(limit: number = 100, offset: number = 0): Promise<OrderConnection> {
+  async getOrders(timestamp?: string, limit: number = 100, offset: number = 0): Promise<OrderConnection> {
     try {
-      const totalQuery = await db.select({ count: sql<number>`cast(count(*) as integer)` }).from(orders);
-      const total = totalQuery[0]?.count || 0;
+      let totalQuery = db.select({ count: sql<number>`cast(count(*) as integer)` }).from(orders);
+      let query = db.select().from(orders);
 
-      const ordersList = await db
-        .select()
-        .from(orders)
+      if (timestamp) {
+        const timestampDate = new Date(timestamp);
+        totalQuery = totalQuery.where(sql`${orders.created_at} >= ${timestampDate} OR ${orders.updated_at} >= ${timestampDate}`);
+        query = query.where(sql`${orders.created_at} >= ${timestampDate} OR ${orders.updated_at} >= ${timestampDate}`);
+      }
+
+      const totalResult = await totalQuery;
+      const total = totalResult[0]?.count || 0;
+
+      const ordersList = await query
         .limit(limit)
         .offset(offset)
         .orderBy(orders.order_id);

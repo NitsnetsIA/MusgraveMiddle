@@ -303,23 +303,23 @@ export const typeDefs = `#graphql
     taxes(timestamp: String, limit: Int, offset: Int): TaxConnection!
     tax(code: String!): Tax
     
-    deliveryCenters(limit: Int, offset: Int): DeliveryCenterConnection!
+    deliveryCenters(timestamp: String, limit: Int, offset: Int): DeliveryCenterConnection!
     deliveryCenter(code: String!): DeliveryCenter
     
-    stores(limit: Int, offset: Int): StoreConnection!
+    stores(timestamp: String, limit: Int, offset: Int): StoreConnection!
     store(code: String!): Store
     
-    users(limit: Int, offset: Int): UserConnection!
+    users(timestamp: String, limit: Int, offset: Int): UserConnection!
     user(email: String!): User
     
-    purchaseOrders(limit: Int, offset: Int): PurchaseOrderConnection!
+    purchaseOrders(timestamp: String, limit: Int, offset: Int): PurchaseOrderConnection!
     purchaseOrder(purchase_order_id: String!): PurchaseOrder
     
     purchaseOrderItems(purchase_order_id: String): [PurchaseOrderItem!]!
     orderItems(order_id: String): [OrderItem!]!
     purchaseOrderItem(item_id: Int!): PurchaseOrderItem
     
-    orders(limit: Int, offset: Int): OrderConnection!
+    orders(timestamp: String, limit: Int, offset: Int): OrderConnection!
     order(order_id: String!): Order
     
     orderItem(item_id: Int!): OrderItem
