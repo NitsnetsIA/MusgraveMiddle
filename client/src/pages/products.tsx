@@ -1005,39 +1005,44 @@ export default function Products() {
     setIsGeneratingBulkData(true);
     
     try {
-      // Step 1: Generate 10,000 products
-      toast({ title: "Iniciando generación masiva", description: "Generando 10,000 productos..." });
+      // Step 1: Generate Spanish IVA taxes first
+      toast({ title: "Iniciando generación masiva", description: "Generando impuestos IVA españoles..." });
+      await generateTaxes(true, timestampOffset);
+      queryClient.invalidateQueries({ queryKey: ["taxes"] });
+
+      // Step 2: Generate 10,000 products
+      toast({ title: "Paso 2/7", description: "Generando 10,000 productos..." });
       await generateProducts(10000, timestampOffset);
       queryClient.invalidateQueries({ queryKey: ["products"] });
 
-      // Step 2: Generate 20 delivery centers
-      toast({ title: "Paso 2/6", description: "Generando 20 centros de distribución..." });
+      // Step 3: Generate 20 delivery centers
+      toast({ title: "Paso 3/7", description: "Generando 20 centros de distribución..." });
       await generateDeliveryCenters(20, true, timestampOffset);
       queryClient.invalidateQueries({ queryKey: ["delivery-centers"] });
 
-      // Step 3: Generate stores (2 per center = 40 stores)
-      toast({ title: "Paso 3/6", description: "Generando tiendas..." });
+      // Step 4: Generate stores (2 per center = 40 stores)
+      toast({ title: "Paso 4/7", description: "Generando tiendas..." });
       await generateStores(2, true, timestampOffset);
       queryClient.invalidateQueries({ queryKey: ["stores"] });
 
-      // Step 4: Generate users (2 per store = 80 users)
-      toast({ title: "Paso 4/6", description: "Generando usuarios..." });
+      // Step 5: Generate users (2 per store = 80 users)
+      toast({ title: "Paso 5/7", description: "Generando usuarios..." });
       await generateUsers(2, true, timestampOffset);
       queryClient.invalidateQueries({ queryKey: ["users"] });
 
-      // Step 5: Generate 1000 purchase orders
-      toast({ title: "Paso 5/6", description: "Generando 1,000 órdenes de compra..." });
+      // Step 6: Generate 1000 purchase orders
+      toast({ title: "Paso 6/7", description: "Generando 1,000 órdenes de compra..." });
       await generatePurchaseOrders(1000, true, timestampOffset);
       queryClient.invalidateQueries({ queryKey: ["purchase-orders"] });
 
-      // Step 6: Generate 1000 orders
-      toast({ title: "Paso 6/6", description: "Generando 1,000 pedidos..." });
+      // Step 7: Generate 1000 orders
+      toast({ title: "Paso 7/7", description: "Generando 1,000 pedidos..." });
       await generateOrders(1000, true, timestampOffset);
       queryClient.invalidateQueries({ queryKey: ["orders"] });
 
       toast({
         title: "¡Datos completos generados!",
-        description: "Se han creado 10,000 productos, 20 centros, 40 tiendas, 80 usuarios, 1,000 órdenes de compra y 1,000 pedidos.",
+        description: "Se han creado 4 impuestos IVA, 10,000 productos, 20 centros, 40 tiendas, 80 usuarios, 1,000 órdenes de compra y 1,000 pedidos.",
       });
 
     } catch (error) {
@@ -1665,7 +1670,6 @@ export default function Products() {
                   onClick={() => generateTaxesMutation.mutate({ timestampOffset })}
                   disabled={generateTaxesMutation.isPending}
                   data-testid="button-generate-taxes"
-                  className="w-full"
                 >
                   {generateTaxesMutation.isPending ? (
                     <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
