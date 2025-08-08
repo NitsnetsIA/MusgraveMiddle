@@ -1034,19 +1034,19 @@ export default function Products() {
       await generateUsers(2, true, timestampOffset);
       queryClient.invalidateQueries({ queryKey: ["users"] });
 
-      // Step 6: Generate 1000 purchase orders
-      toast({ title: "Paso 6/7", description: "Generando 1,000 órdenes de compra..." });
-      await generatePurchaseOrders(1000, true, timestampOffset);
+      // Step 6: Generate 100 purchase orders
+      toast({ title: "Paso 6/7", description: "Generando 100 órdenes de compra..." });
+      await generatePurchaseOrders(100, true, timestampOffset);
       queryClient.invalidateQueries({ queryKey: ["purchase-orders"] });
 
-      // Step 7: Generate 1000 orders
-      toast({ title: "Paso 7/7", description: "Generando 1,000 pedidos..." });
-      await generateOrders(1000, true, timestampOffset);
+      // Step 7: Generate 100 orders
+      toast({ title: "Paso 7/7", description: "Generando 100 pedidos..." });
+      await generateOrders(100, true, timestampOffset);
       queryClient.invalidateQueries({ queryKey: ["orders"] });
 
       toast({
         title: "¡Datos completos generados!",
-        description: "Se han creado 4 impuestos IVA, 1,000 productos, 20 centros, 40 tiendas, 80 usuarios, 1,000 órdenes de compra y 1,000 pedidos.",
+        description: "Se han creado 4 impuestos IVA, 1,000 productos, 20 centros, 40 tiendas, 80 usuarios, 100 órdenes de compra y 100 pedidos.",
       });
 
     } catch (error) {
@@ -1565,7 +1565,7 @@ export default function Products() {
                   Generación Masiva de Datos
                 </CardTitle>
                 <CardDescription>
-                  Genera un conjunto completo de datos de prueba: 10,000 productos, 20 centros de distribución, 40 tiendas, 80 usuarios, 1,000 órdenes de compra y 1,000 pedidos
+                  Genera un conjunto completo de datos de prueba: 4 impuestos IVA, 1,000 productos, 20 centros de distribución, 40 tiendas, 80 usuarios, 100 órdenes de compra y 100 pedidos
                 </CardDescription>
               </CardHeader>
               <CardContent>
