@@ -43,8 +43,8 @@ export const resolvers = {
     },
 
     // Users queries
-    users: async (_: any, { timestamp, limit = 100, offset = 0 }: { timestamp?: string; limit?: number; offset?: number }) => {
-      return await storage.getUsers(timestamp, limit, offset);
+    users: async (_: any, { timestamp, limit = 100, offset = 0, store_id }: { timestamp?: string; limit?: number; offset?: number; store_id?: string }) => {
+      return await storage.getUsers(timestamp, limit, offset, store_id);
     },
     
     user: async (_: any, { email }: { email: string }) => {
@@ -52,8 +52,8 @@ export const resolvers = {
     },
 
     // Purchase Orders queries
-    purchaseOrders: async (_: any, { timestamp, limit = 100, offset = 0 }: { timestamp?: string; limit?: number; offset?: number }) => {
-      return await storage.getPurchaseOrders(timestamp, limit, offset);
+    purchaseOrders: async (_: any, { timestamp, limit = 100, offset = 0, store_id }: { timestamp?: string; limit?: number; offset?: number; store_id?: string }) => {
+      return await storage.getPurchaseOrders(timestamp, limit, offset, store_id);
     },
     
     purchaseOrder: async (_: any, { purchase_order_id }: { purchase_order_id: string }) => {
@@ -81,8 +81,8 @@ export const resolvers = {
     },
 
     // Orders queries
-    orders: async (_: any, { timestamp, limit = 100, offset = 0 }: { timestamp?: string; limit?: number; offset?: number }) => {
-      return await storage.getOrders(timestamp, limit, offset);
+    orders: async (_: any, { timestamp, limit = 100, offset = 0, store_id }: { timestamp?: string; limit?: number; offset?: number; store_id?: string }) => {
+      return await storage.getOrders(timestamp, limit, offset, store_id);
     },
     
     order: async (_: any, { order_id }: { order_id: string }) => {

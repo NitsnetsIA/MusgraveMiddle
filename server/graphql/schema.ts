@@ -315,17 +315,17 @@ export const typeDefs = `#graphql
     stores(timestamp: String, limit: Int, offset: Int): StoreConnection!
     store(code: String!): Store
     
-    users(timestamp: String, limit: Int, offset: Int): UserConnection!
+    users(timestamp: String, limit: Int, offset: Int, store_id: String): UserConnection!
     user(email: String!): User
     
-    purchaseOrders(timestamp: String, limit: Int, offset: Int): PurchaseOrderConnection!
+    purchaseOrders(timestamp: String, limit: Int, offset: Int, store_id: String): PurchaseOrderConnection!
     purchaseOrder(purchase_order_id: String!): PurchaseOrder
     
     purchaseOrderItems(purchase_order_id: String): [PurchaseOrderItem!]!
     orderItems(order_id: String): [OrderItem!]!
     purchaseOrderItem(item_id: Int!): PurchaseOrderItem
     
-    orders(timestamp: String, limit: Int, offset: Int): OrderConnection!
+    orders(timestamp: String, limit: Int, offset: Int, store_id: String): OrderConnection!
     order(order_id: String!): Order
     
     orderItem(item_id: Int!): OrderItem

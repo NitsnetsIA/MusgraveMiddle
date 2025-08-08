@@ -72,7 +72,7 @@ export interface IStorage {
   toggleStoreStatus(code: string): Promise<Store>;
 
   // Users methods
-  getUsers(timestamp?: string, limit?: number, offset?: number): Promise<UserConnection>;
+  getUsers(timestamp?: string, limit?: number, offset?: number, store_id?: string): Promise<UserConnection>;
   getUser(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(email: string, user: Partial<InsertUser>): Promise<User>;
@@ -82,7 +82,7 @@ export interface IStorage {
   loginUser(email: string, password: string): Promise<User>;
 
   // Purchase Orders methods
-  getPurchaseOrders(timestamp?: string, limit?: number, offset?: number): Promise<PurchaseOrderConnection>;
+  getPurchaseOrders(timestamp?: string, limit?: number, offset?: number, store_id?: string): Promise<PurchaseOrderConnection>;
   getPurchaseOrder(purchase_order_id: string): Promise<PurchaseOrder | undefined>;
   createPurchaseOrder(order: InsertPurchaseOrder): Promise<PurchaseOrder>;
   updatePurchaseOrder(purchase_order_id: string, order: Partial<InsertPurchaseOrder>): Promise<PurchaseOrder>;
@@ -98,7 +98,7 @@ export interface IStorage {
   deleteAllPurchaseOrderItems(): Promise<DeleteAllResult>;
 
   // Orders methods
-  getOrders(timestamp?: string, limit?: number, offset?: number): Promise<OrderConnection>;
+  getOrders(timestamp?: string, limit?: number, offset?: number, store_id?: string): Promise<OrderConnection>;
   getOrder(order_id: string): Promise<Order | undefined>;
   createOrder(order: InsertOrder): Promise<Order>;
   updateOrder(order_id: string, order: Partial<InsertOrder>): Promise<Order>;
@@ -626,34 +626,31 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async toggleStoreStatus(code: string): Promise<Store> {
-    // Get current status
-    const currentStore = await db.select().from(stores).where(eq(stores.code, code)).limit(1);
-    if (!currentStore.length) {
-      throw new Error('Store not found');
-    }
-    
-    const [updated] = await db
-      .update(stores)
-      .set({
-        is_active: !currentStore[0].is_active,
-        updated_at: new Date(),
-      })
-      .where(eq(stores.code, code))
-      .returning();
-    return updated;
-  }
-
   // Users CRUD
-  async getUsers(timestamp?: string, limit: number = 100, offset: number = 0): Promise<UserConnection> {
+  async getUsers(timestamp?: string, limit: number = 100, offset: number = 0, store_id?: string): Promise<UserConnection> {
     try {
       let totalQuery = db.select({ count: sql<number>`cast(count(*) as integer)` }).from(users);
       let query = db.select().from(users);
 
+      // Build WHERE conditions
+      let whereConditions = [];
+      
       if (timestamp) {
         const timestampDate = new Date(timestamp);
-        totalQuery = totalQuery.where(sql`${users.created_at} >= ${timestampDate} OR ${users.updated_at} >= ${timestampDate}`);
-        query = query.where(sql`${users.created_at} >= ${timestampDate} OR ${users.updated_at} >= ${timestampDate}`);
+        whereConditions.push(sql`${users.created_at} >= ${timestampDate} OR ${users.updated_at} >= ${timestampDate}`);
+      }
+      
+      if (store_id) {
+        whereConditions.push(eq(users.store_id, store_id));
+      }
+
+      // Apply WHERE conditions
+      if (whereConditions.length > 0) {
+        const combinedWhere = whereConditions.length === 1 
+          ? whereConditions[0] 
+          : sql`${whereConditions[0]} AND ${whereConditions[1]}`;
+        totalQuery = totalQuery.where(combinedWhere);
+        query = query.where(combinedWhere);
       }
 
       const totalResult = await totalQuery;
@@ -785,15 +782,30 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Purchase Orders CRUD
-  async getPurchaseOrders(timestamp?: string, limit: number = 100, offset: number = 0): Promise<PurchaseOrderConnection> {
+  async getPurchaseOrders(timestamp?: string, limit: number = 100, offset: number = 0, store_id?: string): Promise<PurchaseOrderConnection> {
     try {
       let totalQuery = db.select({ count: sql<number>`cast(count(*) as integer)` }).from(purchaseOrders);
       let query = db.select().from(purchaseOrders);
 
+      // Build WHERE conditions
+      let whereConditions = [];
+      
       if (timestamp) {
         const timestampDate = new Date(timestamp);
-        totalQuery = totalQuery.where(sql`${purchaseOrders.created_at} >= ${timestampDate} OR ${purchaseOrders.updated_at} >= ${timestampDate}`);
-        query = query.where(sql`${purchaseOrders.created_at} >= ${timestampDate} OR ${purchaseOrders.updated_at} >= ${timestampDate}`);
+        whereConditions.push(sql`${purchaseOrders.created_at} >= ${timestampDate} OR ${purchaseOrders.updated_at} >= ${timestampDate}`);
+      }
+      
+      if (store_id) {
+        whereConditions.push(eq(purchaseOrders.store_id, store_id));
+      }
+
+      // Apply WHERE conditions
+      if (whereConditions.length > 0) {
+        const combinedWhere = whereConditions.length === 1 
+          ? whereConditions[0] 
+          : sql`${whereConditions[0]} AND ${whereConditions[1]}`;
+        totalQuery = totalQuery.where(combinedWhere);
+        query = query.where(combinedWhere);
       }
 
       const totalResult = await totalQuery;
@@ -955,15 +967,30 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Orders CRUD
-  async getOrders(timestamp?: string, limit: number = 100, offset: number = 0): Promise<OrderConnection> {
+  async getOrders(timestamp?: string, limit: number = 100, offset: number = 0, store_id?: string): Promise<OrderConnection> {
     try {
       let totalQuery = db.select({ count: sql<number>`cast(count(*) as integer)` }).from(orders);
       let query = db.select().from(orders);
 
+      // Build WHERE conditions
+      let whereConditions = [];
+      
       if (timestamp) {
         const timestampDate = new Date(timestamp);
-        totalQuery = totalQuery.where(sql`${orders.created_at} >= ${timestampDate} OR ${orders.updated_at} >= ${timestampDate}`);
-        query = query.where(sql`${orders.created_at} >= ${timestampDate} OR ${orders.updated_at} >= ${timestampDate}`);
+        whereConditions.push(sql`${orders.created_at} >= ${timestampDate} OR ${orders.updated_at} >= ${timestampDate}`);
+      }
+      
+      if (store_id) {
+        whereConditions.push(eq(orders.store_id, store_id));
+      }
+
+      // Apply WHERE conditions
+      if (whereConditions.length > 0) {
+        const combinedWhere = whereConditions.length === 1 
+          ? whereConditions[0] 
+          : sql`${whereConditions[0]} AND ${whereConditions[1]}`;
+        totalQuery = totalQuery.where(combinedWhere);
+        query = query.where(combinedWhere);
       }
 
       const totalResult = await totalQuery;
