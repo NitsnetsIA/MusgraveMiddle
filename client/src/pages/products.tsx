@@ -523,7 +523,7 @@ async function fetchOrders(): Promise<EntitiesResponse<Order>> {
   return fetchOrdersPaginated(0, 20);
 }
 
-async function fetchTaxes(): Promise<EntitiesResponse<Tax>> {
+async function fetchTaxesPaginated(offset: number, limit: number): Promise<EntitiesResponse<Tax>> {
   const query = `
     query GetTaxes($limit: Int, $offset: Int) {
       taxes(limit: $limit, offset: $offset) {
@@ -547,7 +547,7 @@ async function fetchTaxes(): Promise<EntitiesResponse<Tax>> {
       "Content-Type": "application/json",
       "Apollo-Require-Preflight": "true",
     },
-    body: JSON.stringify({ query, variables: { limit: 10, offset: 0 } }),
+    body: JSON.stringify({ query, variables: { limit, offset } }),
   });
 
   if (!response.ok) {
@@ -563,9 +563,13 @@ async function fetchTaxes(): Promise<EntitiesResponse<Tax>> {
   return {
     data: result.data.taxes.taxes || [],
     total: result.data.taxes.total || 0,
-    limit: result.data.taxes.limit || 10,
-    offset: result.data.taxes.offset || 0
+    limit: result.data.taxes.limit || limit,
+    offset: result.data.taxes.offset || offset
   };
+}
+
+async function fetchTaxes(): Promise<EntitiesResponse<Tax>> {
+  return fetchTaxesPaginated(0, 20);
 }
 
 // Functions for generating random data
@@ -1090,6 +1094,14 @@ export default function Products() {
   const [currentPage, setCurrentPage] = useState(0);
   const pageSize = 20;
   
+  // Pagination states for all entities
+  const [deliveryCentersPagination, setDeliveryCentersPagination] = useState({ limit: 20, offset: 0 });
+  const [storesPagination, setStoresPagination] = useState({ limit: 20, offset: 0 });
+  const [usersPagination, setUsersPagination] = useState({ limit: 20, offset: 0 });
+  const [purchaseOrdersPagination, setPurchaseOrdersPagination] = useState({ limit: 20, offset: 0 });
+  const [ordersPagination, setOrdersPagination] = useState({ limit: 20, offset: 0 });
+  const [taxesPagination, setTaxesPagination] = useState({ limit: 20, offset: 0 });
+  
   // Modal states
   const [selectedOrder, setSelectedOrder] = useState<PurchaseOrder | Order | null>(null);
   const [orderDetailsOpen, setOrderDetailsOpen] = useState(false);
@@ -1105,33 +1117,33 @@ export default function Products() {
   });
 
   const { data: centersData, isLoading: centersLoading } = useQuery({
-    queryKey: ["delivery-centers"],
-    queryFn: fetchDeliveryCenters,
+    queryKey: ["delivery-centers", deliveryCentersPagination.offset, deliveryCentersPagination.limit],
+    queryFn: () => fetchDeliveryCentersPaginated(deliveryCentersPagination.offset, deliveryCentersPagination.limit),
   });
 
   const { data: storesData, isLoading: storesLoading } = useQuery({
-    queryKey: ["stores"],
-    queryFn: fetchStores,
+    queryKey: ["stores", storesPagination.offset, storesPagination.limit],
+    queryFn: () => fetchStoresPaginated(storesPagination.offset, storesPagination.limit),
   });
 
   const { data: usersData, isLoading: usersLoading } = useQuery({
-    queryKey: ["users"],
-    queryFn: fetchUsers,
+    queryKey: ["users", usersPagination.offset, usersPagination.limit],
+    queryFn: () => fetchUsersPaginated(usersPagination.offset, usersPagination.limit),
   });
 
   const { data: purchaseOrdersData, isLoading: purchaseOrdersLoading } = useQuery({
-    queryKey: ["purchase-orders"],
-    queryFn: fetchPurchaseOrders,
+    queryKey: ["purchase-orders", purchaseOrdersPagination.offset, purchaseOrdersPagination.limit],
+    queryFn: () => fetchPurchaseOrdersPaginated(purchaseOrdersPagination.offset, purchaseOrdersPagination.limit),
   });
 
   const { data: ordersData, isLoading: ordersLoading } = useQuery({
-    queryKey: ["orders"],
-    queryFn: fetchOrders,
+    queryKey: ["orders", ordersPagination.offset, ordersPagination.limit],
+    queryFn: () => fetchOrdersPaginated(ordersPagination.offset, ordersPagination.limit),
   });
 
   const { data: taxesData, isLoading: taxesLoading } = useQuery({
-    queryKey: ["taxes"],
-    queryFn: fetchTaxes,
+    queryKey: ["taxes", taxesPagination.offset, taxesPagination.limit],
+    queryFn: () => fetchTaxesPaginated(taxesPagination.offset, taxesPagination.limit),
   });
 
   // Mutations for entity generation
@@ -1729,7 +1741,7 @@ export default function Products() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Building2 className="h-5 w-5" />
-                    Centros de Distribución ({centersData?.data?.length || 0})
+                    Centros de Distribución ({centersData?.total || 0})
                   </CardTitle>
                   <CardDescription>
                     Centros de distribución para gestión logística
@@ -1743,48 +1755,62 @@ export default function Products() {
                       ))}
                     </div>
                   ) : centersData?.data?.length ? (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Código</TableHead>
-                          <TableHead>Nombre</TableHead>
-                          <TableHead>Estado</TableHead>
-                          <TableHead className="w-20">Acciones</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {centersData.data.map((center) => (
-                          <TableRow key={center.code}>
-                            <TableCell className="font-mono">{center.code}</TableCell>
-                            <TableCell className="font-medium">{center.name}</TableCell>
-                            <TableCell>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => toggleDeliveryCenterActiveMutation.mutate(center.code)}
-                                className="h-6"
-                                data-testid={`toggle-center-active-${center.code}`}
-                              >
-                                <Badge variant={center.is_active ? "default" : "secondary"}>
-                                  {center.is_active ? "Activo" : "Inactivo"}
-                                </Badge>
-                              </Button>
-                            </TableCell>
-                            <TableCell>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {/* TODO: Add delete center */}}
-                                className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                                data-testid={`delete-center-${center.code}`}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </TableCell>
+                    <>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Código</TableHead>
+                            <TableHead>Nombre</TableHead>
+                            <TableHead>Estado</TableHead>
+                            <TableHead className="w-20">Acciones</TableHead>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                        </TableHeader>
+                        <TableBody>
+                          {centersData.data.map((center) => (
+                            <TableRow key={center.code}>
+                              <TableCell className="font-mono">{center.code}</TableCell>
+                              <TableCell className="font-medium">{center.name}</TableCell>
+                              <TableCell>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => toggleDeliveryCenterActiveMutation.mutate(center.code)}
+                                  className="h-6"
+                                  data-testid={`toggle-center-active-${center.code}`}
+                                >
+                                  <Badge variant={(center as any).is_active ? "default" : "secondary"}>
+                                    {(center as any).is_active ? "Activo" : "Inactivo"}
+                                  </Badge>
+                                </Button>
+                              </TableCell>
+                              <TableCell>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {/* TODO: Add delete center */}}
+                                  className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                                  data-testid={`delete-center-${center.code}`}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                      
+                      <div className="mt-4">
+                        <PaginationComponent
+                          currentPage={Math.floor(deliveryCentersPagination.offset / deliveryCentersPagination.limit)}
+                          totalItems={centersData.total}
+                          pageSize={deliveryCentersPagination.limit}
+                          onPageChange={(page) => setDeliveryCentersPagination({ 
+                            ...deliveryCentersPagination, 
+                            offset: page * deliveryCentersPagination.limit 
+                          })}
+                        />
+                      </div>
+                    </>
                   ) : (
                     <div className="text-center py-8">
                       <Building2 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
@@ -1801,7 +1827,7 @@ export default function Products() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Store className="h-5 w-5" />
-                    Tiendas ({storesData?.data?.length || 0})
+                    Tiendas ({storesData?.total || 0})
                   </CardTitle>
                   <CardDescription>
                     Tiendas vinculadas a centros de distribución
@@ -1815,7 +1841,8 @@ export default function Products() {
                       ))}
                     </div>
                   ) : storesData?.data?.length ? (
-                    <Table>
+                    <>
+                      <Table>
                       <TableHeader>
                         <TableRow>
                           <TableHead>Código</TableHead>
@@ -1866,6 +1893,19 @@ export default function Products() {
                         ))}
                       </TableBody>
                     </Table>
+                    
+                    <div className="mt-4">
+                      <PaginationComponent
+                        currentPage={Math.floor(storesPagination.offset / storesPagination.limit)}
+                        totalItems={storesData.total}
+                        pageSize={storesPagination.limit}
+                        onPageChange={(page) => setStoresPagination({ 
+                          ...storesPagination, 
+                          offset: page * storesPagination.limit 
+                        })}
+                      />
+                    </div>
+                    </>
                   ) : (
                     <div className="text-center py-8">
                       <Store className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
@@ -1882,7 +1922,7 @@ export default function Products() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Users className="h-5 w-5" />
-                    Usuarios ({usersData?.data?.length || 0})
+                    Usuarios ({usersData?.total || 0})
                   </CardTitle>
                   <CardDescription>
                     Personal de tiendas con acceso al sistema
@@ -1896,18 +1936,19 @@ export default function Products() {
                       ))}
                     </div>
                   ) : usersData?.data?.length ? (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Email</TableHead>
-                          <TableHead>Nombre</TableHead>
-                          <TableHead>Tienda</TableHead>
-                          <TableHead>Estado</TableHead>
-                          <TableHead className="w-20">Acciones</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {usersData.data.map((user) => (
+                    <>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Email</TableHead>
+                            <TableHead>Nombre</TableHead>
+                            <TableHead>Tienda</TableHead>
+                            <TableHead>Estado</TableHead>
+                            <TableHead className="w-20">Acciones</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {usersData.data.map((user) => (
                           <TableRow key={user.email}>
                             <TableCell className="font-mono">{user.email}</TableCell>
                             <TableCell className="font-medium">{user.name}</TableCell>
@@ -1944,7 +1985,20 @@ export default function Products() {
                           </TableRow>
                         ))}
                       </TableBody>
-                    </Table>
+                      </Table>
+                      
+                      <div className="mt-4">
+                        <PaginationComponent
+                          currentPage={Math.floor(usersPagination.offset / usersPagination.limit)}
+                          totalItems={usersData.total}
+                          pageSize={usersPagination.limit}
+                          onPageChange={(page) => setUsersPagination({ 
+                            ...usersPagination, 
+                            offset: page * usersPagination.limit 
+                          })}
+                        />
+                      </div>
+                    </>
                   ) : (
                     <div className="text-center py-8">
                       <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
@@ -1961,7 +2015,7 @@ export default function Products() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <FileText className="h-5 w-5" />
-                    Órdenes de Compra ({purchaseOrdersData?.data?.length || 0})
+                    Órdenes de Compra ({purchaseOrdersData?.total || 0})
                   </CardTitle>
                   <CardDescription>
                     Órdenes de compra en proceso de los clientes
@@ -1975,18 +2029,19 @@ export default function Products() {
                       ))}
                     </div>
                   ) : purchaseOrdersData?.data?.length ? (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>ID</TableHead>
-                          <TableHead>Usuario</TableHead>
-                          <TableHead>Tienda</TableHead>
-                          <TableHead>Estado</TableHead>
-                          <TableHead>Total</TableHead>
-                          <TableHead>Fecha</TableHead>
-                          <TableHead className="w-20">Acciones</TableHead>
-                        </TableRow>
-                      </TableHeader>
+                    <>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>ID</TableHead>
+                            <TableHead>Usuario</TableHead>
+                            <TableHead>Tienda</TableHead>
+                            <TableHead>Estado</TableHead>
+                            <TableHead>Total</TableHead>
+                            <TableHead>Fecha</TableHead>
+                            <TableHead className="w-20">Acciones</TableHead>
+                          </TableRow>
+                        </TableHeader>
                       <TableBody>
                         {purchaseOrdersData.data.map((order) => (
                           <TableRow key={order.purchase_order_id}>
@@ -2025,7 +2080,20 @@ export default function Products() {
                           </TableRow>
                         ))}
                       </TableBody>
-                    </Table>
+                      </Table>
+                      
+                      <div className="mt-4">
+                        <PaginationComponent
+                          currentPage={Math.floor(purchaseOrdersPagination.offset / purchaseOrdersPagination.limit)}
+                          totalItems={purchaseOrdersData.total}
+                          pageSize={purchaseOrdersPagination.limit}
+                          onPageChange={(page) => setPurchaseOrdersPagination({ 
+                            ...purchaseOrdersPagination, 
+                            offset: page * purchaseOrdersPagination.limit 
+                          })}
+                        />
+                      </div>
+                    </>
                   ) : (
                     <div className="text-center py-8">
                       <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
@@ -2042,7 +2110,7 @@ export default function Products() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Receipt className="h-5 w-5" />
-                    Pedidos ({ordersData?.data?.length || 0})
+                    Pedidos ({ordersData?.total || 0})
                   </CardTitle>
                   <CardDescription>
                     Pedidos procesados y finalizados
@@ -2056,19 +2124,20 @@ export default function Products() {
                       ))}
                     </div>
                   ) : ordersData?.data?.length ? (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>ID</TableHead>
-                          <TableHead>Usuario</TableHead>
-                          <TableHead>Tienda</TableHead>
-                          <TableHead>Subtotal</TableHead>
-                          <TableHead>IVA</TableHead>
-                          <TableHead>Total</TableHead>
-                          <TableHead>Fecha</TableHead>
-                          <TableHead className="w-20">Acciones</TableHead>
-                        </TableRow>
-                      </TableHeader>
+                    <>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>ID</TableHead>
+                            <TableHead>Usuario</TableHead>
+                            <TableHead>Tienda</TableHead>
+                            <TableHead>Subtotal</TableHead>
+                            <TableHead>IVA</TableHead>
+                            <TableHead>Total</TableHead>
+                            <TableHead>Fecha</TableHead>
+                            <TableHead className="w-20">Acciones</TableHead>
+                          </TableRow>
+                        </TableHeader>
                       <TableBody>
                         {ordersData.data.map((order) => (
                           <TableRow key={order.order_id}>
@@ -2104,7 +2173,20 @@ export default function Products() {
                           </TableRow>
                         ))}
                       </TableBody>
-                    </Table>
+                      </Table>
+                      
+                      <div className="mt-4">
+                        <PaginationComponent
+                          currentPage={Math.floor(ordersPagination.offset / ordersPagination.limit)}
+                          totalItems={ordersData.total}
+                          pageSize={ordersPagination.limit}
+                          onPageChange={(page) => setOrdersPagination({ 
+                            ...ordersPagination, 
+                            offset: page * ordersPagination.limit 
+                          })}
+                        />
+                      </div>
+                    </>
                   ) : (
                     <div className="text-center py-8">
                       <Receipt className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
@@ -2121,7 +2203,7 @@ export default function Products() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Receipt className="h-5 w-5" />
-                    Impuestos ({taxesData?.data?.length || 0})
+                    Impuestos ({taxesData?.total || 0})
                   </CardTitle>
                   <CardDescription>
                     Tipos de IVA aplicables en España
@@ -2135,28 +2217,42 @@ export default function Products() {
                       ))}
                     </div>
                   ) : taxesData?.data?.length ? (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Código</TableHead>
-                          <TableHead>Nombre</TableHead>
-                          <TableHead>Tipo IVA</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {taxesData.data.map((tax) => (
-                          <TableRow key={tax.code}>
-                            <TableCell className="font-mono">{tax.code}</TableCell>
-                            <TableCell className="font-medium">{tax.name}</TableCell>
-                            <TableCell>
-                              <Badge variant="outline">
-                                {(tax.tax_rate * 100).toFixed(0)}%
-                              </Badge>
-                            </TableCell>
+                    <>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Código</TableHead>
+                            <TableHead>Nombre</TableHead>
+                            <TableHead>Tipo IVA</TableHead>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                        </TableHeader>
+                        <TableBody>
+                          {taxesData.data.map((tax) => (
+                            <TableRow key={tax.code}>
+                              <TableCell className="font-mono">{tax.code}</TableCell>
+                              <TableCell className="font-medium">{tax.name}</TableCell>
+                              <TableCell>
+                                <Badge variant="outline">
+                                  {(tax.tax_rate * 100).toFixed(0)}%
+                                </Badge>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                      
+                      <div className="mt-4">
+                        <PaginationComponent
+                          currentPage={Math.floor(taxesPagination.offset / taxesPagination.limit)}
+                          totalItems={taxesData.total}
+                          pageSize={taxesPagination.limit}
+                          onPageChange={(page) => setTaxesPagination({ 
+                            ...taxesPagination, 
+                            offset: page * taxesPagination.limit 
+                          })}
+                        />
+                      </div>
+                    </>
                   ) : (
                     <div className="text-center py-8">
                       <Receipt className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
