@@ -185,10 +185,11 @@ function PaginationComponent({ currentPage, totalItems, pageSize, onPageChange }
 }
 
 // Fetch functions for all entities
-async function fetchProducts(): Promise<ProductsResponse> {
+async function fetchProductsPaginated(page: number, pageSize: number): Promise<ProductsResponse> {
+  const offset = page * pageSize;
   const query = `
-    query GetProducts {
-      products(limit: 20, offset: 0) {
+    query GetProducts($limit: Int, $offset: Int) {
+      products(limit: $limit, offset: $offset) {
         products {
           ean
           ref
@@ -218,7 +219,10 @@ async function fetchProducts(): Promise<ProductsResponse> {
       "Content-Type": "application/json",
       "Apollo-Require-Preflight": "true",
     },
-    body: JSON.stringify({ query }),
+    body: JSON.stringify({ 
+      query,
+      variables: { limit: pageSize, offset }
+    }),
   });
 
   if (!response.ok) {
@@ -232,6 +236,10 @@ async function fetchProducts(): Promise<ProductsResponse> {
   }
 
   return result.data.products;
+}
+
+async function fetchProducts(): Promise<ProductsResponse> {
+  return fetchProductsPaginated(0, 20);
 }
 
 async function fetchDeliveryCenters(): Promise<EntitiesResponse<DeliveryCenter>> {
@@ -783,6 +791,245 @@ async function deleteAllData(): Promise<{ success: boolean; message: string }> {
   return result.data.deleteAllData;
 }
 
+// Fetch order details
+async function fetchPurchaseOrderItems(purchaseOrderId: string) {
+  const query = `
+    query GetPurchaseOrderItems($purchaseOrderId: String!) {
+      purchaseOrderItems(purchaseOrderId: $purchaseOrderId) {
+        item_ean
+        item_title
+        item_description
+        unit_of_measure
+        quantity_measure
+        quantity
+        base_price_at_order
+        tax_rate_at_order
+        created_at
+        updated_at
+      }
+    }
+  `;
+
+  const response = await fetch(GRAPHQL_ENDPOINT, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Apollo-Require-Preflight": "true",
+    },
+    body: JSON.stringify({ 
+      query,
+      variables: { purchaseOrderId }
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const result = await response.json();
+  
+  if (result.errors) {
+    throw new Error(result.errors[0]?.message || "GraphQL error");
+  }
+
+  return result.data.purchaseOrderItems;
+}
+
+async function fetchOrderItems(orderId: string) {
+  const query = `
+    query GetOrderItems($orderId: String!) {
+      orderItems(orderId: $orderId) {
+        item_ean
+        item_title
+        item_description
+        unit_of_measure
+        quantity_measure
+        quantity
+        base_price_at_order
+        tax_rate_at_order
+        created_at
+        updated_at
+      }
+    }
+  `;
+
+  const response = await fetch(GRAPHQL_ENDPOINT, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Apollo-Require-Preflight": "true",
+    },
+    body: JSON.stringify({ 
+      query,
+      variables: { orderId }
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const result = await response.json();
+  
+  if (result.errors) {
+    throw new Error(result.errors[0]?.message || "GraphQL error");
+  }
+
+  return result.data.orderItems;
+}
+
+// Order Details Component
+interface OrderDetailsContentProps {
+  order: PurchaseOrder | Order;
+  orderType: 'purchase' | 'order';
+}
+
+interface OrderItem {
+  item_ean: string;
+  item_title: string;
+  item_description: string | null;
+  unit_of_measure: string;
+  quantity_measure: number;
+  quantity: number;
+  base_price_at_order: number;
+  tax_rate_at_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+function OrderDetailsContent({ order, orderType }: OrderDetailsContentProps) {
+  const orderId = orderType === 'purchase' 
+    ? (order as PurchaseOrder).purchase_order_id 
+    : (order as Order).order_id;
+
+  const { data: orderItems, isLoading } = useQuery({
+    queryKey: [orderType === 'purchase' ? 'purchase-order-items' : 'order-items', orderId],
+    queryFn: () => orderType === 'purchase' 
+      ? fetchPurchaseOrderItems(orderId)
+      : fetchOrderItems(orderId),
+    enabled: !!orderId,
+  });
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <Skeleton key={i} className="h-12 w-full" />
+        ))}
+      </div>
+    );
+  }
+
+  if (!orderItems || orderItems.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+        <p className="text-muted-foreground">No hay productos en esta orden</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Order Summary */}
+      <div className="grid grid-cols-2 gap-4 p-4 bg-muted/50 rounded-lg">
+        <div>
+          <span className="text-sm text-muted-foreground">ID de Orden:</span>
+          <p className="font-mono text-sm">{orderId}</p>
+        </div>
+        <div>
+          <span className="text-sm text-muted-foreground">Cliente:</span>
+          <p className="font-medium">{order.user?.name}</p>
+          <p className="text-sm text-muted-foreground">{order.user?.email}</p>
+        </div>
+        <div>
+          <span className="text-sm text-muted-foreground">Tienda:</span>
+          <p className="font-medium">{order.user?.store?.name}</p>
+        </div>
+        <div>
+          <span className="text-sm text-muted-foreground">Total:</span>
+          <p className="font-bold text-lg">€{order.final_total.toFixed(2)}</p>
+        </div>
+        {orderType === 'purchase' && (
+          <div>
+            <span className="text-sm text-muted-foreground">Estado:</span>
+            <p>
+              <Badge variant={(order as PurchaseOrder).status === 'pending' ? 'secondary' : 'default'}>
+                {(order as PurchaseOrder).status}
+              </Badge>
+            </p>
+          </div>
+        )}
+        {orderType === 'order' && (
+          <>
+            <div>
+              <span className="text-sm text-muted-foreground">Subtotal:</span>
+              <p className="font-medium">€{(order as Order).subtotal.toFixed(2)}</p>
+            </div>
+            <div>
+              <span className="text-sm text-muted-foreground">IVA:</span>
+              <p className="font-medium">€{(order as Order).tax_total.toFixed(2)}</p>
+            </div>
+            <div>
+              <span className="text-sm text-muted-foreground">Orden Original:</span>
+              <p className="font-mono text-sm">{(order as Order).source_purchase_order_id}</p>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Order Items Table */}
+      <div>
+        <h3 className="text-lg font-semibold mb-4">Productos ({orderItems.length})</h3>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>EAN</TableHead>
+              <TableHead>Producto</TableHead>
+              <TableHead>Cantidad</TableHead>
+              <TableHead>Precio Unitario</TableHead>
+              <TableHead>IVA</TableHead>
+              <TableHead>Subtotal</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {orderItems.map((item: OrderItem) => {
+              const lineSubtotal = item.quantity * item.base_price_at_order;
+              const lineTax = lineSubtotal * item.tax_rate_at_order;
+              const lineTotal = lineSubtotal + lineTax;
+              
+              return (
+                <TableRow key={item.item_ean}>
+                  <TableCell className="font-mono">{item.item_ean}</TableCell>
+                  <TableCell>
+                    <div>
+                      <div className="font-medium">{item.item_title}</div>
+                      {item.item_description && (
+                        <div className="text-sm text-muted-foreground">{item.item_description}</div>
+                      )}
+                      <div className="text-xs text-muted-foreground">
+                        {item.quantity_measure} {item.unit_of_measure}
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>{item.quantity}</TableCell>
+                  <TableCell>€{item.base_price_at_order.toFixed(2)}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline">
+                      {(item.tax_rate_at_order * 100).toFixed(0)}%
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="font-medium">€{lineTotal.toFixed(2)}</TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </div>
+    </div>
+  );
+}
+
 export default function Products() {
   // Tab state
   const [activeTab, setActiveTab] = useState("products");
@@ -798,13 +1045,22 @@ export default function Products() {
   const [purchaseOrdersCount, setPurchaseOrdersCount] = useState(10);
   const [ordersCount, setOrdersCount] = useState(10);
   
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(0);
+  const pageSize = 20;
+  
+  // Modal states
+  const [selectedOrder, setSelectedOrder] = useState<PurchaseOrder | Order | null>(null);
+  const [orderDetailsOpen, setOrderDetailsOpen] = useState(false);
+  const [orderType, setOrderType] = useState<'purchase' | 'order'>('purchase');
+  
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Data queries for all entities
+  // Data queries for all entities with pagination
   const { data: productsData, isLoading: productsLoading } = useQuery({
-    queryKey: ["products"],
-    queryFn: fetchProducts,
+    queryKey: ["products", currentPage],
+    queryFn: () => fetchProductsPaginated(currentPage, pageSize),
   });
 
   const { data: centersData, isLoading: centersLoading } = useQuery({
@@ -981,6 +1237,86 @@ export default function Products() {
   // Bulk data generation
   const [isGeneratingBulkData, setIsGeneratingBulkData] = useState(false);
 
+  // Delete mutations for all entities
+  const deleteProductMutation = useMutation({
+    mutationFn: async (ean: string) => {
+      const query = `
+        mutation DeleteProduct($ean: String!) {
+          deleteProduct(ean: $ean)
+        }
+      `;
+      const response = await fetch(GRAPHQL_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Apollo-Require-Preflight": "true",
+        },
+        body: JSON.stringify({ query, variables: { ean } }),
+      });
+
+      const result = await response.json();
+      if (result.errors) {
+        throw new Error(result.errors[0]?.message || "Error al eliminar producto");
+      }
+      return result.data.deleteProduct;
+    },
+    onSuccess: () => {
+      toast({ title: "Producto eliminado", description: "El producto se ha eliminado correctamente" });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+    },
+    onError: (error) => {
+      toast({ 
+        title: "Error", 
+        description: error instanceof Error ? error.message : "Error al eliminar producto",
+        variant: "destructive" 
+      });
+    },
+  });
+
+  // Toggle active status mutations
+  const toggleProductActiveMutation = useMutation({
+    mutationFn: async ({ ean, is_active }: { ean: string; is_active: boolean }) => {
+      const query = `
+        mutation UpdateProduct($ean: String!, $product: UpdateProductInput!) {
+          updateProduct(ean: $ean, product: $product) {
+            ean
+            is_active
+          }
+        }
+      `;
+      const response = await fetch(GRAPHQL_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Apollo-Require-Preflight": "true",
+        },
+        body: JSON.stringify({ 
+          query, 
+          variables: { 
+            ean, 
+            product: { is_active } 
+          } 
+        }),
+      });
+
+      const result = await response.json();
+      if (result.errors) {
+        throw new Error(result.errors[0]?.message || "Error al actualizar producto");
+      }
+      return result.data.updateProduct;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+    },
+    onError: (error) => {
+      toast({ 
+        title: "Error", 
+        description: error instanceof Error ? error.message : "Error al actualizar producto",
+        variant: "destructive" 
+      });
+    },
+  });
+
   // Delete all data mutation
   const deleteAllDataMutation = useMutation({
     mutationFn: deleteAllData,
@@ -1146,48 +1482,82 @@ export default function Products() {
                       ))}
                     </div>
                   ) : productsData?.products.length ? (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>EAN</TableHead>
-                          <TableHead>Producto</TableHead>
-                          <TableHead>Precio Base</TableHead>
-                          <TableHead>IVA</TableHead>
-                          <TableHead>Precio Final</TableHead>
-                          <TableHead>Estado</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {productsData.products.map((product) => {
-                          const finalPrice = product.base_price * (1 + (product.tax?.tax_rate || 0));
-                          return (
-                            <TableRow key={product.ean}>
-                              <TableCell className="font-mono">{product.ean}</TableCell>
-                              <TableCell>
-                                <div>
-                                  <div className="font-medium">{product.title}</div>
-                                  <div className="text-sm text-muted-foreground">
-                                    {product.quantity_measure} {product.unit_of_measure}
+                    <>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>EAN</TableHead>
+                            <TableHead>Producto</TableHead>
+                            <TableHead>Precio Base</TableHead>
+                            <TableHead>IVA</TableHead>
+                            <TableHead>Precio Final</TableHead>
+                            <TableHead>Estado</TableHead>
+                            <TableHead className="w-20">Acciones</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {productsData.products.map((product) => {
+                            const finalPrice = product.base_price * (1 + (product.tax?.tax_rate || 0));
+                            return (
+                              <TableRow key={product.ean}>
+                                <TableCell className="font-mono">{product.ean}</TableCell>
+                                <TableCell>
+                                  <div>
+                                    <div className="font-medium">{product.title}</div>
+                                    <div className="text-sm text-muted-foreground">
+                                      {product.quantity_measure} {product.unit_of_measure}
+                                    </div>
                                   </div>
-                                </div>
-                              </TableCell>
-                              <TableCell>€{product.base_price.toFixed(2)}</TableCell>
-                              <TableCell>
-                                <Badge variant="secondary">
-                                  {product.tax?.name} ({((product.tax?.tax_rate || 0) * 100).toFixed(0)}%)
-                                </Badge>
-                              </TableCell>
-                              <TableCell className="font-medium">€{finalPrice.toFixed(2)}</TableCell>
-                              <TableCell>
-                                <Badge variant={product.is_active ? "default" : "secondary"}>
-                                  {product.is_active ? "Activo" : "Inactivo"}
-                                </Badge>
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })}
-                      </TableBody>
-                    </Table>
+                                </TableCell>
+                                <TableCell>€{product.base_price.toFixed(2)}</TableCell>
+                                <TableCell>
+                                  <Badge variant="secondary">
+                                    {product.tax?.name} ({((product.tax?.tax_rate || 0) * 100).toFixed(0)}%)
+                                  </Badge>
+                                </TableCell>
+                                <TableCell className="font-medium">€{finalPrice.toFixed(2)}</TableCell>
+                                <TableCell>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => toggleProductActiveMutation.mutate({ 
+                                      ean: product.ean, 
+                                      is_active: !product.is_active 
+                                    })}
+                                    className="h-6"
+                                    data-testid={`toggle-active-${product.ean}`}
+                                  >
+                                    <Badge variant={product.is_active ? "default" : "secondary"}>
+                                      {product.is_active ? "Activo" : "Inactivo"}
+                                    </Badge>
+                                  </Button>
+                                </TableCell>
+                                <TableCell>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => deleteProductMutation.mutate(product.ean)}
+                                    className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                                    data-testid={`delete-product-${product.ean}`}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                      
+                      <div className="mt-4">
+                        <PaginationComponent
+                          currentPage={currentPage}
+                          totalItems={productsData.total}
+                          pageSize={pageSize}
+                          onPageChange={setCurrentPage}
+                        />
+                      </div>
+                    </>
                   ) : (
                     <div className="text-center py-8">
                       <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
@@ -1401,6 +1771,7 @@ export default function Products() {
                           <TableHead>Estado</TableHead>
                           <TableHead>Total</TableHead>
                           <TableHead>Fecha</TableHead>
+                          <TableHead className="w-20">Acciones</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -1422,6 +1793,21 @@ export default function Products() {
                             <TableCell className="font-medium">€{order.final_total.toFixed(2)}</TableCell>
                             <TableCell className="text-sm text-muted-foreground">
                               {new Date(order.created_at).toLocaleDateString('es-ES')}
+                            </TableCell>
+                            <TableCell>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedOrder(order);
+                                  setOrderType('purchase');
+                                  setOrderDetailsOpen(true);
+                                }}
+                                className="h-8 w-8 p-0"
+                                data-testid={`view-purchase-order-${order.purchase_order_id}`}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
                             </TableCell>
                           </TableRow>
                         ))}
@@ -1467,6 +1853,7 @@ export default function Products() {
                           <TableHead>IVA</TableHead>
                           <TableHead>Total</TableHead>
                           <TableHead>Fecha</TableHead>
+                          <TableHead className="w-20">Acciones</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -1485,6 +1872,21 @@ export default function Products() {
                             <TableCell className="font-medium">€{order.final_total.toFixed(2)}</TableCell>
                             <TableCell className="text-sm text-muted-foreground">
                               {new Date(order.created_at).toLocaleDateString('es-ES')}
+                            </TableCell>
+                            <TableCell>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedOrder(order);
+                                  setOrderType('order');
+                                  setOrderDetailsOpen(true);
+                                }}
+                                className="h-8 w-8 p-0"
+                                data-testid={`view-order-${order.order_id}`}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
                             </TableCell>
                           </TableRow>
                         ))}
@@ -1963,6 +2365,43 @@ export default function Products() {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Order Details Modal */}
+      <Dialog open={orderDetailsOpen} onOpenChange={setOrderDetailsOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {orderType === 'purchase' ? (
+                <>
+                  <FileText className="h-5 w-5" />
+                  Detalles de Orden de Compra
+                </>
+              ) : (
+                <>
+                  <Receipt className="h-5 w-5" />
+                  Detalles del Pedido
+                </>
+              )}
+            </DialogTitle>
+            <DialogDescription>
+              {selectedOrder && (
+                <>
+                  ID: {orderType === 'purchase' 
+                    ? (selectedOrder as PurchaseOrder).purchase_order_id 
+                    : (selectedOrder as Order).order_id}
+                </>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedOrder && (
+            <OrderDetailsContent 
+              order={selectedOrder} 
+              orderType={orderType}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
