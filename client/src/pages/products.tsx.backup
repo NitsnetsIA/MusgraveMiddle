@@ -2388,7 +2388,7 @@ export default function Products() {
               </TabsTrigger>
               <TabsTrigger value="delivery-centers" className="flex items-center gap-2">
                 <Building2 className="h-4 w-4" />
-                <span>Centros ({centersData?.data?.length || 0})</span>
+                <span>Centros ({deliveryCentersData?.length || 0})</span>
               </TabsTrigger>
               <TabsTrigger value="stores" className="flex items-center gap-2">
                 <Store className="h-4 w-4" />
@@ -2872,233 +2872,6 @@ export default function Products() {
           </div>
         </CardContent>
       </Card>
-
-            <TabsContent value="products" className="mt-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Package className="h-5 w-5" />
-                    Productos ({productsData?.total || 0})
-                  </CardTitle>
-                  <CardDescription>
-                    Catálogo completo de productos de alimentación con información de precios e IVA
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {productsLoading ? (
-                    <div className="space-y-4">
-                      {Array.from({ length: 5 }).map((_, i) => (
-                        <Skeleton key={i} className="h-12 w-full" />
-                      ))}
-                    </div>
-                  ) : productsData?.products.length ? (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>EAN</TableHead>
-                          <TableHead>Producto</TableHead>
-                          <TableHead>Precio Base</TableHead>
-                          <TableHead>IVA</TableHead>
-                          <TableHead>Precio Final</TableHead>
-                          <TableHead>Estado</TableHead>
-                          <TableHead>Creado</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {productsData.products.map((product) => {
-                          const finalPrice = product.base_price * (1 + (product.tax?.tax_rate || 0));
-                          return (
-                            <TableRow key={product.ean}>
-                              <TableCell className="font-mono">{product.ean}</TableCell>
-                              <TableCell>
-                                <div>
-                                  <div className="font-medium">{product.title}</div>
-                                  <div className="text-sm text-muted-foreground">
-                                    {product.quantity_measure} {product.unit_of_measure}
-                                  </div>
-                                </div>
-                              </TableCell>
-                              <TableCell>€{product.base_price.toFixed(2)}</TableCell>
-                              <TableCell>
-                                <Badge variant="secondary">
-                                  {product.tax?.name} ({((product.tax?.tax_rate || 0) * 100).toFixed(0)}%)
-                                </Badge>
-                              </TableCell>
-                              <TableCell className="font-medium">€{finalPrice.toFixed(2)}</TableCell>
-                              <TableCell>
-                                <Badge variant={product.is_active ? "default" : "secondary"}>
-                                  {product.is_active ? "Activo" : "Inactivo"}
-                                </Badge>
-                              </TableCell>
-                              <TableCell className="text-sm text-muted-foreground">
-                                {new Date(product.created_at).toLocaleDateString('es-ES')}
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })}
-                      </TableBody>
-                    </Table>
-                  ) : (
-                    <div className="text-center py-8">
-                      <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                      <p className="text-muted-foreground">No hay productos disponibles</p>
-                    </div>
-                  )}
-                  
-                  {/* Paginación para productos */}
-                  {productsData && (
-                    <div className="mt-4">
-                      <PaginationComponent 
-                        currentPage={currentPageProducts}
-                        totalItems={productsData.total}
-                        pageSize={pageSize}
-                        onPageChange={setCurrentPageProducts}
-                      />
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="delivery-centers" className="mt-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Building2 className="h-5 w-5" />
-                    Centros de Distribución ({centersData?.data?.length || 0})
-                  </CardTitle>
-                  <CardDescription>
-                    Centros de distribución para gestión logística
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {centersLoading ? (
-                    <div className="space-y-4">
-                      {Array.from({ length: 3 }).map((_, i) => (
-                        <Skeleton key={i} className="h-12 w-full" />
-                      ))}
-                    </div>
-                  ) : centersData?.data?.length ? (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Código</TableHead>
-                          <TableHead>Nombre</TableHead>
-                          <TableHead>Ciudad</TableHead>
-                          <TableHead>Región</TableHead>
-                          <TableHead>CP</TableHead>
-                          <TableHead>Estado</TableHead>
-                          <TableHead>Creado</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {centersData.data.map((center) => (
-                          <TableRow key={center.code}>
-                            <TableCell className="font-mono">{center.code}</TableCell>
-                            <TableCell className="font-medium">{center.name}</TableCell>
-                            <TableCell>{center.city}</TableCell>
-                            <TableCell>{center.region}</TableCell>
-                            <TableCell>{center.postal_code}</TableCell>
-                            <TableCell>
-                              <Badge variant={center.is_active ? "default" : "secondary"}>
-                                {center.is_active ? "Activo" : "Inactivo"}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="text-sm text-muted-foreground">
-                              {new Date(center.created_at).toLocaleDateString('es-ES')}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  ) : (
-                    <div className="text-center py-8">
-                      <Building2 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                      <p className="text-muted-foreground">No hay centros de distribución configurados</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="stores" className="mt-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Store className="h-5 w-5" />
-                    Tiendas ({storesData?.data?.length || 0})
-                  </CardTitle>
-                  <CardDescription>
-                    Tiendas vinculadas a centros de distribución
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {storesLoading ? (
-                    <div className="space-y-4">
-                      {Array.from({ length: 3 }).map((_, i) => (
-                        <Skeleton key={i} className="h-12 w-full" />
-                      ))}
-                    </div>
-                  ) : storesData?.data?.length ? (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Código</TableHead>
-                          <TableHead>Nombre</TableHead>
-                          <TableHead>Centro</TableHead>
-                          <TableHead>Responsable</TableHead>
-                          <TableHead>Estado</TableHead>
-                          <TableHead>Creado</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {storesData.data.map((store) => (
-                          <TableRow key={store.code}>
-                            <TableCell className="font-mono">{store.code}</TableCell>
-                            <TableCell className="font-medium">{store.name}</TableCell>
-                            <TableCell>
-                              <div>
-                                <div className="font-medium">{store.deliveryCenter?.name}</div>
-                                <div className="text-sm text-muted-foreground">{store.delivery_center_code}</div>
-                              </div>
-                            </TableCell>
-                            <TableCell>{store.responsible_email}</TableCell>
-                            <TableCell>
-                              <Badge variant={store.is_active ? "default" : "secondary"}>
-                                {store.is_active ? "Activa" : "Inactiva"}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="text-sm text-muted-foreground">
-                              {new Date(store.created_at).toLocaleDateString('es-ES')}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  ) : (
-                    <div className="text-center py-8">
-                      <Store className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                      <p className="text-muted-foreground">No hay tiendas configuradas</p>
-                    </div>
-                  )}
-                  
-                  {/* Paginación para tiendas */}
-                  {storesData && (
-                    <div className="mt-4">
-                      <PaginationComponent 
-                        currentPage={currentPageStores}
-                        totalItems={storesData.total}
-                        pageSize={pageSize}
-                        onPageChange={setCurrentPageStores}
-                      />
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* Add other TabsContent for users, purchase-orders, orders, and taxes here */}
-          </Tabs>
         </TabsContent>
 
         {/* Generate Data Tab */}
@@ -3111,6 +2884,867 @@ export default function Products() {
         </TabsContent>
       </Tabs>
 
+      {/* Modal para ver líneas de pedido */}
+      <Dialog open={isOrderItemsModalOpen} onOpenChange={setIsOrderItemsModalOpen}>
+            <CardContent>
+              {productsLoading ? (
+                <div className="space-y-4">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Skeleton key={i} className="h-12 w-full" />
+                  ))}
+                </div>
+              ) : productsData?.products.length ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>EAN</TableHead>
+                      <TableHead>Producto</TableHead>
+                      <TableHead>Precio Base</TableHead>
+                      <TableHead>IVA</TableHead>
+                      <TableHead>Precio Final</TableHead>
+                      <TableHead>Estado</TableHead>
+                      <TableHead>Creado</TableHead>
+                      <TableHead>Acciones</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {productsData.products.map((product) => {
+                      const finalPrice = product.base_price * (1 + (product.tax?.tax_rate || 0));
+                      return (
+                        <TableRow key={product.ean}>
+                          <TableCell className="font-mono">{product.ean}</TableCell>
+                          <TableCell>
+                            <div>
+                              <div className="font-medium">{product.title}</div>
+                              <div className="text-sm text-muted-foreground">
+                                {product.quantity_measure} {product.unit_of_measure}
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>€{product.base_price.toFixed(2)}</TableCell>
+                          <TableCell>
+                            <Badge variant="secondary">
+                              {product.tax?.name} ({((product.tax?.tax_rate || 0) * 100).toFixed(0)}%)
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="font-medium">€{finalPrice.toFixed(2)}</TableCell>
+                          <TableCell>
+                            <Badge 
+                              variant={product.is_active ? "default" : "secondary"}
+                              className="cursor-pointer hover:bg-opacity-80"
+                              onClick={async () => {
+                                try {
+                                  await toggleProductStatus(product.ean);
+                                  queryClient.invalidateQueries({ queryKey: ["products"] });
+                                } catch (error) {
+                                  console.error('Error toggling product status:', error);
+                                }
+                              }}
+                              data-testid={`badge-toggle-product-${product.ean}`}
+                            >
+                              {product.is_active ? "Activo" : "Inactivo"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            {new Date().toLocaleDateString('es-ES')}
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={async () => {
+                                if (confirm(`¿Estás seguro de que quieres eliminar el producto ${product.title}?`)) {
+                                  try {
+                                    await deleteProduct(product.ean);
+                                    queryClient.invalidateQueries({ queryKey: ["products"] });
+                                  } catch (error) {
+                                    console.error('Error deleting product:', error);
+                                  }
+                                }
+                              }}
+                              data-testid={`button-delete-product-${product.ean}`}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              ) : (
+                <div className="text-center py-8">
+                  <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">No hay productos disponibles</p>
+                </div>
+              )}
+              
+              {/* Paginación para productos */}
+              {productsData && (
+                <div className="mt-4">
+                  <PaginationComponent 
+                    currentPage={currentPageProducts}
+                    totalItems={productsData.total}
+                    pageSize={pageSize}
+                    onPageChange={setCurrentPageProducts}
+                  />
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="delivery-centers" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Building2 className="h-5 w-5" />
+                Centros de Distribución ({centersData?.total || 0})
+              </CardTitle>
+              <CardDescription>
+                Centros de distribución para la gestión logística
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {centersLoading ? (
+                <div className="space-y-4">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Skeleton key={i} className="h-12 w-full" />
+                  ))}
+                </div>
+              ) : centersData?.data.length ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Código</TableHead>
+                      <TableHead>Nombre</TableHead>
+                      <TableHead>Información</TableHead>
+                      <TableHead>Estado</TableHead>
+                      <TableHead>Creado</TableHead>
+                      <TableHead>Acciones</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {centersData.data.map((center) => (
+                      <TableRow key={center.code}>
+                        <TableCell className="font-mono">{center.code}</TableCell>
+                        <TableCell className="font-medium">{center.name}</TableCell>
+                        <TableCell>-</TableCell>
+                        <TableCell>
+                          <Badge variant="default">Activo</Badge>
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {new Date(center.created_at).toLocaleDateString('es-ES')}
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={async () => {
+                              if (confirm(`¿Estás seguro de que quieres eliminar el centro ${center.name}?`)) {
+                                try {
+                                  await deleteDeliveryCenter(center.code);
+                                  queryClient.invalidateQueries({ queryKey: ["delivery-centers"] });
+                                } catch (error) {
+                                  console.error('Error deleting delivery center:', error);
+                                }
+                              }
+                            }}
+                            data-testid={`button-delete-center-${center.code}`}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <div className="text-center py-8">
+                  <Building2 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">No hay centros de distribución disponibles</p>
+                </div>
+              )}
+              
+              {/* Paginación para centros */}
+              {centersData && (
+                <div className="mt-4">
+                  <PaginationComponent 
+                    currentPage={currentPageCenters}
+                    totalItems={centersData.total}
+                    pageSize={pageSize}
+                    onPageChange={setCurrentPageCenters}
+                  />
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="stores" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Store className="h-5 w-5" />
+                Tiendas ({storesData?.total || 0})
+              </CardTitle>
+              <CardDescription>
+                Red de tiendas vinculadas a centros de distribución
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {storesLoading ? (
+                <div className="space-y-4">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Skeleton key={i} className="h-12 w-full" />
+                  ))}
+                </div>
+              ) : storesData?.data.length ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Código</TableHead>
+                      <TableHead>Nombre</TableHead>
+                      <TableHead>Centro/Email</TableHead>
+                      <TableHead>Estado</TableHead>
+                      <TableHead>Creado</TableHead>
+                      <TableHead>Acciones</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {storesData.data.map((store) => (
+                      <TableRow key={store.code}>
+                        <TableCell className="font-mono">{store.code}</TableCell>
+                        <TableCell className="font-medium">{store.name}</TableCell>
+                        <TableCell>
+                          <div>
+                            <div className="font-medium">{store.deliveryCenter?.name || "N/A"}</div>
+                            <div className="text-sm text-muted-foreground">
+                              {store.responsible_email || "Sin responsable"}
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge 
+                            variant={store.is_active ? "default" : "secondary"}
+                            className="cursor-pointer hover:bg-opacity-80"
+                            onClick={async () => {
+                              try {
+                                await toggleStoreStatus(store.code);
+                                queryClient.invalidateQueries({ queryKey: ["stores"] });
+                              } catch (error) {
+                                console.error('Error toggling store status:', error);
+                              }
+                            }}
+                            data-testid={`badge-toggle-store-${store.code}`}
+                          >
+                            {store.is_active ? "Activo" : "Inactivo"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {new Date(store.created_at).toLocaleDateString('es-ES')}
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={async () => {
+                              if (confirm(`¿Estás seguro de que quieres eliminar la tienda ${store.name}?`)) {
+                                try {
+                                  await deleteStore(store.code);
+                                  queryClient.invalidateQueries({ queryKey: ["stores"] });
+                                } catch (error) {
+                                  console.error('Error deleting store:', error);
+                                }
+                              }
+                            }}
+                            data-testid={`button-delete-store-${store.code}`}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <div className="text-center py-8">
+                  <Store className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">No hay tiendas disponibles</p>
+                </div>
+              )}
+              
+              {/* Paginación para tiendas */}
+              {storesData && (
+                <div className="mt-4">
+                  <PaginationComponent 
+                    currentPage={currentPageStores}
+                    totalItems={storesData.total}
+                    pageSize={pageSize}
+                    onPageChange={setCurrentPageStores}
+                  />
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="users" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Usuarios ({usersData?.total || 0})
+              </CardTitle>
+              <CardDescription>
+                Personal de tiendas con acceso al sistema
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {usersLoading ? (
+                <div className="space-y-4">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Skeleton key={i} className="h-12 w-full" />
+                  ))}
+                </div>
+              ) : usersData?.data.length ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>ID</TableHead>
+                      <TableHead>Nombre</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Tienda</TableHead>
+                      <TableHead>Rol</TableHead>
+                      <TableHead>Estado</TableHead>
+                      <TableHead>Creado</TableHead>
+                      <TableHead>Acciones</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {usersData.data.map((user) => (
+                      <TableRow key={user.email}>
+                        <TableCell className="font-mono text-sm">{user.email.slice(0, 10)}...</TableCell>
+                        <TableCell className="font-medium">{user.name || "Sin nombre"}</TableCell>
+                        <TableCell>{user.email}</TableCell>
+                        <TableCell>
+                          <div>
+                            <div className="font-medium">{user.store?.name || "N/A"}</div>
+                            <div className="text-sm text-muted-foreground">
+                              ID: {user.store_id}
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">Usuario</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge 
+                            variant={user.is_active ? "default" : "secondary"}
+                            className="cursor-pointer hover:bg-opacity-80"
+                            onClick={async () => {
+                              try {
+                                await toggleUserStatus(user.email);
+                                queryClient.invalidateQueries({ queryKey: ["users"] });
+                              } catch (error) {
+                                console.error('Error toggling user status:', error);
+                              }
+                            }}
+                            data-testid={`badge-toggle-user-${user.email}`}
+                          >
+                            {user.is_active ? "Activo" : "Inactivo"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {new Date(user.created_at).toLocaleDateString('es-ES')}
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={async () => {
+                              if (confirm(`¿Estás seguro de que quieres eliminar el usuario ${user.name || user.email}?`)) {
+                                try {
+                                  await deleteUser(user.email);
+                                  queryClient.invalidateQueries({ queryKey: ["users"] });
+                                } catch (error) {
+                                  console.error('Error deleting user:', error);
+                                }
+                              }
+                            }}
+                            data-testid={`button-delete-user-${user.email}`}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <div className="text-center py-8">
+                  <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">No hay usuarios disponibles</p>
+                </div>
+              )}
+              
+              {/* Paginación para usuarios */}
+              {usersData && (
+                <div className="mt-4">
+                  <PaginationComponent 
+                    currentPage={currentPageUsers}
+                    totalItems={usersData.total}
+                    pageSize={pageSize}
+                    onPageChange={setCurrentPageUsers}
+                  />
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="purchase-orders" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Órdenes de Compra ({purchaseOrdersData?.total || 0})
+              </CardTitle>
+              <CardDescription>
+                Órdenes de compra realizadas por los usuarios
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {purchaseOrdersLoading ? (
+                <div className="space-y-4">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Skeleton key={i} className="h-12 w-full" />
+                  ))}
+                </div>
+              ) : purchaseOrdersData?.data.length ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>ID</TableHead>
+                      <TableHead>Usuario</TableHead>
+                      <TableHead>Tienda</TableHead>
+                      <TableHead>Estado</TableHead>
+                      <TableHead>Total</TableHead>
+                      <TableHead>Creado</TableHead>
+                      <TableHead>Acciones</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {purchaseOrdersData.data.map((order) => (
+                      <TableRow key={order.purchase_order_id}>
+                        <TableCell className="font-mono text-sm">{order.purchase_order_id.slice(-8)}</TableCell>
+                        <TableCell>
+                          <div>
+                            <div className="font-medium">{order.user?.name || "Sin nombre"}</div>
+                            <div className="text-sm text-muted-foreground">
+                              {order.user?.email || order.user_email}
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>{order.user?.store?.name || "N/A"}</TableCell>
+                        <TableCell>
+                          <Badge variant={order.status === 'pending' ? "secondary" : order.status === 'completed' ? "default" : "destructive"}>
+                            {order.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="font-medium">€{order.final_total.toFixed(2)}</TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {new Date(order.created_at).toLocaleDateString('es-ES')}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedPurchaseOrderId(order.purchase_order_id);
+                                setIsOrderItemsModalOpen(true);
+                              }}
+                              data-testid={`button-view-items-${order.purchase_order_id}`}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={async () => {
+                                if (confirm(`¿Estás seguro de que quieres eliminar la orden ${order.purchase_order_id.slice(-8)}?`)) {
+                                  try {
+                                    await deletePurchaseOrder(order.purchase_order_id);
+                                    queryClient.invalidateQueries({ queryKey: ["purchase-orders"] });
+                                  } catch (error) {
+                                    console.error('Error deleting purchase order:', error);
+                                  }
+                                }
+                              }}
+                              data-testid={`button-delete-purchase-order-${order.purchase_order_id}`}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <div className="text-center py-8">
+                  <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">No hay órdenes de compra disponibles</p>
+                </div>
+              )}
+              
+              {/* Paginación para órdenes de compra */}
+              {purchaseOrdersData && (
+                <div className="mt-4">
+                  <PaginationComponent 
+                    currentPage={currentPagePurchaseOrders}
+                    totalItems={purchaseOrdersData.total}
+                    pageSize={pageSize}
+                    onPageChange={setCurrentPagePurchaseOrders}
+                  />
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="orders" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Pedidos ({ordersData?.total || 0})
+              </CardTitle>
+              <CardDescription>
+                Pedidos procesados del sistema (con o sin orden de compra previa)
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {ordersLoading ? (
+                <div className="space-y-4">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Skeleton key={i} className="h-12 w-full" />
+                  ))}
+                </div>
+              ) : ordersData?.data.length ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>ID Pedido</TableHead>
+                      <TableHead>Orden de Compra</TableHead>
+                      <TableHead>Usuario</TableHead>
+                      <TableHead>Tienda</TableHead>
+                      <TableHead>Observaciones</TableHead>
+                      <TableHead>Total</TableHead>
+                      <TableHead>Creado</TableHead>
+                      <TableHead>Acciones</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {ordersData.data.map((order) => (
+                      <TableRow key={order.order_id}>
+                        <TableCell className="font-mono text-sm">{order.order_id?.slice(-8) || 'N/A'}</TableCell>
+                        <TableCell>
+                          {order.source_purchase_order_id ? (
+                            <Badge variant="outline" className="font-mono text-xs">
+                              {order.source_purchase_order_id.slice(-8)}
+                            </Badge>
+                          ) : (
+                            <Badge variant="secondary">Directo</Badge>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <div className="font-medium">{order.user?.name || "Sin nombre"}</div>
+                            <div className="text-sm text-muted-foreground">
+                              {order.user?.email || order.user_email}
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>{order.user?.store?.name || order.store_id}</TableCell>
+                        <TableCell className="max-w-xs">
+                          <div className="truncate text-sm">
+                            {order.observations || "Sin observaciones"}
+                          </div>
+                        </TableCell>
+                        <TableCell className="font-medium">€{order.final_total?.toFixed(2) || '0.00'}</TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {new Date(order.created_at).toLocaleDateString('es-ES')}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  data-testid={`button-view-order-${order.order_id}`}
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                                <DialogHeader>
+                                  <DialogTitle>Detalles del Pedido: {order.order_id}</DialogTitle>
+                                  <DialogDescription>
+                                    Información completa del pedido y sus líneas de productos
+                                  </DialogDescription>
+                                </DialogHeader>
+                                
+                                <div className="space-y-4">
+                                  {/* Order Information */}
+                                  <div className="grid grid-cols-2 gap-4 p-4 border rounded-lg">
+                                    <div>
+                                      <h4 className="font-semibold">Información General</h4>
+                                      <div className="text-sm space-y-1 mt-2">
+                                        <div><span className="font-medium">ID:</span> {order.order_id}</div>
+                                        <div><span className="font-medium">Usuario:</span> {order.user?.name || "Sin nombre"} ({order.user?.email})</div>
+                                        <div><span className="font-medium">Tienda:</span> {order.user?.store?.name || order.store_id}</div>
+                                        <div><span className="font-medium">Fecha:</span> {new Date(order.created_at).toLocaleDateString('es-ES')}</div>
+                                      </div>
+                                    </div>
+                                    <div>
+                                      <h4 className="font-semibold">Totales</h4>
+                                      <div className="text-sm space-y-1 mt-2">
+                                        <div><span className="font-medium">Subtotal:</span> €{order.subtotal?.toFixed(2) || '0.00'}</div>
+                                        <div><span className="font-medium">IVA:</span> €{order.tax_total?.toFixed(2) || '0.00'}</div>
+                                        <div><span className="font-medium text-lg">Total:</span> <span className="text-lg">€{order.final_total?.toFixed(2) || '0.00'}</span></div>
+                                        {order.observations && (
+                                          <div><span className="font-medium">Observaciones:</span> {order.observations}</div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                  
+                                  {/* Order Items */}
+                                  <div>
+                                    <h4 className="font-semibold mb-3">Líneas del Pedido</h4>
+                                    <OrderItemsTable orderId={order.order_id} />
+                                  </div>
+                                </div>
+                              </DialogContent>
+                            </Dialog>
+
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={async () => {
+                                if (confirm(`¿Estás seguro de que quieres eliminar el pedido ${order.order_id?.slice(-8) || 'N/A'}?`)) {
+                                  try {
+                                    await deleteOrder(order.order_id);
+                                    queryClient.invalidateQueries({ queryKey: ["orders"] });
+                                  } catch (error) {
+                                    console.error('Error deleting order:', error);
+                                  }
+                                }
+                              }}
+                              data-testid={`button-delete-order-${order.order_id}`}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <div className="text-center py-8">
+                  <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">No hay pedidos disponibles</p>
+                </div>
+              )}
+              
+              {/* Paginación para pedidos */}
+              {ordersData && (
+                <div className="mt-4">
+                  <PaginationComponent 
+                    currentPage={currentPageOrders}
+                    totalItems={ordersData.total}
+                    pageSize={pageSize}
+                    onPageChange={setCurrentPageOrders}
+                  />
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="taxes" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Receipt className="h-5 w-5" />
+                Impuestos ({taxesData?.total || 0})
+              </CardTitle>
+              <CardDescription>
+                Tipos de IVA españoles configurados en el sistema
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {taxesLoading ? (
+                <div className="space-y-4">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Skeleton key={i} className="h-12 w-full" />
+                  ))}
+                </div>
+              ) : taxesData?.data.length ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Código</TableHead>
+                      <TableHead>Nombre</TableHead>
+                      <TableHead>Tasa</TableHead>
+                      <TableHead>Descripción</TableHead>
+                      <TableHead>Estado</TableHead>
+                      <TableHead>Creado</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {taxesData.data.map((tax) => (
+                      <TableRow key={tax.code}>
+                        <TableCell className="font-mono">{tax.code}</TableCell>
+                        <TableCell className="font-medium">{tax.name}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline">
+                            {(tax.tax_rate * 100).toFixed(0)}%
+                          </Badge>
+                        </TableCell>
+                        <TableCell>-</TableCell>
+                        <TableCell>
+                          <Badge variant="default">Activo</Badge>
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {new Date(tax.created_at).toLocaleDateString('es-ES')}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <div className="text-center py-8">
+                  <Receipt className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">No hay impuestos configurados</p>
+                </div>
+              )}
+              
+              {/* Paginación para impuestos */}
+              {taxesData && (
+                <div className="mt-4">
+                  <PaginationComponent 
+                    currentPage={currentPageTaxes}
+                    totalItems={taxesData.total}
+                    pageSize={pageSize}
+                    onPageChange={setCurrentPageTaxes}
+                  />
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+          </Tabs>
+        </TabsContent>
+
+        {/* Generate Data Tab */}
+        <TabsContent value="generate-data" className="mt-6">
+          {/* Admin Controls */}
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle>Herramientas de Administración</CardTitle>
+              <CardDescription>
+                Gestión completa de entidades del sistema con validación de dependencias
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Global Timestamp */}
+              <div className="p-4 border rounded-lg bg-blue-50 dark:bg-blue-950">
+                <div className="space-y-2">
+                  <Label htmlFor="global-timestamp">Fecha/Hora de Creación (para todas las entidades)</Label>
+                  <Input
+                    id="global-timestamp"
+                    type="datetime-local"
+                    value={timestampOffset ? timestampOffset.slice(0, 16) : ''}
+                    onChange={(e) => setTimestampOffset(e.target.value ? new Date(e.target.value).toISOString() : '')}
+                    placeholder="Usa el momento actual si se deja vacío"
+                    data-testid="input-global-timestamp"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Esta fecha/hora se aplicará a todas las entidades que generes
+                  </p>
+                </div>
+              </div>
+
+              {/* Products Section */}
+              <div className="p-4 border rounded-lg space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-medium flex items-center gap-2">
+                      <Package className="h-4 w-4" />
+                      Productos
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      Gestión de productos españoles con categorías y marcas auténticas
+                    </p>
+                  </div>
+                  <Button
+                    onClick={handleDeleteAllProducts}
+                    variant="destructive"
+                    size="sm"
+                    disabled={deleteAllMutation.isPending}
+                    data-testid="button-delete-all-products"
+                  >
+                    {deleteAllMutation.isPending ? (
+                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-4 w-4 mr-2" />
+                    )}
+                    Eliminar Todos
+                  </Button>
+                </div>
+                
+                <div className="flex items-center gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="product-count">Cantidad (1-1000)</Label>
+                    <Input
+                      id="product-count"
+                      type="number"
+                      min="1"
+                      max="1000"
+                      value={productCount}
+                      onChange={(e) => setProductCount(parseInt(e.target.value) || 0)}
+                      data-testid="input-product-count"
+                      className="w-32"
+                    />
+                  </div>
+                  
+                  <Button
+                    onClick={handleGenerateProducts}
+                    disabled={generateMutation.isPending}
+                    data-testid="button-generate-products"
+                  >
+                    {generateMutation.isPending ? (
+                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Plus className="h-4 w-4 mr-2" />
+                    )}
+                    Generar Productos
+                  </Button>
+                </div>
+              </div>
+
+              {/* Other generation sections would go here... */}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      {/* Modal para ver líneas de pedido */}
       <Dialog open={isOrderItemsModalOpen} onOpenChange={setIsOrderItemsModalOpen}>
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
