@@ -24,6 +24,8 @@ interface Product {
   quantity_measure: number;
   image_url: string | null;
   is_active: boolean;
+  created_at: string;
+  updated_at: string;
   tax?: {
     name: string;
     tax_rate: number;
@@ -201,6 +203,8 @@ async function fetchProductsPaginated(page: number, pageSize: number): Promise<P
           quantity_measure
           image_url
           is_active
+          created_at
+          updated_at
           tax {
             name
             tax_rate
