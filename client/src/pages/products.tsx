@@ -533,7 +533,6 @@ async function generateRandomProducts(count: number, timestamp?: string): Promis
           generateProducts(count: $count, timestampOffset: $timestampOffset) {
             success
             message
-            count
           }
         }
       `,
@@ -567,7 +566,6 @@ async function generateDeliveryCenters(count: number, clearExisting?: boolean, t
           generateDeliveryCenters(count: $count, clearExisting: $clearExisting, timestampOffset: $timestampOffset) {
             success
             message
-            count
           }
         }
       `,
@@ -601,7 +599,6 @@ async function generateStores(storesPerCenter: number, clearExisting?: boolean, 
           generateStores(storesPerCenter: $storesPerCenter, clearExisting: $clearExisting, timestampOffset: $timestampOffset) {
             success
             message
-            count
           }
         }
       `,
@@ -635,7 +632,6 @@ async function generateUsers(usersPerStore: number, clearExisting?: boolean, tim
           generateUsers(usersPerStore: $usersPerStore, clearExisting: $clearExisting, timestampOffset: $timestampOffset) {
             success
             message
-            count
           }
         }
       `,
@@ -669,7 +665,6 @@ async function generatePurchaseOrders(count: number, clearExisting?: boolean, ti
           generatePurchaseOrders(count: $count, clearExisting: $clearExisting, timestampOffset: $timestampOffset) {
             success
             message
-            count
           }
         }
       `,
@@ -703,7 +698,6 @@ async function generateOrders(count: number, clearExisting?: boolean, timestampO
           generateOrders(count: $count, clearExisting: $clearExisting, timestampOffset: $timestampOffset) {
             success
             message
-            count
           }
         }
       `,
@@ -722,6 +716,38 @@ async function generateOrders(count: number, clearExisting?: boolean, timestampO
   }
 
   return result.data.generateOrders;
+}
+
+async function deleteAllData(): Promise<{ success: boolean; message: string }> {
+  const response = await fetch(GRAPHQL_ENDPOINT, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Apollo-Require-Preflight": "true",
+    },
+    body: JSON.stringify({
+      query: `
+        mutation DeleteAllData {
+          deleteAllData {
+            success
+            message
+          }
+        }
+      `,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const result = await response.json();
+  
+  if (result.errors) {
+    throw new Error(result.errors[0]?.message || "GraphQL error");
+  }
+
+  return result.data.deleteAllData;
 }
 
 export default function Products() {
@@ -900,6 +926,27 @@ export default function Products() {
 
   // Bulk data generation
   const [isGeneratingBulkData, setIsGeneratingBulkData] = useState(false);
+
+  // Delete all data mutation
+  const deleteAllDataMutation = useMutation({
+    mutationFn: deleteAllData,
+    onSuccess: (result) => {
+      toast({
+        title: result.success ? "Datos eliminados" : "Error",
+        description: result.message,
+        variant: result.success ? "default" : "destructive",
+      });
+      // Invalidate all queries to refresh data
+      queryClient.invalidateQueries();
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Error al eliminar datos",
+        variant: "destructive",
+      });
+    },
+  });
 
   const generateCompleteDataset = async () => {
     setIsGeneratingBulkData(true);
@@ -1487,6 +1534,40 @@ export default function Products() {
               </CardContent>
             </Card>
 
+            {/* Delete All Data */}
+            <Card className="border-2 border-destructive/20">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-destructive">
+                  <Trash2 className="h-5 w-5" />
+                  Eliminar Todos los Datos
+                </CardTitle>
+                <CardDescription>
+                  Elimina completamente todos los datos: productos, centros, tiendas, usuarios, órdenes y pedidos
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button
+                  onClick={() => deleteAllDataMutation.mutate()}
+                  disabled={deleteAllDataMutation.isPending}
+                  variant="destructive"
+                  className="w-full"
+                  data-testid="button-delete-all-data"
+                >
+                  {deleteAllDataMutation.isPending ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                      Eliminando todos los datos...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Eliminar Todos los Datos
+                    </>
+                  )}
+                </Button>
+              </CardContent>
+            </Card>
+
             {/* Timestamp Control */}
             <Card>
               <CardHeader>
@@ -1603,19 +1684,6 @@ export default function Products() {
                     )}
                     Generar Centros
                   </Button>
-                  
-                  <Button
-                    onClick={() => generateDeliveryCentersMutation.mutate({ 
-                      count: deliveryCentersCount, 
-                      clearExisting: true, 
-                      timestampOffset 
-                    })}
-                    disabled={generateDeliveryCentersMutation.isPending}
-                    variant="outline"
-                    data-testid="button-replace-centers"
-                  >
-                    Reemplazar Existentes
-                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -1661,19 +1729,6 @@ export default function Products() {
                       <Plus className="h-4 w-4 mr-2" />
                     )}
                     Generar Tiendas
-                  </Button>
-                  
-                  <Button
-                    onClick={() => generateStoresMutation.mutate({ 
-                      storesPerCenter, 
-                      clearExisting: true, 
-                      timestampOffset 
-                    })}
-                    disabled={generateStoresMutation.isPending}
-                    variant="outline"
-                    data-testid="button-replace-stores"
-                  >
-                    Reemplazar Existentes
                   </Button>
                 </div>
               </CardContent>
@@ -1721,19 +1776,6 @@ export default function Products() {
                     )}
                     Generar Usuarios
                   </Button>
-                  
-                  <Button
-                    onClick={() => generateUsersMutation.mutate({ 
-                      usersPerStore, 
-                      clearExisting: true, 
-                      timestampOffset 
-                    })}
-                    disabled={generateUsersMutation.isPending}
-                    variant="outline"
-                    data-testid="button-replace-users"
-                  >
-                    Reemplazar Existentes
-                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -1780,19 +1822,6 @@ export default function Products() {
                     )}
                     Generar Órdenes
                   </Button>
-                  
-                  <Button
-                    onClick={() => generatePurchaseOrdersMutation.mutate({ 
-                      count: purchaseOrdersCount, 
-                      clearExisting: true, 
-                      timestampOffset 
-                    })}
-                    disabled={generatePurchaseOrdersMutation.isPending}
-                    variant="outline"
-                    data-testid="button-replace-purchase-orders"
-                  >
-                    Reemplazar Existentes
-                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -1838,19 +1867,6 @@ export default function Products() {
                       <Plus className="h-4 w-4 mr-2" />
                     )}
                     Generar Pedidos
-                  </Button>
-                  
-                  <Button
-                    onClick={() => generateOrdersMutation.mutate({ 
-                      count: ordersCount, 
-                      clearExisting: true, 
-                      timestampOffset 
-                    })}
-                    disabled={generateOrdersMutation.isPending}
-                    variant="outline"
-                    data-testid="button-replace-orders"
-                  >
-                    Reemplazar Existentes
                   </Button>
                 </div>
               </CardContent>
