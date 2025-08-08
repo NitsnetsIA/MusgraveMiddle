@@ -527,9 +527,225 @@ async function fetchTaxes(): Promise<EntitiesResponse<Tax>> {
   };
 }
 
+// Functions for generating random data
+async function generateRandomProducts(count: number, timestamp?: string): Promise<{ message: string }> {
+  const response = await fetch(GRAPHQL_ENDPOINT, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Apollo-Require-Preflight": "true",
+    },
+    body: JSON.stringify({
+      query: `
+        mutation GenerateProducts($count: Int!, $timestampOffset: String) {
+          generateProducts(count: $count, timestampOffset: $timestampOffset) {
+            success
+            message
+            count
+          }
+        }
+      `,
+      variables: { count, timestampOffset: timestamp },
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const result = await response.json();
+  
+  if (result.errors) {
+    throw new Error(result.errors[0]?.message || "GraphQL error");
+  }
+
+  return { message: result.data.generateProducts.message };
+}
+
+async function generateDeliveryCenters(count: number, clearExisting?: boolean, timestampOffset?: string): Promise<{ success: boolean; message: string }> {
+  const response = await fetch(GRAPHQL_ENDPOINT, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Apollo-Require-Preflight": "true",
+    },
+    body: JSON.stringify({
+      query: `
+        mutation GenerateDeliveryCenters($count: Int!, $clearExisting: Boolean, $timestampOffset: String) {
+          generateDeliveryCenters(count: $count, clearExisting: $clearExisting, timestampOffset: $timestampOffset) {
+            success
+            message
+            count
+          }
+        }
+      `,
+      variables: { count, clearExisting, timestampOffset },
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const result = await response.json();
+  
+  if (result.errors) {
+    throw new Error(result.errors[0]?.message || "GraphQL error");
+  }
+
+  return result.data.generateDeliveryCenters;
+}
+
+async function generateStores(storesPerCenter: number, clearExisting?: boolean, timestampOffset?: string): Promise<{ success: boolean; message: string }> {
+  const response = await fetch(GRAPHQL_ENDPOINT, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Apollo-Require-Preflight": "true",
+    },
+    body: JSON.stringify({
+      query: `
+        mutation GenerateStores($storesPerCenter: Int!, $clearExisting: Boolean, $timestampOffset: String) {
+          generateStores(storesPerCenter: $storesPerCenter, clearExisting: $clearExisting, timestampOffset: $timestampOffset) {
+            success
+            message
+            count
+          }
+        }
+      `,
+      variables: { storesPerCenter, clearExisting, timestampOffset },
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const result = await response.json();
+  
+  if (result.errors) {
+    throw new Error(result.errors[0]?.message || "GraphQL error");
+  }
+
+  return result.data.generateStores;
+}
+
+async function generateUsers(usersPerStore: number, clearExisting?: boolean, timestampOffset?: string): Promise<{ success: boolean; message: string }> {
+  const response = await fetch(GRAPHQL_ENDPOINT, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Apollo-Require-Preflight": "true",
+    },
+    body: JSON.stringify({
+      query: `
+        mutation GenerateUsers($usersPerStore: Int!, $clearExisting: Boolean, $timestampOffset: String) {
+          generateUsers(usersPerStore: $usersPerStore, clearExisting: $clearExisting, timestampOffset: $timestampOffset) {
+            success
+            message
+            count
+          }
+        }
+      `,
+      variables: { usersPerStore, clearExisting, timestampOffset },
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const result = await response.json();
+  
+  if (result.errors) {
+    throw new Error(result.errors[0]?.message || "GraphQL error");
+  }
+
+  return result.data.generateUsers;
+}
+
+async function generatePurchaseOrders(count: number, clearExisting?: boolean, timestampOffset?: string): Promise<{ success: boolean; message: string }> {
+  const response = await fetch(GRAPHQL_ENDPOINT, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Apollo-Require-Preflight": "true",
+    },
+    body: JSON.stringify({
+      query: `
+        mutation GeneratePurchaseOrders($count: Int!, $clearExisting: Boolean, $timestampOffset: String) {
+          generatePurchaseOrders(count: $count, clearExisting: $clearExisting, timestampOffset: $timestampOffset) {
+            success
+            message
+            count
+          }
+        }
+      `,
+      variables: { count, clearExisting, timestampOffset },
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const result = await response.json();
+  
+  if (result.errors) {
+    throw new Error(result.errors[0]?.message || "GraphQL error");
+  }
+
+  return result.data.generatePurchaseOrders;
+}
+
+async function generateOrders(count: number, clearExisting?: boolean, timestampOffset?: string): Promise<{ success: boolean; message: string }> {
+  const response = await fetch(GRAPHQL_ENDPOINT, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Apollo-Require-Preflight": "true",
+    },
+    body: JSON.stringify({
+      query: `
+        mutation GenerateOrders($count: Int!, $clearExisting: Boolean, $timestampOffset: String) {
+          generateOrders(count: $count, clearExisting: $clearExisting, timestampOffset: $timestampOffset) {
+            success
+            message
+            count
+          }
+        }
+      `,
+      variables: { count, clearExisting, timestampOffset },
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const result = await response.json();
+  
+  if (result.errors) {
+    throw new Error(result.errors[0]?.message || "GraphQL error");
+  }
+
+  return result.data.generateOrders;
+}
+
 export default function Products() {
   // Tab state
   const [activeTab, setActiveTab] = useState("products");
+  
+  // Common timestamp for all entities
+  const [timestampOffset, setTimestampOffset] = useState('');
+  
+  // Entity generation states
+  const [productCount, setProductCount] = useState(10);
+  const [deliveryCentersCount, setDeliveryCentersCount] = useState(2);
+  const [storesPerCenter, setStoresPerCenter] = useState(2);
+  const [usersPerStore, setUsersPerStore] = useState(2);
+  const [purchaseOrdersCount, setPurchaseOrdersCount] = useState(10);
+  const [ordersCount, setOrdersCount] = useState(10);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -568,6 +784,126 @@ export default function Products() {
   const { data: taxesData, isLoading: taxesLoading } = useQuery({
     queryKey: ["taxes"],
     queryFn: fetchTaxes,
+  });
+
+  // Mutations for entity generation
+  const generateMutation = useMutation({
+    mutationFn: ({ count, timestamp }: { count: number; timestamp?: string }) => 
+      generateRandomProducts(count, timestamp),
+    onSuccess: (result) => {
+      toast({
+        title: "Productos generados",
+        description: result.message,
+      });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Error al generar productos",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const generateDeliveryCentersMutation = useMutation({
+    mutationFn: ({ count, clearExisting, timestampOffset }: { count: number; clearExisting?: boolean; timestampOffset?: string }) => 
+      generateDeliveryCenters(count, clearExisting, timestampOffset),
+    onSuccess: (result) => {
+      toast({
+        title: result.success ? "Centros de distribución creados" : "Error",
+        description: result.message,
+        variant: result.success ? "default" : "destructive",
+      });
+      queryClient.invalidateQueries({ queryKey: ["delivery-centers"] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Error al generar centros",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const generateStoresMutation = useMutation({
+    mutationFn: ({ storesPerCenter, clearExisting, timestampOffset }: { storesPerCenter: number; clearExisting?: boolean; timestampOffset?: string }) => 
+      generateStores(storesPerCenter, clearExisting, timestampOffset),
+    onSuccess: (result) => {
+      toast({
+        title: result.success ? "Tiendas creadas" : "Error",
+        description: result.message,
+        variant: result.success ? "default" : "destructive",
+      });
+      queryClient.invalidateQueries({ queryKey: ["stores"] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Error al generar tiendas",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const generateUsersMutation = useMutation({
+    mutationFn: ({ usersPerStore, clearExisting, timestampOffset }: { usersPerStore: number; clearExisting?: boolean; timestampOffset?: string }) => 
+      generateUsers(usersPerStore, clearExisting, timestampOffset),
+    onSuccess: (result) => {
+      toast({
+        title: result.success ? "Usuarios creados" : "Error",
+        description: result.message,
+        variant: result.success ? "default" : "destructive",
+      });
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Error al generar usuarios",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const generatePurchaseOrdersMutation = useMutation({
+    mutationFn: ({ count, clearExisting, timestampOffset }: { count: number; clearExisting?: boolean; timestampOffset?: string }) => 
+      generatePurchaseOrders(count, clearExisting, timestampOffset),
+    onSuccess: (result) => {
+      toast({
+        title: result.success ? "Órdenes de compra creadas" : "Error", 
+        description: result.message,
+        variant: result.success ? "default" : "destructive",
+      });
+      queryClient.invalidateQueries({ queryKey: ["purchase-orders"] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Error al generar órdenes",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const generateOrdersMutation = useMutation({
+    mutationFn: ({ count, clearExisting, timestampOffset }: { count: number; clearExisting?: boolean; timestampOffset?: string }) => 
+      generateOrders(count, clearExisting, timestampOffset),
+    onSuccess: (result) => {
+      toast({
+        title: result.success ? "Pedidos creados" : "Error", 
+        description: result.message,
+        variant: result.success ? "default" : "destructive",
+      });
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Error al generar pedidos",
+        variant: "destructive",
+      });
+    },
   });
 
   return (
@@ -1070,9 +1406,375 @@ export default function Products() {
 
         {/* Generate Data Tab */}
         <TabsContent value="generate-data" className="mt-6">
-          <div className="text-center py-8">
-            <Settings className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">Funcionalidad de generación en construcción</p>
+          <div className="space-y-6">
+            {/* Timestamp Control */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Settings className="h-5 w-5" />
+                  Control de Tiempo
+                </CardTitle>
+                <CardDescription>
+                  Configuración de timestamps para todas las entidades
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <Label htmlFor="timestamp-offset">Desplazamiento de Timestamp (opcional)</Label>
+                  <Input
+                    id="timestamp-offset"
+                    placeholder="Ej: -7d, -2h, -30m (días, horas, minutos)"
+                    value={timestampOffset}
+                    onChange={(e) => setTimestampOffset(e.target.value)}
+                    data-testid="input-timestamp-offset"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Use formato como "-7d" (7 días atrás), "-2h" (2 horas atrás), o "-30m" (30 minutos atrás)
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Products Generation */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Package className="h-5 w-5" />
+                  Productos
+                </CardTitle>
+                <CardDescription>
+                  Generación de productos aleatorios de alimentación
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="product-count">Cantidad (1-100)</Label>
+                    <Input
+                      id="product-count"
+                      type="number"
+                      min="1"
+                      max="100"
+                      value={productCount}
+                      onChange={(e) => setProductCount(parseInt(e.target.value) || 0)}
+                      data-testid="input-product-count"
+                      className="w-32"
+                    />
+                  </div>
+                  
+                  <Button
+                    onClick={() => generateMutation.mutate({ 
+                      count: productCount, 
+                      timestamp: timestampOffset 
+                    })}
+                    disabled={generateMutation.isPending}
+                    data-testid="button-generate-products"
+                  >
+                    {generateMutation.isPending ? (
+                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Plus className="h-4 w-4 mr-2" />
+                    )}
+                    Generar Productos
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Delivery Centers Generation */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Building2 className="h-5 w-5" />
+                  Centros de Distribución
+                </CardTitle>
+                <CardDescription>
+                  Generación de centros de distribución logística
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="centers-count">Cantidad (1-10)</Label>
+                    <Input
+                      id="centers-count"
+                      type="number"
+                      min="1"
+                      max="10"
+                      value={deliveryCentersCount}
+                      onChange={(e) => setDeliveryCentersCount(parseInt(e.target.value) || 0)}
+                      data-testid="input-centers-count"
+                      className="w-32"
+                    />
+                  </div>
+                  
+                  <Button
+                    onClick={() => generateDeliveryCentersMutation.mutate({ 
+                      count: deliveryCentersCount, 
+                      timestampOffset 
+                    })}
+                    disabled={generateDeliveryCentersMutation.isPending}
+                    data-testid="button-generate-centers"
+                  >
+                    {generateDeliveryCentersMutation.isPending ? (
+                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Plus className="h-4 w-4 mr-2" />
+                    )}
+                    Generar Centros
+                  </Button>
+                  
+                  <Button
+                    onClick={() => generateDeliveryCentersMutation.mutate({ 
+                      count: deliveryCentersCount, 
+                      clearExisting: true, 
+                      timestampOffset 
+                    })}
+                    disabled={generateDeliveryCentersMutation.isPending}
+                    variant="outline"
+                    data-testid="button-replace-centers"
+                  >
+                    Reemplazar Existentes
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Stores Generation */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Store className="h-5 w-5" />
+                  Tiendas
+                </CardTitle>
+                <CardDescription>
+                  Generación de tiendas vinculadas a centros existentes
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="stores-per-center">Tiendas por Centro (1-5)</Label>
+                    <Input
+                      id="stores-per-center"
+                      type="number"
+                      min="1"
+                      max="5"
+                      value={storesPerCenter}
+                      onChange={(e) => setStoresPerCenter(parseInt(e.target.value) || 0)}
+                      data-testid="input-stores-per-center"
+                      className="w-32"
+                    />
+                  </div>
+                  
+                  <Button
+                    onClick={() => generateStoresMutation.mutate({ 
+                      storesPerCenter, 
+                      timestampOffset 
+                    })}
+                    disabled={generateStoresMutation.isPending}
+                    data-testid="button-generate-stores"
+                  >
+                    {generateStoresMutation.isPending ? (
+                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Plus className="h-4 w-4 mr-2" />
+                    )}
+                    Generar Tiendas
+                  </Button>
+                  
+                  <Button
+                    onClick={() => generateStoresMutation.mutate({ 
+                      storesPerCenter, 
+                      clearExisting: true, 
+                      timestampOffset 
+                    })}
+                    disabled={generateStoresMutation.isPending}
+                    variant="outline"
+                    data-testid="button-replace-stores"
+                  >
+                    Reemplazar Existentes
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Users Generation */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  Usuarios
+                </CardTitle>
+                <CardDescription>
+                  Generación de usuarios para tiendas existentes
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="users-per-store">Usuarios por Tienda (1-5)</Label>
+                    <Input
+                      id="users-per-store"
+                      type="number"
+                      min="1"
+                      max="5"
+                      value={usersPerStore}
+                      onChange={(e) => setUsersPerStore(parseInt(e.target.value) || 0)}
+                      data-testid="input-users-per-store"
+                      className="w-32"
+                    />
+                  </div>
+                  
+                  <Button
+                    onClick={() => generateUsersMutation.mutate({ 
+                      usersPerStore, 
+                      timestampOffset 
+                    })}
+                    disabled={generateUsersMutation.isPending}
+                    data-testid="button-generate-users"
+                  >
+                    {generateUsersMutation.isPending ? (
+                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Plus className="h-4 w-4 mr-2" />
+                    )}
+                    Generar Usuarios
+                  </Button>
+                  
+                  <Button
+                    onClick={() => generateUsersMutation.mutate({ 
+                      usersPerStore, 
+                      clearExisting: true, 
+                      timestampOffset 
+                    })}
+                    disabled={generateUsersMutation.isPending}
+                    variant="outline"
+                    data-testid="button-replace-users"
+                  >
+                    Reemplazar Existentes
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Purchase Orders Generation */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Órdenes de Compra
+                </CardTitle>
+                <CardDescription>
+                  Generación de órdenes de compra - requiere usuarios existentes
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="purchase-orders-count">Cantidad (1-50)</Label>
+                    <Input
+                      id="purchase-orders-count"
+                      type="number"
+                      min="1"
+                      max="50"
+                      value={purchaseOrdersCount}
+                      onChange={(e) => setPurchaseOrdersCount(parseInt(e.target.value) || 0)}
+                      data-testid="input-purchase-orders-count"
+                      className="w-32"
+                    />
+                  </div>
+                  
+                  <Button
+                    onClick={() => generatePurchaseOrdersMutation.mutate({ 
+                      count: purchaseOrdersCount, 
+                      timestampOffset 
+                    })}
+                    disabled={generatePurchaseOrdersMutation.isPending}
+                    data-testid="button-generate-purchase-orders"
+                  >
+                    {generatePurchaseOrdersMutation.isPending ? (
+                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Plus className="h-4 w-4 mr-2" />
+                    )}
+                    Generar Órdenes
+                  </Button>
+                  
+                  <Button
+                    onClick={() => generatePurchaseOrdersMutation.mutate({ 
+                      count: purchaseOrdersCount, 
+                      clearExisting: true, 
+                      timestampOffset 
+                    })}
+                    disabled={generatePurchaseOrdersMutation.isPending}
+                    variant="outline"
+                    data-testid="button-replace-purchase-orders"
+                  >
+                    Reemplazar Existentes
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Orders Generation */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <ShoppingCart className="h-5 w-5" />
+                  Pedidos (Solo Desarrollo)
+                </CardTitle>
+                <CardDescription>
+                  Generación de pedidos procesados - requiere usuarios existentes
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="orders-count">Cantidad (1-50)</Label>
+                    <Input
+                      id="orders-count"
+                      type="number"
+                      min="1"
+                      max="50"
+                      value={ordersCount}
+                      onChange={(e) => setOrdersCount(parseInt(e.target.value) || 0)}
+                      data-testid="input-orders-count"
+                      className="w-32"
+                    />
+                  </div>
+                  
+                  <Button
+                    onClick={() => generateOrdersMutation.mutate({ 
+                      count: ordersCount, 
+                      timestampOffset 
+                    })}
+                    disabled={generateOrdersMutation.isPending}
+                    data-testid="button-generate-orders"
+                  >
+                    {generateOrdersMutation.isPending ? (
+                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Plus className="h-4 w-4 mr-2" />
+                    )}
+                    Generar Pedidos
+                  </Button>
+                  
+                  <Button
+                    onClick={() => generateOrdersMutation.mutate({ 
+                      count: ordersCount, 
+                      clearExisting: true, 
+                      timestampOffset 
+                    })}
+                    disabled={generateOrdersMutation.isPending}
+                    variant="outline"
+                    data-testid="button-replace-orders"
+                  >
+                    Reemplazar Existentes
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </TabsContent>
       </Tabs>
