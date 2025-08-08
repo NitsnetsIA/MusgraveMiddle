@@ -2674,30 +2674,14 @@ export default function Products() {
 
           {/* Purchase Orders Section - Solo para desarrollo */}
           <div className="p-4 border rounded-lg space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-medium flex items-center gap-2">
-                  <FileText className="h-4 w-4" />
-                  Órdenes de Compra (Solo Desarrollo)
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  Generación de datos de prueba - requiere usuarios existentes
-                </p>
-              </div>
-              <Button
-                onClick={handleDeleteAllPurchaseOrders}
-                variant="destructive"
-                size="sm"
-                disabled={deleteAllPurchaseOrdersMutation.isPending}
-                data-testid="button-delete-all-purchase-orders"
-              >
-                {deleteAllPurchaseOrdersMutation.isPending ? (
-                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <Trash2 className="h-4 w-4 mr-2" />
-                )}
-                Eliminar Todas
-              </Button>
+            <div>
+              <h3 className="font-medium flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                Órdenes de Compra (Solo Desarrollo)
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Generación de datos de prueba - requiere usuarios existentes
+              </p>
             </div>
             
             <div className="flex items-center gap-4">
@@ -2748,30 +2732,14 @@ export default function Products() {
 
           {/* Orders Generation Section */}
           <div className="p-4 border rounded-lg bg-green-50 dark:bg-green-950">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="font-medium flex items-center gap-2">
-                  <ShoppingCart className="h-4 w-4" />
-                  Pedidos (Solo Desarrollo)
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  Generación de pedidos procesados - requiere usuarios existentes
-                </p>
-              </div>
-              <Button
-                onClick={handleDeleteAllOrders}
-                variant="destructive"
-                size="sm"
-                disabled={deleteAllOrdersMutation.isPending}
-                data-testid="button-delete-all-orders"
-              >
-                {deleteAllOrdersMutation.isPending ? (
-                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <Trash2 className="h-4 w-4 mr-2" />
-                )}
-                Eliminar Todos
-              </Button>
+            <div className="mb-4">
+              <h3 className="font-medium flex items-center gap-2">
+                <ShoppingCart className="h-4 w-4" />
+                Pedidos (Solo Desarrollo)
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Generación de pedidos procesados - requiere usuarios existentes
+              </p>
             </div>
             
             <div className="flex items-center gap-4">
