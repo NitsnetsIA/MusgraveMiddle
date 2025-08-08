@@ -43,10 +43,6 @@ const GRAPHQL_ENDPOINT = "/graphql";
 interface DeliveryCenter {
   code: string;
   name: string;
-  city: string;
-  region: string;
-  postal_code: string;
-  is_active: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -244,10 +240,6 @@ async function fetchDeliveryCenters(): Promise<EntitiesResponse<DeliveryCenter>>
       deliveryCenters {
         code
         name
-        city
-        region
-        postal_code
-        is_active
         created_at
         updated_at
       }
@@ -906,6 +898,59 @@ export default function Products() {
     },
   });
 
+  // Bulk data generation
+  const [isGeneratingBulkData, setIsGeneratingBulkData] = useState(false);
+
+  const generateCompleteDataset = async () => {
+    setIsGeneratingBulkData(true);
+    
+    try {
+      // Step 1: Generate 10,000 products
+      toast({ title: "Iniciando generación masiva", description: "Generando 10,000 productos..." });
+      await generateRandomProducts(10000, timestampOffset);
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+
+      // Step 2: Generate 20 delivery centers
+      toast({ title: "Paso 2/6", description: "Generando 20 centros de distribución..." });
+      await generateDeliveryCenters(20, true, timestampOffset);
+      queryClient.invalidateQueries({ queryKey: ["delivery-centers"] });
+
+      // Step 3: Generate stores (2 per center = 40 stores)
+      toast({ title: "Paso 3/6", description: "Generando tiendas..." });
+      await generateStores(2, true, timestampOffset);
+      queryClient.invalidateQueries({ queryKey: ["stores"] });
+
+      // Step 4: Generate users (2 per store = 80 users)
+      toast({ title: "Paso 4/6", description: "Generando usuarios..." });
+      await generateUsers(2, true, timestampOffset);
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+
+      // Step 5: Generate 1000 purchase orders
+      toast({ title: "Paso 5/6", description: "Generando 1,000 órdenes de compra..." });
+      await generatePurchaseOrders(1000, true, timestampOffset);
+      queryClient.invalidateQueries({ queryKey: ["purchase-orders"] });
+
+      // Step 6: Generate 1000 orders
+      toast({ title: "Paso 6/6", description: "Generando 1,000 pedidos..." });
+      await generateOrders(1000, true, timestampOffset);
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+
+      toast({
+        title: "¡Datos completos generados!",
+        description: "Se han creado 10,000 productos, 20 centros, 40 tiendas, 80 usuarios, 1,000 órdenes de compra y 1,000 pedidos.",
+      });
+
+    } catch (error) {
+      toast({
+        title: "Error en generación masiva",
+        description: error instanceof Error ? error.message : "Error durante la generación de datos",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingBulkData(false);
+    }
+  };
+
   return (
     <div className="container mx-auto p-6 space-y-8">
       {/* Header */}
@@ -1069,10 +1114,8 @@ export default function Products() {
                         <TableRow>
                           <TableHead>Código</TableHead>
                           <TableHead>Nombre</TableHead>
-                          <TableHead>Ciudad</TableHead>
-                          <TableHead>Región</TableHead>
-                          <TableHead>CP</TableHead>
-                          <TableHead>Estado</TableHead>
+                          <TableHead>Fecha Creación</TableHead>
+                          <TableHead>Última Actualización</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -1080,13 +1123,11 @@ export default function Products() {
                           <TableRow key={center.code}>
                             <TableCell className="font-mono">{center.code}</TableCell>
                             <TableCell className="font-medium">{center.name}</TableCell>
-                            <TableCell>{center.city}</TableCell>
-                            <TableCell>{center.region}</TableCell>
-                            <TableCell>{center.postal_code}</TableCell>
-                            <TableCell>
-                              <Badge variant={center.is_active ? "default" : "secondary"}>
-                                {center.is_active ? "Activo" : "Inactivo"}
-                              </Badge>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {new Date(center.created_at).toLocaleDateString('es-ES')}
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {new Date(center.updated_at).toLocaleDateString('es-ES')}
                             </TableCell>
                           </TableRow>
                         ))}
@@ -1407,6 +1448,45 @@ export default function Products() {
         {/* Generate Data Tab */}
         <TabsContent value="generate-data" className="mt-6">
           <div className="space-y-6">
+            {/* Bulk Data Generation */}
+            <Card className="border-2 border-primary/20">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-primary">
+                  <Settings className="h-6 w-6" />
+                  Generación Masiva de Datos
+                </CardTitle>
+                <CardDescription>
+                  Genera un conjunto completo de datos de prueba: 10,000 productos, 20 centros de distribución, 40 tiendas, 80 usuarios, 1,000 órdenes de compra y 1,000 pedidos
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button
+                  onClick={generateCompleteDataset}
+                  disabled={isGeneratingBulkData}
+                  size="lg"
+                  className="w-full"
+                  data-testid="button-generate-complete-dataset"
+                >
+                  {isGeneratingBulkData ? (
+                    <>
+                      <RefreshCw className="h-5 w-5 mr-2 animate-spin" />
+                      Generando datos completos...
+                    </>
+                  ) : (
+                    <>
+                      <Package className="h-5 w-5 mr-2" />
+                      Generar Datos Completos
+                    </>
+                  )}
+                </Button>
+                {isGeneratingBulkData && (
+                  <p className="text-center text-sm text-muted-foreground mt-2">
+                    Esto puede tomar varios minutos. Por favor, espera...
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+
             {/* Timestamp Control */}
             <Card>
               <CardHeader>
