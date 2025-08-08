@@ -1600,8 +1600,8 @@ export default function Products() {
   const deletePurchaseOrderMutation = useMutation({
     mutationFn: async (purchaseOrderId: string) => {
       const query = `
-        mutation DeletePurchaseOrder($purchaseOrderId: String!) {
-          deletePurchaseOrder(purchaseOrderId: $purchaseOrderId)
+        mutation DeletePurchaseOrder($purchase_order_id: String!) {
+          deletePurchaseOrder(purchase_order_id: $purchase_order_id)
         }
       `;
       const response = await fetch(GRAPHQL_ENDPOINT, {
@@ -1610,7 +1610,7 @@ export default function Products() {
           "Content-Type": "application/json",
           "Apollo-Require-Preflight": "true",
         },
-        body: JSON.stringify({ query, variables: { purchaseOrderId } }),
+        body: JSON.stringify({ query, variables: { purchase_order_id: purchaseOrderId } }),
       });
 
       const result = await response.json();
@@ -1635,8 +1635,8 @@ export default function Products() {
   const deleteOrderMutation = useMutation({
     mutationFn: async (orderId: string) => {
       const query = `
-        mutation DeleteOrder($orderId: String!) {
-          deleteOrder(orderId: $orderId)
+        mutation DeleteOrder($order_id: String!) {
+          deleteOrder(order_id: $order_id)
         }
       `;
       const response = await fetch(GRAPHQL_ENDPOINT, {
@@ -1645,7 +1645,7 @@ export default function Products() {
           "Content-Type": "application/json",
           "Apollo-Require-Preflight": "true",
         },
-        body: JSON.stringify({ query, variables: { orderId } }),
+        body: JSON.stringify({ query, variables: { order_id: orderId } }),
       });
 
       const result = await response.json();
