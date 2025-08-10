@@ -211,7 +211,18 @@ export const resolvers = {
 
     // Purchase Orders mutations
     createPurchaseOrder: async (_: any, { input }: { input: any }) => {
-      return await storage.createPurchaseOrder(input);
+      // Si hay items incluidos, usar el método que crea todo junto
+      if (input.items && input.items.length > 0) {
+        const { items, ...purchaseOrderData } = input;
+        return await storage.createPurchaseOrderWithItems({
+          purchaseOrder: purchaseOrderData,
+          items: items
+        });
+      } else {
+        // Si no hay items, usar el método tradicional
+        const { items, ...purchaseOrderData } = input;
+        return await storage.createPurchaseOrder(purchaseOrderData);
+      }
     },
     
     updatePurchaseOrder: async (_: any, { purchase_order_id, input }: { purchase_order_id: string; input: any }) => {

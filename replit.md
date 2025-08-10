@@ -18,6 +18,9 @@ This is a headless GraphQL microservice for managing grocery products and Spanis
 - **Implemented SHA3 password hashing with individual email as salt for enhanced security**
 - **Enforced default user Luis Romero Pérez (luis@esgranvia.es) with store ES001 and password 'password123'**
 - **Guaranteed ES001 store creation as first store for default user assignment**
+- **Added client synchronization support with server_sent_at field in purchase orders**
+- **Implemented frontend-controlled timestamps for created_at, updated_at, and server_sent_at**
+- **Created atomic purchase order creation with items using createPurchaseOrderWithItems mutation**
 
 ## User Preferences
 
@@ -52,7 +55,8 @@ Preferred communication style: Simple, everyday language.
 - **Orders table**: Final processed orders derived from purchase orders
 - **Order Items table**: Line items for final processed orders
 - **Foreign key relationships**: Complete referential integrity across all entities
-- **Timestamps**: Automatic created_at and updated_at tracking for all entities
+- **Timestamps**: Automatic created_at and updated_at tracking for all entities, with frontend-controlled timestamp support
+- **Client Synchronization**: server_sent_at field in purchase orders for mobile/web app sync tracking
 - **Security**: SHA3-256 password hashing with individual email salt for each user
 
 ### API Architecture
@@ -67,6 +71,8 @@ Preferred communication style: Simple, everyday language.
 - **Individual entity generation methods** with dependency validation for granular control
 - **Entity generation with Spanish context** using authentic Spanish names, cities, and business structures
 - **Dependency validation** preventing creation of child entities without required parent entities
+- **Client-controlled timestamps** allowing frontend applications to set specific created_at, updated_at, and server_sent_at values for offline synchronization
+- **Atomic purchase order creation** with createPurchaseOrderWithItems mutation for creating orders with line items in a single transaction
 
 ### Development Environment
 - **Replit integration** with custom plugins for development banner and cartographer

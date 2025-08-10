@@ -70,6 +70,7 @@ export const typeDefs = `#graphql
     subtotal: Float!
     tax_total: Float!
     final_total: Float!
+    server_sent_at: DateTime
     created_at: DateTime!
     updated_at: DateTime!
     user: User
@@ -219,6 +220,10 @@ export const typeDefs = `#graphql
     subtotal: Float!
     tax_total: Float!
     final_total: Float!
+    server_sent_at: DateTime
+    created_at: DateTime
+    updated_at: DateTime
+    items: [PurchaseOrderItemInput!]
   }
 
   input UpdatePurchaseOrderInput {
@@ -228,10 +233,13 @@ export const typeDefs = `#graphql
     subtotal: Float
     tax_total: Float
     final_total: Float
+    server_sent_at: DateTime
+    created_at: DateTime
+    updated_at: DateTime
   }
 
   input PurchaseOrderItemInput {
-    purchase_order_id: String!
+    purchase_order_id: String
     item_ean: String!
     item_title: String
     item_description: String
@@ -241,6 +249,8 @@ export const typeDefs = `#graphql
     quantity: Float!
     base_price_at_order: Float!
     tax_rate_at_order: Float!
+    created_at: DateTime
+    updated_at: DateTime
   }
 
   input UpdatePurchaseOrderItemInput {

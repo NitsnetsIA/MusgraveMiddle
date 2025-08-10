@@ -834,27 +834,140 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createPurchaseOrder(order: InsertPurchaseOrder): Promise<PurchaseOrder> {
+    const now = new Date();
+    
+    // Construir el objeto con solo campos no-undefined
+    const insertData: any = {
+      purchase_order_id: order.purchase_order_id,
+      user_email: order.user_email,
+      store_id: order.store_id,
+      status: order.status,
+      subtotal: order.subtotal,
+      tax_total: order.tax_total,
+      final_total: order.final_total,
+    };
+
+    // Solo agregar timestamps si están definidos, sino dejar que la DB use defaults
+    if (order.created_at) {
+      const createdAt = order.created_at instanceof Date ? order.created_at : new Date(order.created_at);
+      if (!isNaN(createdAt.getTime())) insertData.created_at = createdAt;
+    }
+
+    if (order.updated_at) {
+      const updatedAt = order.updated_at instanceof Date ? order.updated_at : new Date(order.updated_at);
+      if (!isNaN(updatedAt.getTime())) insertData.updated_at = updatedAt;
+    }
+
+    if (order.server_sent_at) {
+      const serverSentAt = order.server_sent_at instanceof Date ? order.server_sent_at : new Date(order.server_sent_at);
+      if (!isNaN(serverSentAt.getTime())) insertData.server_sent_at = serverSentAt;
+    }
+    
     const [created] = await db
       .insert(purchaseOrders)
-      .values({
-        ...order,
-        created_at: new Date(),
-        updated_at: new Date(),
-      })
+      .values(insertData)
       .returning();
     return created;
   }
 
   async updatePurchaseOrder(purchase_order_id: string, order: Partial<InsertPurchaseOrder>): Promise<PurchaseOrder> {
+    const now = new Date();
+    
+    // Función para convertir string a Date si es necesario
+    const parseDate = (dateValue: any): Date => {
+      if (!dateValue) return now;
+      return dateValue instanceof Date ? dateValue : new Date(dateValue);
+    };
+    
     const [updated] = await db
       .update(purchaseOrders)
       .set({
         ...order,
-        updated_at: new Date(),
+        // Convertir updated_at de string a Date si es necesario
+        updated_at: parseDate(order.updated_at),
+        // Si hay server_sent_at, también convertirlo
+        ...(order.server_sent_at && { server_sent_at: parseDate(order.server_sent_at) }),
+        ...(order.created_at && { created_at: parseDate(order.created_at) }),
       })
       .where(eq(purchaseOrders.purchase_order_id, purchase_order_id))
       .returning();
     return updated;
+  }
+
+  // Método para crear purchase order con items de una vez
+  async createPurchaseOrderWithItems(orderData: {
+    purchaseOrder: InsertPurchaseOrder;
+    items: InsertPurchaseOrderItem[];
+  }): Promise<PurchaseOrder> {
+    const order = orderData.purchaseOrder;
+    
+    // Construir el objeto purchase order con solo campos válidos
+    const insertData: any = {
+      purchase_order_id: order.purchase_order_id,
+      user_email: order.user_email,
+      store_id: order.store_id,
+      status: order.status,
+      subtotal: order.subtotal,
+      tax_total: order.tax_total,
+      final_total: order.final_total,
+    };
+
+    // Solo agregar timestamps si están definidos
+    if (order.created_at) {
+      const createdAt = order.created_at instanceof Date ? order.created_at : new Date(order.created_at);
+      if (!isNaN(createdAt.getTime())) insertData.created_at = createdAt;
+    }
+
+    if (order.updated_at) {
+      const updatedAt = order.updated_at instanceof Date ? order.updated_at : new Date(order.updated_at);
+      if (!isNaN(updatedAt.getTime())) insertData.updated_at = updatedAt;
+    }
+
+    if (order.server_sent_at) {
+      const serverSentAt = order.server_sent_at instanceof Date ? order.server_sent_at : new Date(order.server_sent_at);
+      if (!isNaN(serverSentAt.getTime())) insertData.server_sent_at = serverSentAt;
+    }
+    
+    // Crear la purchase order
+    const [created] = await db
+      .insert(purchaseOrders)
+      .values(insertData)
+      .returning();
+
+    // Crear los items si se proporcionaron
+    if (orderData.items && orderData.items.length > 0) {
+      const itemsToInsert = orderData.items.map(item => {
+        const itemData: any = {
+          purchase_order_id: created.purchase_order_id,
+          item_ean: item.item_ean,
+          item_title: item.item_title,
+          item_description: item.item_description,
+          unit_of_measure: item.unit_of_measure,
+          quantity_measure: item.quantity_measure,
+          image_url: item.image_url,
+          quantity: item.quantity,
+          base_price_at_order: item.base_price_at_order,
+          tax_rate_at_order: item.tax_rate_at_order,
+        };
+
+        // Solo agregar timestamps de item si están definidos
+        if (item.created_at) {
+          const createdAt = item.created_at instanceof Date ? item.created_at : new Date(item.created_at);
+          if (!isNaN(createdAt.getTime())) itemData.created_at = createdAt;
+        }
+
+        if (item.updated_at) {
+          const updatedAt = item.updated_at instanceof Date ? item.updated_at : new Date(item.updated_at);
+          if (!isNaN(updatedAt.getTime())) itemData.updated_at = updatedAt;
+        }
+
+        return itemData;
+      });
+      
+      await db.insert(purchaseOrderItems).values(itemsToInsert);
+    }
+
+    return created;
   }
 
   async deletePurchaseOrder(purchase_order_id: string): Promise<boolean> {
@@ -918,23 +1031,42 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createPurchaseOrderItem(item: InsertPurchaseOrderItem): Promise<PurchaseOrderItem> {
+    const now = new Date();
+    
+    // Función para convertir string a Date si es necesario
+    const parseDate = (dateValue: any): Date => {
+      if (!dateValue) return now;
+      return dateValue instanceof Date ? dateValue : new Date(dateValue);
+    };
+    
     const [created] = await db
       .insert(purchaseOrderItems)
       .values({
         ...item,
-        created_at: new Date(),
-        updated_at: new Date(),
+        // Convertir timestamps de string a Date si es necesario
+        created_at: parseDate(item.created_at),
+        updated_at: parseDate(item.updated_at),
       })
       .returning();
     return created;
   }
 
   async updatePurchaseOrderItem(item_id: number, item: Partial<InsertPurchaseOrderItem>): Promise<PurchaseOrderItem> {
+    const now = new Date();
+    
+    // Función para convertir string a Date si es necesario
+    const parseDate = (dateValue: any): Date => {
+      if (!dateValue) return now;
+      return dateValue instanceof Date ? dateValue : new Date(dateValue);
+    };
+    
     const [updated] = await db
       .update(purchaseOrderItems)
       .set({
         ...item,
-        updated_at: new Date(),
+        // Convertir timestamps de string a Date si es necesario
+        updated_at: parseDate(item.updated_at),
+        ...(item.created_at && { created_at: parseDate(item.created_at) }),
       })
       .where(eq(purchaseOrderItems.item_id, item_id))
       .returning();
