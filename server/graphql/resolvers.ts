@@ -241,7 +241,8 @@ export const resolvers = {
         // Si simulateOrder es true, crear el pedido simulado
         if (simulateOrder) {
           try {
-            simulatedOrder = await createSimulatedOrder(createdPurchaseOrder);
+            const { createSimulatedOrder: createSimulated } = await import('../simulation.js');
+            simulatedOrder = await createSimulated(createdPurchaseOrder);
             message = 'Purchase order created and order simulated successfully';
           } catch (error) {
             console.error('Error creating simulated order:', error);
@@ -538,7 +539,7 @@ export const resolvers = {
 };
 
 // Función auxiliar para crear un pedido simulado basado en una purchase order
-async function createSimulatedOrder(sourcePurchaseOrder: any): Promise<any> {
+export async function createSimulatedOrder(sourcePurchaseOrder: any): Promise<any> {
   // Obtener los items de la purchase order
   const purchaseOrderItemsResult = await db.select()
     .from(purchaseOrderItems)

@@ -878,8 +878,9 @@ export class DatabaseStorage implements IStorage {
       if (config && config.value === 'true') {
         console.log('Auto-simulation enabled, creating order from purchase order:', created.purchase_order_id);
         
-        // Generar order automáticamente usando la lógica de simulación
-        await this.simulateOrderFromPurchaseOrder(created);
+        // Generar order automáticamente usando la función de simulación
+        const { createSimulatedOrder } = await import('./simulation.js');
+        await createSimulatedOrder(created);
       }
     } catch (error) {
       console.error('Error checking auto-simulation config or creating order:', error);
@@ -1092,6 +1093,25 @@ export class DatabaseStorage implements IStorage {
       await db.insert(purchaseOrderItems).values(itemsToInsert);
     }
 
+    // Verificar si la simulación automática está activada
+    try {
+      const [config] = await db
+        .select()
+        .from(systemConfig)
+        .where(eq(systemConfig.key, 'auto_simulate_orders_on_purchase'));
+
+      if (config && config.value === 'true') {
+        console.log('Auto-simulation enabled, creating order from purchase order:', created.purchase_order_id);
+        
+        // Generar order automáticamente usando la función de simulación
+        const { createSimulatedOrder } = await import('./simulation.js');
+        await createSimulatedOrder(created);
+      }
+    } catch (error) {
+      console.error('Error checking auto-simulation config or creating order:', error);
+      // No lanzar error para no interrumpir la creación de la purchase order
+    }
+
     return created;
   }
 
@@ -1199,7 +1219,8 @@ export class DatabaseStorage implements IStorage {
 
           if (purchaseOrder) {
             console.log('Purchase order found, triggering auto-simulation for:', purchaseOrder.purchase_order_id);
-            await this.simulateOrderFromPurchaseOrder(purchaseOrder);
+            const { createSimulatedOrder } = await import('./simulation.js');
+            await createSimulatedOrder(purchaseOrder);
           }
         }
       }

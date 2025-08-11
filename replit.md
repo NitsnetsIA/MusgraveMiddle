@@ -25,6 +25,9 @@ This is a headless GraphQL microservice for managing grocery products and Spanis
 - **Implemented automatic order simulation when purchase orders are created from frontend apps**
 - **Enhanced bulk purchase order generation with automatic simulation toggle**
 - **Fixed critical bug where bulk generation wasn't triggering simulation automatically**
+- **RESOLVED: Fixed automatic order simulation for frontend apps (August 2025)**
+- **Issue solved: createPurchaseOrderWithItems now includes automatic simulation logic**
+- **Confirmed working: Frontend apps automatically generate processed orders when sending purchase orders**
 
 ## User Preferences
 
