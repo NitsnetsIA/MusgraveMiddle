@@ -127,6 +127,15 @@ export const orderItems = pgTable("order_items", {
   updated_at: timestamp("updated_at", { withTimezone: true }).notNull().default(sql`CURRENT_TIMESTAMP`)
 });
 
+// Tabla de Configuración Global del Sistema
+export const systemConfig = pgTable("system_config", {
+  key: text("key").primaryKey(),
+  value: text("value").notNull(),
+  description: text("description"),
+  created_at: timestamp("created_at", { withTimezone: true }).notNull().default(sql`CURRENT_TIMESTAMP`),
+  updated_at: timestamp("updated_at", { withTimezone: true }).notNull().default(sql`CURRENT_TIMESTAMP`)
+});
+
 // Relations
 export const deliveryCentersRelations = relations(deliveryCenters, ({ many }) => ({
   stores: many(stores),
@@ -247,6 +256,11 @@ export const insertOrderItemSchema = createInsertSchema(orderItems).omit({
   updated_at: true,
 });
 
+export const insertSystemConfigSchema = createInsertSchema(systemConfig).omit({
+  created_at: true,
+  updated_at: true,
+});
+
 // Types
 export type InsertTax = z.infer<typeof insertTaxSchema>;
 export type Tax = typeof taxes.$inferSelect;
@@ -269,6 +283,9 @@ export type InsertOrder = z.infer<typeof insertOrderSchema>;
 export type Order = typeof orders.$inferSelect;
 export type InsertOrderItem = z.infer<typeof insertOrderItemSchema>;
 export type OrderItem = typeof orderItems.$inferSelect;
+
+export type InsertSystemConfig = z.infer<typeof insertSystemConfigSchema>;
+export type SystemConfig = typeof systemConfig.$inferSelect;
 
 // Connection types for pagination
 export type ProductConnection = {

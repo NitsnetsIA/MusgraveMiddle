@@ -21,6 +21,10 @@ This is a headless GraphQL microservice for managing grocery products and Spanis
 - **Added client synchronization support with server_sent_at field in purchase orders**
 - **Implemented frontend-controlled timestamps for created_at, updated_at, and server_sent_at**
 - **Created atomic purchase order creation with items using createPurchaseOrderWithItems mutation**
+- **Added global system configuration for automatic order simulation with system_config table**
+- **Implemented automatic order simulation when purchase orders are created from frontend apps**
+- **Enhanced bulk purchase order generation with automatic simulation toggle**
+- **Fixed critical bug where bulk generation wasn't triggering simulation automatically**
 
 ## User Preferences
 
