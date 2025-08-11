@@ -743,7 +743,7 @@ async function generateUsers(usersPerStore: number, clearExisting?: boolean, tim
   return result.data.generateUsers;
 }
 
-async function generatePurchaseOrders(count: number, clearExisting?: boolean, timestampOffset?: string): Promise<{ success: boolean; message: string }> {
+async function generatePurchaseOrders(count: number, clearExisting?: boolean, timestampOffset?: string, autoSimulate = false): Promise<{ success: boolean; message: string }> {
   const response = await fetch(GRAPHQL_ENDPOINT, {
     method: "POST",
     headers: {
@@ -752,14 +752,14 @@ async function generatePurchaseOrders(count: number, clearExisting?: boolean, ti
     },
     body: JSON.stringify({
       query: `
-        mutation GeneratePurchaseOrders($count: Int!, $clearExisting: Boolean, $timestampOffset: String) {
-          generatePurchaseOrders(count: $count, clearExisting: $clearExisting, timestampOffset: $timestampOffset) {
+        mutation GeneratePurchaseOrders($count: Int!, $clearExisting: Boolean, $timestampOffset: String, $autoSimulate: Boolean) {
+          generatePurchaseOrders(count: $count, clearExisting: $clearExisting, timestampOffset: $timestampOffset, autoSimulate: $autoSimulate) {
             success
             message
           }
         }
       `,
-      variables: { count, clearExisting, timestampOffset },
+      variables: { count, clearExisting, timestampOffset, autoSimulate },
     }),
   });
 
@@ -1237,7 +1237,7 @@ export default function Products() {
 
   const generatePurchaseOrdersMutation = useMutation({
     mutationFn: ({ count, clearExisting, timestampOffset }: { count: number; clearExisting?: boolean; timestampOffset?: string }) => 
-      generatePurchaseOrders(count, clearExisting, timestampOffset),
+      generatePurchaseOrders(count, clearExisting, timestampOffset, autoSimulateOrders),
     onSuccess: (result) => {
       toast({
         title: result.success ? "Órdenes de compra creadas" : "Error", 

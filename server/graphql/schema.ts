@@ -457,7 +457,7 @@ export const typeDefs = `#graphql
     generateDeliveryCenters(count: Int!, clearExisting: Boolean = false, timestampOffset: String): SingleEntityGenerationResult!
     generateStores(storesPerCenter: Int!, clearExisting: Boolean = false, timestampOffset: String): SingleEntityGenerationResult!
     generateUsers(usersPerStore: Int!, clearExisting: Boolean = false, timestampOffset: String): SingleEntityGenerationResult!
-    generatePurchaseOrders(count: Int!, clearExisting: Boolean = false, timestampOffset: String): SingleEntityGenerationResult!
+    generatePurchaseOrders(count: Int!, clearExisting: Boolean = false, timestampOffset: String, autoSimulate: Boolean = false): SingleEntityGenerationResult!
     generateOrders(count: Int!, clearExisting: Boolean = false, timestampOffset: String): SingleEntityGenerationResult!
     generateEntities(input: GenerateEntitiesInput!): GenerateEntitiesResult!
     

@@ -340,8 +340,30 @@ export const resolvers = {
       return await storage.generateUsers(usersPerStore, clearExisting || false, timestampOffset);
     },
 
-    generatePurchaseOrders: async (_: any, { count, clearExisting, timestampOffset }: { count: number; clearExisting?: boolean; timestampOffset?: string }) => {
-      return await storage.generatePurchaseOrders(count, clearExisting || false, timestampOffset);
+    generatePurchaseOrders: async (_: any, { count, clearExisting, timestampOffset, autoSimulate }: { count: number; clearExisting?: boolean; timestampOffset?: string; autoSimulate?: boolean }) => {
+      const result = await storage.generatePurchaseOrders(count, clearExisting || false, timestampOffset);
+      
+      // Si autoSimulate está activado, generar orders automáticamente para cada purchase order creada
+      if (autoSimulate && result.success) {
+        try {
+          console.log(`Auto-simulating orders for ${count} purchase orders...`);
+          const ordersResult = await storage.generateOrders(count, false, timestampOffset);
+          if (ordersResult.success) {
+            return {
+              ...result,
+              message: `${result.message} + ${ordersResult.message} (simulación automática activada)`
+            };
+          }
+        } catch (error) {
+          console.error('Error in auto-simulation:', error);
+          return {
+            ...result,
+            message: `${result.message} (simulación automática falló: ${error instanceof Error ? error.message : 'Unknown error'})`
+          };
+        }
+      }
+      
+      return result;
     },
 
     generateOrders: async (_: any, { count, clearExisting, timestampOffset }: { count: number; clearExisting?: boolean; timestampOffset?: string }) => {
