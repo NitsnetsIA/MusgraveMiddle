@@ -2125,7 +2125,6 @@ export class DatabaseStorage implements IStorage {
     deliveryCenters?: number;
     storesPerCenter?: number;
     usersPerStore?: number;
-    purchaseOrders?: number;
     clearExisting?: boolean;
   }): Promise<{
     success: boolean;
@@ -2133,7 +2132,6 @@ export class DatabaseStorage implements IStorage {
       deliveryCenters: number;
       stores: number;
       users: number;
-      purchaseOrders: number;
     };
     message: string;
   }> {
@@ -2141,7 +2139,6 @@ export class DatabaseStorage implements IStorage {
       deliveryCenters: deliveryCentersCount = 5,
       storesPerCenter = 3,
       usersPerStore = 4,
-      purchaseOrders: purchaseOrdersCount = 20,
       clearExisting = false
     } = options;
 
@@ -2160,12 +2157,11 @@ export class DatabaseStorage implements IStorage {
         console.log("Existing entity data cleared successfully");
       }
 
-      // Generate coherent entities
+      // Generate coherent entities (sin purchase orders - ciclo completo desde apps frontales)
       const generated = generateCoherentEntities({
         deliveryCenters: deliveryCentersCount,
         storesPerCenter,
-        usersPerStore,
-        purchaseOrders: purchaseOrdersCount
+        usersPerStore
       });
 
       // Insert delivery centers
@@ -2186,13 +2182,9 @@ export class DatabaseStorage implements IStorage {
         await db.insert(users).values(user).execute();
       }
 
-      // Insert purchase orders
-      console.log(`Inserting ${generated.purchaseOrders.length} purchase orders...`);
-      for (const order of generated.purchaseOrders) {
-        await db.insert(purchaseOrders).values(order).execute();
-      }
+      // Ya no insertamos purchase orders porque el ciclo completo se hace desde las apps frontales
 
-      const message = `Successfully generated ${generated.summary.deliveryCenters} delivery centers, ${generated.summary.stores} stores, ${generated.summary.users} users, and ${generated.summary.purchaseOrders} purchase orders.`;
+      const message = `Successfully generated ${generated.summary.deliveryCenters} delivery centers, ${generated.summary.stores} stores, and ${generated.summary.users} users.`;
       
       console.log("Entity generation completed:", message);
       
@@ -2209,8 +2201,7 @@ export class DatabaseStorage implements IStorage {
         summary: {
           deliveryCenters: 0,
           stores: 0,
-          users: 0,
-          purchaseOrders: 0
+          users: 0
         },
         message: `Error generating entities: ${error instanceof Error ? error.message : 'Unknown error'}`
       };

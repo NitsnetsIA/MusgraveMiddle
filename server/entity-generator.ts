@@ -236,13 +236,11 @@ export function generateCoherentEntities(options: {
   deliveryCenters?: number;
   storesPerCenter?: number;
   usersPerStore?: number;
-  purchaseOrders?: number;
 }) {
   const {
     deliveryCenters = 5,
     storesPerCenter = 3,
-    usersPerStore = 4,
-    purchaseOrders = 20
+    usersPerStore = 4
   } = options;
   
   console.log("Generando centros de distribución...");
