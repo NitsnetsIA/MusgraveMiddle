@@ -1299,6 +1299,273 @@ export default function Products() {
     },
   });
 
+  // Delete all mutations for individual entities
+  const deleteAllProductsMutation = useMutation({
+    mutationFn: async () => {
+      const query = `
+        mutation DeleteAllProducts {
+          deleteAllProducts {
+            success
+            deletedCount
+            message
+          }
+        }
+      `;
+      const response = await fetch(GRAPHQL_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Apollo-Require-Preflight": "true",
+        },
+        body: JSON.stringify({ query }),
+      });
+
+      const result = await response.json();
+      if (result.errors) {
+        throw new Error(result.errors[0]?.message || "Error al eliminar productos");
+      }
+      return result.data.deleteAllProducts;
+    },
+    onSuccess: (result) => {
+      toast({
+        title: result.success ? "Productos eliminados" : "Error",
+        description: result.message,
+        variant: result.success ? "default" : "destructive"
+      });
+      if (result.success) {
+        queryClient.invalidateQueries({ queryKey: ["products"] });
+      }
+    }
+  });
+
+  const deleteAllTaxesMutation = useMutation({
+    mutationFn: async () => {
+      const query = `
+        mutation DeleteAllTaxes {
+          deleteAllTaxes {
+            success
+            deletedCount
+            message
+          }
+        }
+      `;
+      const response = await fetch(GRAPHQL_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Apollo-Require-Preflight": "true",
+        },
+        body: JSON.stringify({ query }),
+      });
+
+      const result = await response.json();
+      if (result.errors) {
+        throw new Error(result.errors[0]?.message || "Error al eliminar impuestos");
+      }
+      return result.data.deleteAllTaxes;
+    },
+    onSuccess: (result) => {
+      toast({
+        title: result.success ? "Impuestos eliminados" : "Error",
+        description: result.message,
+        variant: result.success ? "default" : "destructive"
+      });
+      if (result.success) {
+        queryClient.invalidateQueries({ queryKey: ["taxes"] });
+      }
+    }
+  });
+
+  const deleteAllDeliveryCentersMutation = useMutation({
+    mutationFn: async () => {
+      const query = `
+        mutation DeleteAllDeliveryCenters {
+          deleteAllDeliveryCenters {
+            success
+            deletedCount
+            message
+          }
+        }
+      `;
+      const response = await fetch(GRAPHQL_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Apollo-Require-Preflight": "true",
+        },
+        body: JSON.stringify({ query }),
+      });
+
+      const result = await response.json();
+      if (result.errors) {
+        throw new Error(result.errors[0]?.message || "Error al eliminar centros");
+      }
+      return result.data.deleteAllDeliveryCenters;
+    },
+    onSuccess: (result) => {
+      toast({
+        title: result.success ? "Centros eliminados" : "Error",
+        description: result.message,
+        variant: result.success ? "default" : "destructive"
+      });
+      if (result.success) {
+        queryClient.invalidateQueries({ queryKey: ["delivery-centers"] });
+      }
+    }
+  });
+
+  const deleteAllStoresMutation = useMutation({
+    mutationFn: async () => {
+      const query = `
+        mutation DeleteAllStores {
+          deleteAllStores {
+            success
+            deletedCount
+            message
+          }
+        }
+      `;
+      const response = await fetch(GRAPHQL_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Apollo-Require-Preflight": "true",
+        },
+        body: JSON.stringify({ query }),
+      });
+
+      const result = await response.json();
+      if (result.errors) {
+        throw new Error(result.errors[0]?.message || "Error al eliminar tiendas");
+      }
+      return result.data.deleteAllStores;
+    },
+    onSuccess: (result) => {
+      toast({
+        title: result.success ? "Tiendas eliminadas" : "Error",
+        description: result.message,
+        variant: result.success ? "default" : "destructive"
+      });
+      if (result.success) {
+        queryClient.invalidateQueries({ queryKey: ["stores"] });
+      }
+    }
+  });
+
+  const deleteAllUsersMutation = useMutation({
+    mutationFn: async () => {
+      const query = `
+        mutation DeleteAllUsers {
+          deleteAllUsers {
+            success
+            deletedCount
+            message
+          }
+        }
+      `;
+      const response = await fetch(GRAPHQL_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Apollo-Require-Preflight": "true",
+        },
+        body: JSON.stringify({ query }),
+      });
+
+      const result = await response.json();
+      if (result.errors) {
+        throw new Error(result.errors[0]?.message || "Error al eliminar usuarios");
+      }
+      return result.data.deleteAllUsers;
+    },
+    onSuccess: (result) => {
+      toast({
+        title: result.success ? "Usuarios eliminados" : "Error",
+        description: result.message,
+        variant: result.success ? "default" : "destructive"
+      });
+      if (result.success) {
+        queryClient.invalidateQueries({ queryKey: ["users"] });
+      }
+    }
+  });
+
+  const deleteAllPurchaseOrdersMutation = useMutation({
+    mutationFn: async () => {
+      const query = `
+        mutation DeleteAllPurchaseOrders {
+          deleteAllPurchaseOrders {
+            success
+            deletedCount
+            message
+          }
+        }
+      `;
+      const response = await fetch(GRAPHQL_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Apollo-Require-Preflight": "true",
+        },
+        body: JSON.stringify({ query }),
+      });
+
+      const result = await response.json();
+      if (result.errors) {
+        throw new Error(result.errors[0]?.message || "Error al eliminar órdenes");
+      }
+      return result.data.deleteAllPurchaseOrders;
+    },
+    onSuccess: (result) => {
+      toast({
+        title: result.success ? "Órdenes eliminadas" : "Error",
+        description: result.message,
+        variant: result.success ? "default" : "destructive"
+      });
+      if (result.success) {
+        queryClient.invalidateQueries({ queryKey: ["purchase-orders"] });
+      }
+    }
+  });
+
+  const deleteAllOrdersMutation = useMutation({
+    mutationFn: async () => {
+      const query = `
+        mutation DeleteAllOrders {
+          deleteAllOrders {
+            success
+            deletedCount
+            message
+          }
+        }
+      `;
+      const response = await fetch(GRAPHQL_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Apollo-Require-Preflight": "true",
+        },
+        body: JSON.stringify({ query }),
+      });
+
+      const result = await response.json();
+      if (result.errors) {
+        throw new Error(result.errors[0]?.message || "Error al eliminar pedidos");
+      }
+      return result.data.deleteAllOrders;
+    },
+    onSuccess: (result) => {
+      toast({
+        title: result.success ? "Pedidos eliminados" : "Error",
+        description: result.message,
+        variant: result.success ? "default" : "destructive"
+      });
+      if (result.success) {
+        queryClient.invalidateQueries({ queryKey: ["orders"] });
+      }
+    }
+  });
+
   // Bulk data generation
   const [isGeneratingBulkData, setIsGeneratingBulkData] = useState(false);
 
@@ -1763,19 +2030,11 @@ export default function Products() {
       await generateUsers(2, true, timestampOffset);
       queryClient.invalidateQueries({ queryKey: ["users"] });
 
-      // Step 6: Generate 100 purchase orders
-      toast({ title: "Paso 6/7", description: "Generando 100 órdenes de compra..." });
-      await generatePurchaseOrders(100, true, timestampOffset);
-      queryClient.invalidateQueries({ queryKey: ["purchase-orders"] });
-
-      // Step 7: Generate 100 orders
-      toast({ title: "Paso 7/7", description: "Generando 100 pedidos..." });
-      await generateOrders(100, true, timestampOffset);
-      queryClient.invalidateQueries({ queryKey: ["orders"] });
+      // Ya no generamos purchase orders ni orders - el ciclo completo se maneja desde apps frontales
 
       toast({
         title: "¡Datos completos generados!",
-        description: "Se han creado 4 impuestos IVA, 1,000 productos, 20 centros, 40 tiendas, 80 usuarios, 100 órdenes de compra y 100 pedidos.",
+        description: "Se han creado 4 impuestos IVA, 1,000 productos, 20 centros, 40 tiendas y 80 usuarios. Las órdenes se manejan desde apps frontales.",
       });
 
     } catch (error) {
@@ -2581,7 +2840,7 @@ export default function Products() {
                   Generación Masiva de Datos
                 </CardTitle>
                 <CardDescription>
-                  Genera un conjunto completo de datos de prueba: 4 impuestos IVA, 1,000 productos, 20 centros de distribución, 40 tiendas, 80 usuarios, 100 órdenes de compra y 100 pedidos
+                  Genera un conjunto completo de datos de prueba: 4 impuestos IVA, 1,000 productos, 20 centros de distribución, 40 tiendas y 80 usuarios. Las órdenes se crean automáticamente desde apps frontales.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -2703,18 +2962,34 @@ export default function Products() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Button
-                  onClick={() => generateTaxesMutation.mutate({ timestampOffset })}
-                  disabled={generateTaxesMutation.isPending}
-                  data-testid="button-generate-taxes"
-                >
-                  {generateTaxesMutation.isPending ? (
-                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <Plus className="h-4 w-4 mr-2" />
-                  )}
-                  Generar Impuestos IVA
-                </Button>
+                <div className="flex items-center gap-4">
+                  <Button
+                    onClick={() => generateTaxesMutation.mutate({ timestampOffset })}
+                    disabled={generateTaxesMutation.isPending}
+                    data-testid="button-generate-taxes"
+                  >
+                    {generateTaxesMutation.isPending ? (
+                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Plus className="h-4 w-4 mr-2" />
+                    )}
+                    Generar Impuestos IVA
+                  </Button>
+                  
+                  <Button
+                    onClick={() => deleteAllTaxesMutation.mutate()}
+                    disabled={deleteAllTaxesMutation.isPending}
+                    variant="destructive"
+                    data-testid="button-delete-all-taxes"
+                  >
+                    {deleteAllTaxesMutation.isPending ? (
+                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-4 w-4 mr-2" />
+                    )}
+                    Eliminar Todos los Registros
+                  </Button>
+                </div>
               </CardContent>
             </Card>
 
@@ -2759,6 +3034,20 @@ export default function Products() {
                       <Plus className="h-4 w-4 mr-2" />
                     )}
                     Generar Productos
+                  </Button>
+
+                  <Button
+                    onClick={() => deleteAllProductsMutation.mutate()}
+                    disabled={deleteAllProductsMutation.isPending}
+                    variant="destructive"
+                    data-testid="button-delete-all-products"
+                  >
+                    {deleteAllProductsMutation.isPending ? (
+                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-4 w-4 mr-2" />
+                    )}
+                    Eliminar Todos los Registros
                   </Button>
                 </div>
               </CardContent>
@@ -2806,6 +3095,20 @@ export default function Products() {
                     )}
                     Generar Centros
                   </Button>
+
+                  <Button
+                    onClick={() => deleteAllDeliveryCentersMutation.mutate()}
+                    disabled={deleteAllDeliveryCentersMutation.isPending}
+                    variant="destructive"
+                    data-testid="button-delete-all-centers"
+                  >
+                    {deleteAllDeliveryCentersMutation.isPending ? (
+                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-4 w-4 mr-2" />
+                    )}
+                    Eliminar Todos los Registros
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -2851,6 +3154,20 @@ export default function Products() {
                       <Plus className="h-4 w-4 mr-2" />
                     )}
                     Generar Tiendas
+                  </Button>
+
+                  <Button
+                    onClick={() => deleteAllStoresMutation.mutate()}
+                    disabled={deleteAllStoresMutation.isPending}
+                    variant="destructive"
+                    data-testid="button-delete-all-stores"
+                  >
+                    {deleteAllStoresMutation.isPending ? (
+                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-4 w-4 mr-2" />
+                    )}
+                    Eliminar Todos los Registros
                   </Button>
                 </div>
               </CardContent>
@@ -2898,6 +3215,20 @@ export default function Products() {
                     )}
                     Generar Usuarios
                   </Button>
+
+                  <Button
+                    onClick={() => deleteAllUsersMutation.mutate()}
+                    disabled={deleteAllUsersMutation.isPending}
+                    variant="destructive"
+                    data-testid="button-delete-all-users"
+                  >
+                    {deleteAllUsersMutation.isPending ? (
+                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-4 w-4 mr-2" />
+                    )}
+                    Eliminar Todos los Registros
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -2944,6 +3275,20 @@ export default function Products() {
                     )}
                     Generar Órdenes
                   </Button>
+
+                  <Button
+                    onClick={() => deleteAllPurchaseOrdersMutation.mutate()}
+                    disabled={deleteAllPurchaseOrdersMutation.isPending}
+                    variant="destructive"
+                    data-testid="button-delete-all-purchase-orders"
+                  >
+                    {deleteAllPurchaseOrdersMutation.isPending ? (
+                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-4 w-4 mr-2" />
+                    )}
+                    Eliminar Todos los Registros
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -2989,6 +3334,20 @@ export default function Products() {
                       <Plus className="h-4 w-4 mr-2" />
                     )}
                     Generar Pedidos
+                  </Button>
+
+                  <Button
+                    onClick={() => deleteAllOrdersMutation.mutate()}
+                    disabled={deleteAllOrdersMutation.isPending}
+                    variant="destructive"
+                    data-testid="button-delete-all-orders"
+                  >
+                    {deleteAllOrdersMutation.isPending ? (
+                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-4 w-4 mr-2" />
+                    )}
+                    Eliminar Todos los Registros
                   </Button>
                 </div>
               </CardContent>
