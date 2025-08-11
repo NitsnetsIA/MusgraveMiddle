@@ -833,7 +833,7 @@ export class DatabaseStorage implements IStorage {
     return order || undefined;
   }
 
-  async createPurchaseOrder(order: InsertPurchaseOrder): Promise<PurchaseOrder> {
+  async createPurchaseOrder(order: InsertPurchaseOrder & { created_at?: Date | string; updated_at?: Date | string }): Promise<PurchaseOrder> {
     const now = new Date();
     
     // Construir el objeto con solo campos no-undefined
@@ -989,7 +989,7 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async updatePurchaseOrder(purchase_order_id: string, order: Partial<InsertPurchaseOrder>): Promise<PurchaseOrder> {
+  async updatePurchaseOrder(purchase_order_id: string, order: Partial<InsertPurchaseOrder & { created_at?: Date | string; updated_at?: Date | string }>): Promise<PurchaseOrder> {
     const now = new Date();
     
     // Función para convertir string a Date si es necesario
@@ -1001,7 +1001,13 @@ export class DatabaseStorage implements IStorage {
     const [updated] = await db
       .update(purchaseOrders)
       .set({
-        ...order,
+        ...(order.status && { status: order.status }),
+        ...(order.store_id && { store_id: order.store_id }),
+        ...(order.purchase_order_id && { purchase_order_id: order.purchase_order_id }),
+        ...(order.user_email && { user_email: order.user_email }),
+        ...(order.subtotal !== undefined && { subtotal: order.subtotal }),
+        ...(order.tax_total !== undefined && { tax_total: order.tax_total }),
+        ...(order.final_total !== undefined && { final_total: order.final_total }),
         // Convertir updated_at de string a Date si es necesario
         updated_at: parseDate(order.updated_at),
         // Si hay server_sent_at, también convertirlo
@@ -1015,8 +1021,8 @@ export class DatabaseStorage implements IStorage {
 
   // Método para crear purchase order con items de una vez
   async createPurchaseOrderWithItems(orderData: {
-    purchaseOrder: InsertPurchaseOrder;
-    items: InsertPurchaseOrderItem[];
+    purchaseOrder: InsertPurchaseOrder & { created_at?: Date | string; updated_at?: Date | string };
+    items: (InsertPurchaseOrderItem & { created_at?: Date | string; updated_at?: Date | string })[];
   }): Promise<PurchaseOrder> {
     const order = orderData.purchaseOrder;
     
@@ -1149,7 +1155,7 @@ export class DatabaseStorage implements IStorage {
     return item || undefined;
   }
 
-  async createPurchaseOrderItem(item: InsertPurchaseOrderItem): Promise<PurchaseOrderItem> {
+  async createPurchaseOrderItem(item: InsertPurchaseOrderItem & { created_at?: Date | string; updated_at?: Date | string }): Promise<PurchaseOrderItem> {
     const now = new Date();
     
     // Función para convertir string a Date si es necesario
@@ -1205,7 +1211,7 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
-  async updatePurchaseOrderItem(item_id: number, item: Partial<InsertPurchaseOrderItem>): Promise<PurchaseOrderItem> {
+  async updatePurchaseOrderItem(item_id: number, item: Partial<InsertPurchaseOrderItem & { created_at?: Date | string; updated_at?: Date | string }>): Promise<PurchaseOrderItem> {
     const now = new Date();
     
     // Función para convertir string a Date si es necesario
@@ -1217,7 +1223,16 @@ export class DatabaseStorage implements IStorage {
     const [updated] = await db
       .update(purchaseOrderItems)
       .set({
-        ...item,
+        ...(item.purchase_order_id && { purchase_order_id: item.purchase_order_id }),
+        ...(item.item_ean && { item_ean: item.item_ean }),
+        ...(item.item_title && { item_title: item.item_title }),
+        ...(item.item_description && { item_description: item.item_description }),
+        ...(item.unit_of_measure && { unit_of_measure: item.unit_of_measure }),
+        ...(item.quantity_measure !== undefined && { quantity_measure: item.quantity_measure }),
+        ...(item.image_url && { image_url: item.image_url }),
+        ...(item.quantity !== undefined && { quantity: item.quantity }),
+        ...(item.base_price_at_order !== undefined && { base_price_at_order: item.base_price_at_order }),
+        ...(item.tax_rate_at_order !== undefined && { tax_rate_at_order: item.tax_rate_at_order }),
         // Convertir timestamps de string a Date si es necesario
         updated_at: parseDate(item.updated_at),
         ...(item.created_at && { created_at: parseDate(item.created_at) }),
