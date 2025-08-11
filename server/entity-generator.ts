@@ -254,19 +254,17 @@ export function generateCoherentEntities(options: {
   console.log("Generando usuarios...");
   const users = generateUsers(stores, usersPerStore);
   
-  console.log("Generando órdenes de compra...");
-  const orders = generatePurchaseOrders(users, stores, [], purchaseOrders);
+  // Ya no generamos purchase orders ni orders en "generar datos completos"
+  // porque ahora el ciclo completo se hace desde las apps frontales
   
   return {
     deliveryCenters: centers,
     stores,
     users,
-    purchaseOrders: orders,
     summary: {
       deliveryCenters: centers.length,
       stores: stores.length,
-      users: users.length,
-      purchaseOrders: orders.length
+      users: users.length
     }
   };
 }

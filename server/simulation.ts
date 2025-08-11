@@ -1,5 +1,5 @@
 import { db } from './db.js';
-import { purchaseOrderItems, stores, products, orders, orderItems } from '../shared/schema.js';
+import { purchaseOrderItems, purchaseOrders, stores, products, orders, orderItems } from '../shared/schema.js';
 import { eq } from 'drizzle-orm';
 
 // Función para crear un pedido simulado basado en una purchase order
@@ -24,8 +24,18 @@ export async function createSimulatedOrder(sourcePurchaseOrder: any): Promise<an
   // Generar ID coherente con el centro de distribución
   const deliveryCenterCode = store.delivery_center_code;
   const now = new Date();
-  const timeStr = now.toISOString().slice(2, 19).replace(/[-:T]/g, '').slice(0, 12); // YYMMDDHHMMSS
-  const randomSuffix = Math.random().toString(36).substr(2, 3).toUpperCase();
+  // Formato: YYMMDDHHMMSS
+  const year = now.getFullYear().toString().slice(-2);
+  const month = (now.getMonth() + 1).toString().padStart(2, '0');
+  const day = now.getDate().toString().padStart(2, '0');
+  const hour = now.getHours().toString().padStart(2, '0');
+  const minute = now.getMinutes().toString().padStart(2, '0');
+  const second = now.getSeconds().toString().padStart(2, '0');
+  const timeStr = `${year}${month}${day}${hour}${minute}${second}`;
+  
+  // Generar 3 caracteres alfanuméricos aleatorios
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  const randomSuffix = Array.from({length: 3}, () => chars.charAt(Math.floor(Math.random() * chars.length))).join('');
   const orderId = `${deliveryCenterCode}-${timeStr}-${randomSuffix}`;
 
   // Obtener todos los productos para posibles sustituciones
@@ -124,6 +134,15 @@ export async function createSimulatedOrder(sourcePurchaseOrder: any): Promise<an
   if (simulatedItems.length > 0) {
     await db.insert(orderItems).values(simulatedItems);
   }
+
+  // Actualizar el estado de la purchase order a "COMPLETADO"
+  await db
+    .update(purchaseOrders)
+    .set({
+      status: 'COMPLETADO',
+      updated_at: new Date()
+    })
+    .where(eq(purchaseOrders.purchase_order_id, sourcePurchaseOrder.purchase_order_id));
 
   return createdOrder;
 }
