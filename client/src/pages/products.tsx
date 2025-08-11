@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { ShoppingCart, Package, Trash2, Plus, RefreshCw, Building2, Store, Users, FileText, Receipt, ChevronLeft, ChevronRight, Eye, Settings } from "lucide-react";
 import React, { useState } from "react";
@@ -1094,6 +1095,9 @@ export default function Products() {
   const [purchaseOrdersCount, setPurchaseOrdersCount] = useState(10);
   const [ordersCount, setOrdersCount] = useState(10);
   
+  // Simulación automática de pedidos
+  const [autoSimulateOrders, setAutoSimulateOrders] = useState(true);
+  
   // Pagination states
   const [currentPage, setCurrentPage] = useState(0);
   const pageSize = 20;
@@ -1237,10 +1241,14 @@ export default function Products() {
     onSuccess: (result) => {
       toast({
         title: result.success ? "Órdenes de compra creadas" : "Error", 
-        description: result.message,
+        description: result.message + (autoSimulateOrders ? " (simulación automática activada)" : ""),
         variant: result.success ? "default" : "destructive",
       });
       queryClient.invalidateQueries({ queryKey: ["purchase-orders"] });
+      // Si la simulación está activada también invalidar orders
+      if (autoSimulateOrders) {
+        queryClient.invalidateQueries({ queryKey: ["orders"] });
+      }
     },
     onError: (error) => {
       toast({
@@ -2650,17 +2658,34 @@ export default function Products() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-2">
-                  <Label htmlFor="timestamp-offset">Desplazamiento de Timestamp (opcional)</Label>
-                  <Input
-                    id="timestamp-offset"
-                    placeholder="Ej: -7d, -2h, -30m (días, horas, minutos)"
-                    value={timestampOffset}
-                    onChange={(e) => setTimestampOffset(e.target.value)}
-                    data-testid="input-timestamp-offset"
-                  />
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="timestamp-offset">Desplazamiento de Timestamp (opcional)</Label>
+                    <Input
+                      id="timestamp-offset"
+                      placeholder="Ej: -7d, -2h, -30m (días, horas, minutos)"
+                      value={timestampOffset}
+                      onChange={(e) => setTimestampOffset(e.target.value)}
+                      data-testid="input-timestamp-offset"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Use formato como "-7d" (7 días atrás), "-2h" (2 horas atrás), o "-30m" (30 minutos atrás)
+                    </p>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="auto-simulate-orders"
+                      checked={autoSimulateOrders}
+                      onCheckedChange={(checked) => setAutoSimulateOrders(checked === true)}
+                      data-testid="checkbox-auto-simulate-orders"
+                    />
+                    <Label htmlFor="auto-simulate-orders" className="text-sm font-medium">
+                      Simular pedido al recibir orden de compra
+                    </Label>
+                  </div>
                   <p className="text-xs text-muted-foreground">
-                    Use formato como "-7d" (7 días atrás), "-2h" (2 horas atrás), o "-30m" (30 minutos atrás)
+                    Cuando está activo, al crear una orden de compra se generará automáticamente un pedido procesado con variaciones realistas en las cantidades
                   </p>
                 </div>
               </CardContent>

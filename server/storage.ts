@@ -870,6 +870,8 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
+
+
   async updatePurchaseOrder(purchase_order_id: string, order: Partial<InsertPurchaseOrder>): Promise<PurchaseOrder> {
     const now = new Date();
     

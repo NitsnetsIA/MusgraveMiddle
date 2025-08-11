@@ -432,6 +432,7 @@ export const typeDefs = `#graphql
     loginUser(input: LoginInput!): User!
 
     createPurchaseOrder(input: PurchaseOrderInput!): PurchaseOrder!
+    createPurchaseOrderWithSimulation(input: PurchaseOrderInput!, simulateOrder: Boolean!): PurchaseOrderSimulationResult!
     updatePurchaseOrder(purchase_order_id: String!, input: UpdatePurchaseOrderInput!): PurchaseOrder!
     deletePurchaseOrder(purchase_order_id: String!): Boolean!
     deleteAllPurchaseOrders: DeleteAllResult!
@@ -491,6 +492,12 @@ export const typeDefs = `#graphql
   type SyncInfoResult {
     entities: [EntitySyncInfo!]!
     generated_at: DateTime!
+  }
+
+  type PurchaseOrderSimulationResult {
+    purchaseOrder: PurchaseOrder!
+    simulatedOrder: Order
+    message: String!
   }
 
   input GenerateEntitiesInput {

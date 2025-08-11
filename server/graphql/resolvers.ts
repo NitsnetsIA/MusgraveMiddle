@@ -224,6 +224,40 @@ export const resolvers = {
         return await storage.createPurchaseOrder(purchaseOrderData);
       }
     },
+
+    // Crear Purchase Order con simulación automática opcional
+    createPurchaseOrderWithSimulation: async (_: any, { input, simulateOrder }: { input: any; simulateOrder: boolean }) => {
+      try {
+        // Crear la purchase order con sus items
+        const { items, ...purchaseOrderData } = input;
+        const createdPurchaseOrder = await storage.createPurchaseOrderWithItems({
+          purchaseOrder: purchaseOrderData,
+          items: items
+        });
+
+        let simulatedOrder = null;
+        let message = 'Purchase order created successfully';
+
+        // Si simulateOrder es true, crear el pedido simulado
+        if (simulateOrder) {
+          try {
+            simulatedOrder = await createSimulatedOrder(createdPurchaseOrder);
+            message = 'Purchase order created and order simulated successfully';
+          } catch (error) {
+            console.error('Error creating simulated order:', error);
+            message = 'Purchase order created but order simulation failed';
+          }
+        }
+
+        return {
+          purchaseOrder: createdPurchaseOrder,
+          simulatedOrder,
+          message
+        };
+      } catch (error) {
+        throw new Error(`Failed to create purchase order with simulation: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
+    },
     
     updatePurchaseOrder: async (_: any, { purchase_order_id, input }: { purchase_order_id: string; input: any }) => {
       return await storage.updatePurchaseOrder(purchase_order_id, input);
@@ -480,3 +514,129 @@ export const resolvers = {
     },
   },
 };
+
+// Función auxiliar para crear un pedido simulado basado en una purchase order
+async function createSimulatedOrder(sourcePurchaseOrder: any): Promise<any> {
+  // Obtener los items de la purchase order
+  const purchaseOrderItemsResult = await db.select()
+    .from(purchaseOrderItems)
+    .where(eq(purchaseOrderItems.purchase_order_id, sourcePurchaseOrder.purchase_order_id));
+
+  // Obtener información de la tienda y centro de distribución
+  const storeResult = await db.select()
+    .from(stores)
+    .where(eq(stores.code, sourcePurchaseOrder.store_id))
+    .limit(1);
+
+  if (!storeResult.length) {
+    throw new Error(`Store ${sourcePurchaseOrder.store_id} not found`);
+  }
+
+  const store = storeResult[0];
+
+  // Generar ID coherente con el centro de distribución
+  const deliveryCenterCode = store.delivery_center_code;
+  const now = new Date();
+  const timeStr = now.toISOString().slice(2, 19).replace(/[-:T]/g, '').slice(0, 12); // YYMMDDHHMMSS
+  const randomSuffix = Math.random().toString(36).substr(2, 3).toUpperCase();
+  const orderId = `${deliveryCenterCode}-${timeStr}-${randomSuffix}`;
+
+  // Obtener todos los productos para posibles sustituciones
+  const allProductsResult = await db.select().from(products).where(eq(products.is_active, true));
+
+  // Simular variaciones en las líneas
+  const simulatedItems: any[] = [];
+  
+  for (const item of purchaseOrderItemsResult) {
+    const random = Math.random();
+    
+    if (random <= 0.8) {
+      // 80% - sin cambios
+      simulatedItems.push({
+        order_id: orderId,
+        item_ean: item.item_ean,
+        item_title: item.item_title,
+        item_description: item.item_description,
+        unit_of_measure: item.unit_of_measure,
+        quantity_measure: item.quantity_measure,
+        image_url: item.image_url,
+        quantity: item.quantity,
+        base_price_at_order: item.base_price_at_order,
+        tax_rate_at_order: item.tax_rate_at_order,
+      });
+    } else {
+      // 20% - reducir cantidad aleatoriamente
+      const reductionFactor = Math.random() * 0.7 + 0.1; // Reducir entre 10% y 80%
+      const newQuantity = Math.floor(item.quantity * reductionFactor);
+      
+      if (newQuantity > 0) {
+        simulatedItems.push({
+          order_id: orderId,
+          item_ean: item.item_ean,
+          item_title: item.item_title,
+          item_description: item.item_description,
+          unit_of_measure: item.unit_of_measure,
+          quantity_measure: item.quantity_measure,
+          image_url: item.image_url,
+          quantity: newQuantity,
+          base_price_at_order: item.base_price_at_order,
+          tax_rate_at_order: item.tax_rate_at_order,
+        });
+      }
+      // Si la cantidad llega a 0, la línea se elimina y hay 20% posibilidad de sustituto
+      else if (Math.random() <= 0.2 && allProductsResult.length > 0) {
+        // Crear línea sustituta con producto aleatorio
+        const substituteProduct = allProductsResult[Math.floor(Math.random() * allProductsResult.length)];
+        simulatedItems.push({
+          order_id: orderId,
+          item_ean: substituteProduct.ean,
+          item_title: substituteProduct.title,
+          item_description: substituteProduct.description,
+          unit_of_measure: substituteProduct.unit_of_measure,
+          quantity_measure: substituteProduct.quantity_measure,
+          image_url: substituteProduct.image_url,
+          quantity: item.quantity, // Cantidad original
+          base_price_at_order: substituteProduct.base_price,
+          tax_rate_at_order: substituteProduct.tax_code === 'GEN' ? 0.21 : 
+                            substituteProduct.tax_code === 'RED' ? 0.10 :
+                            substituteProduct.tax_code === 'SUP' ? 0.04 : 0,
+        });
+      }
+    }
+  }
+
+  // Calcular totales
+  let subtotal = 0;
+  let taxTotal = 0;
+  
+  for (const item of simulatedItems) {
+    const lineSubtotal = item.quantity * item.base_price_at_order;
+    const lineTax = lineSubtotal * item.tax_rate_at_order;
+    subtotal += lineSubtotal;
+    taxTotal += lineTax;
+  }
+
+  const finalTotal = subtotal + taxTotal;
+
+  // Crear el pedido procesado
+  const [createdOrder] = await db
+    .insert(orders)
+    .values({
+      order_id: orderId,
+      source_purchase_order_id: sourcePurchaseOrder.purchase_order_id,
+      user_email: sourcePurchaseOrder.user_email,
+      store_id: sourcePurchaseOrder.store_id,
+      observations: 'Pedido generado automáticamente mediante simulación',
+      subtotal,
+      tax_total: taxTotal,
+      final_total: finalTotal,
+    })
+    .returning();
+
+  // Crear los items del pedido
+  if (simulatedItems.length > 0) {
+    await db.insert(orderItems).values(simulatedItems);
+  }
+
+  return createdOrder;
+}
