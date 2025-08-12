@@ -1546,10 +1546,10 @@ export class DatabaseStorage implements IStorage {
 
       for (const tax of createdTaxes) {
         try {
-          await musgraveSftpService.createTaxCSV(tax);
+          await musgraveSftpService.appendTaxToCSV(tax);
           csvCount++;
         } catch (error) {
-          console.warn(`⚠️ No se pudo crear CSV para tax ${tax.code}:`, error);
+          console.warn(`⚠️ No se pudo agregar CSV para tax ${tax.code}:`, error);
         }
       }
 
@@ -1641,10 +1641,10 @@ export class DatabaseStorage implements IStorage {
             email: `info@${center.code.toLowerCase()}.${center.name.split(' ').slice(-1)[0].toLowerCase()}.es`
           };
           
-          await musgraveSftpService.createDeliveryCenterCSV(extendedCenter);
+          await musgraveSftpService.appendDeliveryCenterToCSV(extendedCenter);
           csvCount++;
         } catch (error) {
-          console.warn(`⚠️ No se pudo crear CSV para delivery center ${center.code}:`, error);
+          console.warn(`⚠️ No se pudo agregar CSV para delivery center ${center.code}:`, error);
         }
       }
 
@@ -1762,10 +1762,10 @@ export class DatabaseStorage implements IStorage {
             phone: `+34 9${Math.floor(Math.random() * 100000000).toString().padStart(8, '0')}`
           };
           
-          await musgraveSftpService.createStoreCSV(extendedStore);
+          await musgraveSftpService.appendStoreToCSV(extendedStore);
           csvCount++;
         } catch (error) {
-          console.warn(`⚠️ No se pudo crear CSV para store ${store.code}:`, error);
+          console.warn(`⚠️ No se pudo agregar CSV para store ${store.code}:`, error);
         }
       }
 
@@ -1878,10 +1878,10 @@ export class DatabaseStorage implements IStorage {
 
       for (const user of createdUsers) {
         try {
-          await musgraveSftpService.createUserCSV(user);
+          await musgraveSftpService.appendUserToCSV(user);
           csvCount++;
         } catch (error) {
-          console.warn(`⚠️ No se pudo crear CSV para usuario ${user.email}:`, error);
+          console.warn(`⚠️ No se pudo agregar CSV para usuario ${user.email}:`, error);
         }
       }
 
