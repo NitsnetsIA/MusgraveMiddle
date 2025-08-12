@@ -83,6 +83,7 @@ interface PurchaseOrder {
   store_id: string;
   status: string;
   final_total: number;
+  server_sent_at?: string;
   created_at: string;
   updated_at: string;
   user?: {
@@ -415,6 +416,7 @@ async function fetchPurchaseOrdersPaginated(offset: number, limit: number): Prom
           store_id
           status
           final_total
+          server_sent_at
           created_at
           updated_at
           user {
@@ -2552,6 +2554,7 @@ export default function Products() {
                             <TableHead>Tienda</TableHead>
                             <TableHead>Estado</TableHead>
                             <TableHead>Total</TableHead>
+                            <TableHead>Enviado al Servidor</TableHead>
                             <TableHead>Creado</TableHead>
                             <TableHead>Actualizado</TableHead>
                             <TableHead className="w-24">Acciones</TableHead>
@@ -2574,6 +2577,9 @@ export default function Products() {
                               </Badge>
                             </TableCell>
                             <TableCell className="font-medium">€{order.final_total.toFixed(2)}</TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {order.server_sent_at ? new Date(order.server_sent_at).toLocaleString('es-ES') : 'N/A'}
+                            </TableCell>
                             <TableCell className="text-sm text-muted-foreground">
                               {new Date(order.created_at).toLocaleString('es-ES')}
                             </TableCell>
