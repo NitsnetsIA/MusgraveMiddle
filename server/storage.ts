@@ -1743,26 +1743,26 @@ export class DatabaseStorage implements IStorage {
         }
       }
 
-      // Agregar datos completos para los stores
-      const fullStoresToCreate = storesToCreate.map(store => ({
-        ...store,
-        address: `Calle ${Math.floor(Math.random() * 999) + 1} ${store.name.split(' ').slice(1).join(' ')}`,
-        city: store.name.split(' ')[1] || 'Madrid', // Extraer ciudad del nombre o usar Madrid
-        province: SPANISH_PROVINCES[SPANISH_CITIES.indexOf(store.name.split(' ')[1] || 'Madrid')] || store.name.split(' ')[1] || 'Madrid',
-        postal_code: `${(Math.floor(Math.random() * 50000) + 1000).toString().padStart(5, '0')}`,
-        country: 'España',
-        phone: `+34 9${Math.floor(Math.random() * 100000000).toString().padStart(8, '0')}`
-      }));
+      const createdStores = await db.insert(stores).values(storesToCreate).returning();
 
-      const createdStores = await db.insert(stores).values(fullStoresToCreate).returning();
-
-      // Crear archivos CSV individuales para cada store
+      // Crear archivos CSV individuales para cada store con datos extendidos
       const { musgraveSftpService } = await import('./services/musgrave-sftp.js');
       let csvCount = 0;
 
       for (const store of createdStores) {
         try {
-          await musgraveSftpService.createStoreCSV(store);
+          // Crear datos extendidos para CSV sin modificar esquema DB
+          const extendedStore = {
+            ...store,
+            address: `Calle ${Math.floor(Math.random() * 999) + 1} ${store.name.split(' ').slice(1).join(' ')}`,
+            city: store.name.split(' ')[1] || 'Madrid', // Extraer ciudad del nombre o usar Madrid
+            province: SPANISH_PROVINCES[SPANISH_CITIES.indexOf(store.name.split(' ')[1] || 'Madrid')] || store.name.split(' ')[1] || 'Madrid',
+            postal_code: `${(Math.floor(Math.random() * 50000) + 1000).toString().padStart(5, '0')}`,
+            country: 'España',
+            phone: `+34 9${Math.floor(Math.random() * 100000000).toString().padStart(8, '0')}`
+          };
+          
+          await musgraveSftpService.createStoreCSV(extendedStore);
           csvCount++;
         } catch (error) {
           console.warn(`⚠️ No se pudo crear CSV para store ${store.code}:`, error);
