@@ -8,6 +8,7 @@ export interface ProductCategory {
   taxCode: string;
   priceRange: { min: number; max: number };
   imageKeyword: string; // For generating appropriate images
+  imageUrl: string; // Real category image URL
 }
 
 export const SPANISH_GROCERY_CATEGORIES: ProductCategory[] = [
@@ -21,7 +22,8 @@ export const SPANISH_GROCERY_CATEGORIES: ProductCategory[] = [
     ],
     taxCode: "IVA_SUPERREDUCIDO",
     priceRange: { min: 0.89, max: 3.50 },
-    imageKeyword: "milk"
+    imageKeyword: "milk",
+    imageUrl: "https://i.ibb.co/SX6c1CBv/Leche-y-lacteos.jpg"
   },
   {
     name: "Yogures y Postres",
@@ -33,7 +35,8 @@ export const SPANISH_GROCERY_CATEGORIES: ProductCategory[] = [
     ],
     taxCode: "IVA_SUPERREDUCIDO",
     priceRange: { min: 0.65, max: 4.99 },
-    imageKeyword: "yogurt"
+    imageKeyword: "yogurt",
+    imageUrl: "https://i.ibb.co/SZgWcy4/Yogures-y-postres.jpg"
   },
   {
     name: "Quesos",
@@ -45,7 +48,8 @@ export const SPANISH_GROCERY_CATEGORIES: ProductCategory[] = [
     ],
     taxCode: "IVA_SUPERREDUCIDO",
     priceRange: { min: 2.50, max: 25.00 },
-    imageKeyword: "cheese"
+    imageKeyword: "cheese",
+    imageUrl: "https://i.ibb.co/zWQCx8L9/Quesos.jpg"
   },
   {
     name: "Carnes Frescas",
@@ -57,7 +61,8 @@ export const SPANISH_GROCERY_CATEGORIES: ProductCategory[] = [
     ],
     taxCode: "IVA_SUPERREDUCIDO",
     priceRange: { min: 3.99, max: 18.99 },
-    imageKeyword: "meat"
+    imageKeyword: "meat",
+    imageUrl: "https://i.ibb.co/cSm7x776/carnes-frescas.jpg"
   },
   {
     name: "Embutidos",
@@ -69,7 +74,8 @@ export const SPANISH_GROCERY_CATEGORIES: ProductCategory[] = [
     ],
     taxCode: "IVA_SUPERREDUCIDO",
     priceRange: { min: 1.99, max: 15.99 },
-    imageKeyword: "ham"
+    imageKeyword: "ham",
+    imageUrl: "https://i.ibb.co/Fby97v9G/embutidos.jpg"
   },
   {
     name: "Pescados y Mariscos",
@@ -82,7 +88,8 @@ export const SPANISH_GROCERY_CATEGORIES: ProductCategory[] = [
     ],
     taxCode: "IVA_SUPERREDUCIDO",
     priceRange: { min: 1.89, max: 22.99 },
-    imageKeyword: "fish"
+    imageKeyword: "fish",
+    imageUrl: "https://i.ibb.co/0jj5htpn/pescados-y-mariscos.jpg"
   },
   {
     name: "Frutas",
@@ -94,7 +101,8 @@ export const SPANISH_GROCERY_CATEGORIES: ProductCategory[] = [
     ],
     taxCode: "IVA_SUPERREDUCIDO",
     priceRange: { min: 0.99, max: 6.99 },
-    imageKeyword: "fruit"
+    imageKeyword: "fruit",
+    imageUrl: "https://i.ibb.co/Vs78Qst/frutas.jpg"
   },
   {
     name: "Verduras y Hortalizas",
@@ -106,7 +114,8 @@ export const SPANISH_GROCERY_CATEGORIES: ProductCategory[] = [
     ],
     taxCode: "IVA_SUPERREDUCIDO",
     priceRange: { min: 0.79, max: 4.99 },
-    imageKeyword: "vegetables"
+    imageKeyword: "vegetables",
+    imageUrl: "https://i.ibb.co/xqsbwRdy/verduras-y-hortalizas.jpg"
   },
   {
     name: "Pan y Bollería",
@@ -118,7 +127,8 @@ export const SPANISH_GROCERY_CATEGORIES: ProductCategory[] = [
     ],
     taxCode: "IVA_SUPERREDUCIDO",
     priceRange: { min: 0.89, max: 4.99 },
-    imageKeyword: "bread"
+    imageKeyword: "bread",
+    imageUrl: "https://i.ibb.co/tTJPt43w/Pan-y-Boller-a.jpg"
   },
   {
     name: "Cereales y Legumbres",
@@ -130,7 +140,8 @@ export const SPANISH_GROCERY_CATEGORIES: ProductCategory[] = [
     ],
     taxCode: "IVA_SUPERREDUCIDO",
     priceRange: { min: 0.99, max: 8.99 },
-    imageKeyword: "rice"
+    imageKeyword: "rice",
+    imageUrl: "https://i.ibb.co/Mx1VJdsn/Cereales-y-Legumbres.jpg"
   },
   {
     name: "Aceites y Vinagres",
@@ -142,7 +153,8 @@ export const SPANISH_GROCERY_CATEGORIES: ProductCategory[] = [
     ],
     taxCode: "IVA_GENERAL",
     priceRange: { min: 1.99, max: 15.99 },
-    imageKeyword: "oil"
+    imageKeyword: "oil",
+    imageUrl: "https://i.ibb.co/cW4xcDz/aceites-y-vinagres.jpg"
   },
   {
     name: "Conservas",
@@ -154,7 +166,8 @@ export const SPANISH_GROCERY_CATEGORIES: ProductCategory[] = [
     ],
     taxCode: "IVA_SUPERREDUCIDO",
     priceRange: { min: 0.89, max: 8.99 },
-    imageKeyword: "canned"
+    imageKeyword: "canned",
+    imageUrl: "https://i.ibb.co/hJQS8fHG/conservas.jpg"
   },
   {
     name: "Bebidas Refrescantes",
@@ -166,7 +179,8 @@ export const SPANISH_GROCERY_CATEGORIES: ProductCategory[] = [
     ],
     taxCode: "IVA_GENERAL",
     priceRange: { min: 0.65, max: 3.99 },
-    imageKeyword: "drinks"
+    imageKeyword: "drinks",
+    imageUrl: "https://i.ibb.co/9msKcZ0F/bebidas-refrescantes.jpg"
   },
   {
     name: "Vinos",
@@ -178,7 +192,8 @@ export const SPANISH_GROCERY_CATEGORIES: ProductCategory[] = [
     ],
     taxCode: "IVA_GENERAL",
     priceRange: { min: 3.99, max: 49.99 },
-    imageKeyword: "wine"
+    imageKeyword: "wine",
+    imageUrl: "https://i.ibb.co/z0BqCcv/vinos.jpg"
   },
   {
     name: "Cervezas",
@@ -191,7 +206,8 @@ export const SPANISH_GROCERY_CATEGORIES: ProductCategory[] = [
     ],
     taxCode: "IVA_GENERAL",
     priceRange: { min: 0.79, max: 15.99 },
-    imageKeyword: "beer"
+    imageKeyword: "beer",
+    imageUrl: "https://i.ibb.co/1fxZW7PW/cervezas.jpg"
   },
   {
     name: "Snacks y Aperitivos",
@@ -203,7 +219,8 @@ export const SPANISH_GROCERY_CATEGORIES: ProductCategory[] = [
     ],
     taxCode: "IVA_GENERAL",
     priceRange: { min: 0.99, max: 4.99 },
-    imageKeyword: "snacks"
+    imageKeyword: "snacks",
+    imageUrl: "https://i.ibb.co/BV2zpc97/snacks-y-aperitivos.jpg"
   },
   {
     name: "Dulces y Chocolate",
@@ -215,7 +232,8 @@ export const SPANISH_GROCERY_CATEGORIES: ProductCategory[] = [
     ],
     taxCode: "IVA_GENERAL",
     priceRange: { min: 0.89, max: 12.99 },
-    imageKeyword: "chocolate"
+    imageKeyword: "chocolate",
+    imageUrl: "https://i.ibb.co/SGRP7hk/dulces-y-chocolates.jpg"
   },
   {
     name: "Productos de Limpieza",
@@ -227,7 +245,8 @@ export const SPANISH_GROCERY_CATEGORIES: ProductCategory[] = [
     ],
     taxCode: "IVA_GENERAL",
     priceRange: { min: 1.99, max: 12.99 },
-    imageKeyword: "cleaning"
+    imageKeyword: "cleaning",
+    imageUrl: "https://i.ibb.co/zWCCJ5SZ/productos-de-limpieza.jpg"
   },
   {
     name: "Higiene Personal",
@@ -239,7 +258,8 @@ export const SPANISH_GROCERY_CATEGORIES: ProductCategory[] = [
     ],
     taxCode: "IVA_GENERAL",
     priceRange: { min: 1.49, max: 8.99 },
-    imageKeyword: "cosmetics"
+    imageKeyword: "cosmetics",
+    imageUrl: "https://i.ibb.co/YgZ0bLS/higiene-personal.jpg"
   },
   {
     name: "Productos para Bebés",
@@ -252,7 +272,8 @@ export const SPANISH_GROCERY_CATEGORIES: ProductCategory[] = [
     ],
     taxCode: "IVA_SUPERREDUCIDO",
     priceRange: { min: 2.99, max: 19.99 },
-    imageKeyword: "baby"
+    imageKeyword: "baby",
+    imageUrl: "https://i.ibb.co/6RxsbsHH/productos-para-bebes.jpg"
   }
 ];
 
@@ -306,9 +327,8 @@ export function generateRandomProduct(timestampOffset: string): {
   ];
   const description = descriptions[Math.floor(Math.random() * descriptions.length)];
   
-  // Generate image URL using Placehold.co service (300x300 size)
-  const categoryText = category.name.toUpperCase().replace(/\s+/g, '+');
-  const imageUrl = `https://placehold.co/300x300/e6e6e6/black?text=${categoryText}+${ean}`;
+  // Use real category image URL
+  const imageUrl = category.imageUrl;
   
   // Calculate timestamps
   const offsetDate = new Date(timestampOffset);

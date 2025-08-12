@@ -854,6 +854,7 @@ async function fetchPurchaseOrderItems(purchaseOrderId: string) {
         item_description
         unit_of_measure
         quantity_measure
+        image_url
         quantity
         base_price_at_order
         tax_rate_at_order
@@ -898,6 +899,7 @@ async function fetchOrderItems(orderId: string) {
         item_description
         unit_of_measure
         quantity_measure
+        image_url
         quantity
         base_price_at_order
         tax_rate_at_order
@@ -945,6 +947,7 @@ interface OrderItem {
   item_description: string | null;
   unit_of_measure: string;
   quantity_measure: number;
+  image_url: string | null;
   quantity: number;
   base_price_at_order: number;
   tax_rate_at_order: number;
@@ -1039,6 +1042,7 @@ function OrderDetailsContent({ order, orderType }: OrderDetailsContentProps) {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead>Imagen</TableHead>
               <TableHead>EAN / Ref</TableHead>
               <TableHead>Producto</TableHead>
               <TableHead>Cantidad</TableHead>
@@ -1055,6 +1059,22 @@ function OrderDetailsContent({ order, orderType }: OrderDetailsContentProps) {
               
               return (
                 <TableRow key={`${item.item_ean}-${index}`}>
+                  <TableCell>
+                    {item.image_url ? (
+                      <img 
+                        src={item.image_url} 
+                        alt={item.item_title}
+                        className="w-12 h-12 object-cover rounded"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                    ) : (
+                      <div className="w-12 h-12 bg-gray-200 rounded flex items-center justify-center">
+                        <span className="text-xs text-gray-500">Sin imagen</span>
+                      </div>
+                    )}
+                  </TableCell>
                   <TableCell className="font-mono">
                     <div>{item.item_ean}</div>
                     {item.item_ref && (
