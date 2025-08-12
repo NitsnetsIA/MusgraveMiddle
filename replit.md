@@ -42,10 +42,11 @@ This is a headless GraphQL microservice for managing grocery products and Spanis
 - **Data Integrity: item_ref field properly saved and synchronized across all entity types**
 - **CSV Simplification: Removed unnecessary fields from CSV export (item_description, unit_of_measure, quantity_measure, image_url, item_created_at, item_updated_at) for cleaner legacy system integration (August 2025)
 - **Real Simulation CSV Export: Implemented comprehensive entity data export to SFTP /out/ folders (August 2025)**
-- **Individual Entity CSV Files: Each entity (user, store, delivery center, tax) generates individual CSV file with extended data fields**
-- **SFTP /out/ Structure: Organized CSV exports by entity type - /out/users/, /out/stores/, /out/deliveryCenters/, /out/taxes/**
+- **Consolidated CSV Files: Single CSV file per entity type - deliveryCenters.csv, users.csv, stores.csv, taxes.csv (August 2025)**
+- **SFTP /out/ Structure: Organized CSV exports by entity type - /out/users/users.csv, /out/stores/stores.csv, /out/deliveryCenters/deliveryCenters.csv, /out/taxes/taxes.csv**
 - **Extended Data Generation: CSV files include enriched data (addresses, phone numbers, provinces) not stored in database schema**
-- **Atomic CSV Creation: Each entity creation automatically triggers corresponding CSV file generation on SFTP****
+- **Incremental CSV Updates: Each entity creation appends to consolidated CSV file, maintaining existing records and adding new ones**
+- **CSV File Management: Downloads existing CSV, merges new data, and uploads updated consolidated file****
 
 ## User Preferences
 
