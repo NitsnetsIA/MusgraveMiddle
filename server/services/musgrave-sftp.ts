@@ -1,4 +1,4 @@
-import { PurchaseOrder, purchaseOrderItems } from '../../shared/schema.js';
+import { PurchaseOrder, purchaseOrderItems, DeliveryCenter, User, Store, Tax } from '../../shared/schema.js';
 import { eq } from 'drizzle-orm';
 import { promises as fs } from 'fs';
 import path from 'path';
@@ -43,6 +43,56 @@ interface PurchaseOrderCSVData {
   base_price_at_order: number;
   tax_rate_at_order: number;
 }
+
+// Interfaces para entidades CSV
+interface DeliveryCenterCSVData {
+  code: string;
+  name: string;
+  address: string;
+  city: string;
+  province: string;
+  postal_code: string;
+  country: string;
+  phone: string;
+  email: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+interface UserCSVData {
+  email: string;
+  name: string;
+  store_id: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+interface StoreCSVData {
+  code: string;
+  name: string;
+  delivery_center_code: string;
+  address: string;
+  city: string;
+  province: string;
+  postal_code: string;
+  country: string;
+  phone: string;
+  responsible_email: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+interface TaxCSVData {
+  code: string;
+  name: string;
+  tax_rate: number;
+  created_at: string;
+  updated_at: string;
+}
+
 
 export class MusgraveSftpService {
   private sftp: any;
@@ -211,6 +261,286 @@ export class MusgraveSftpService {
       }
 
       // Desconectar del SFTP
+      await this.disconnect();
+    }
+  }
+
+  /**
+   * Crea un archivo CSV para un delivery center
+   */
+  public async createDeliveryCenterCSV(deliveryCenter: any): Promise<void> {
+    let tempFilePath: string | null = null;
+    
+    try {
+      console.log(`📤 Creando CSV para delivery center ${deliveryCenter.code}...`);
+      
+      // Conectar al SFTP
+      await this.connect();
+
+      // Preparar datos CSV
+      const csvData: DeliveryCenterCSVData = {
+        code: deliveryCenter.code,
+        name: deliveryCenter.name,
+        address: deliveryCenter.address,
+        city: deliveryCenter.city,
+        province: deliveryCenter.province,
+        postal_code: deliveryCenter.postal_code,
+        country: deliveryCenter.country,
+        phone: deliveryCenter.phone,
+        email: deliveryCenter.email,
+        is_active: deliveryCenter.is_active,
+        created_at: deliveryCenter.created_at.toISOString(),
+        updated_at: deliveryCenter.updated_at.toISOString()
+      };
+
+      // Crear archivo CSV temporal
+      const createCsvWriter = (await import('csv-writer')).createObjectCsvWriter;
+      tempFilePath = path.join(os.tmpdir(), `delivery_center_${deliveryCenter.code}_${Date.now()}.csv`);
+      
+      const csvWriter = createCsvWriter({
+        path: tempFilePath,
+        header: [
+          { id: 'code', title: 'code' },
+          { id: 'name', title: 'name' },
+          { id: 'address', title: 'address' },
+          { id: 'city', title: 'city' },
+          { id: 'province', title: 'province' },
+          { id: 'postal_code', title: 'postal_code' },
+          { id: 'country', title: 'country' },
+          { id: 'phone', title: 'phone' },
+          { id: 'email', title: 'email' },
+          { id: 'is_active', title: 'is_active' },
+          { id: 'created_at', title: 'created_at' },
+          { id: 'updated_at', title: 'updated_at' }
+        ]
+      });
+
+      await csvWriter.writeRecords([csvData]);
+
+      // Subir archivo a SFTP
+      const remotePath = '/out/deliveryCenters';
+      const remoteFileName = `${deliveryCenter.code}.csv`;
+      const remoteFilePath = `${remotePath}/${remoteFileName}`;
+
+      await this.sftp.put(tempFilePath, remoteFilePath);
+      console.log(`✓ CSV del delivery center ${deliveryCenter.code} creado en: ${remoteFilePath}`);
+
+    } catch (error: any) {
+      console.error(`✗ Error creando CSV para delivery center ${deliveryCenter.code}:`, error);
+      throw new Error(`Failed to create delivery center CSV: ${error?.message || error}`);
+    } finally {
+      // Limpiar archivo temporal
+      if (tempFilePath) {
+        try {
+          await fs.unlink(tempFilePath);
+        } catch (cleanupError: any) {
+          console.warn(`⚠️ Error eliminando archivo temporal: ${cleanupError?.message || cleanupError}`);
+        }
+      }
+      await this.disconnect();
+    }
+  }
+
+  /**
+   * Crea un archivo CSV para un usuario
+   */
+  public async createUserCSV(user: any): Promise<void> {
+    let tempFilePath: string | null = null;
+    
+    try {
+      console.log(`📤 Creando CSV para usuario ${user.email}...`);
+      
+      // Conectar al SFTP
+      await this.connect();
+
+      // Preparar datos CSV
+      const csvData: UserCSVData = {
+        email: user.email,
+        name: user.name,
+        store_id: user.store_id,
+        is_active: user.is_active,
+        created_at: user.created_at.toISOString(),
+        updated_at: user.updated_at.toISOString()
+      };
+
+      // Crear archivo CSV temporal
+      const createCsvWriter = (await import('csv-writer')).createObjectCsvWriter;
+      tempFilePath = path.join(os.tmpdir(), `user_${user.email.replace('@', '_').replace('.', '_')}_${Date.now()}.csv`);
+      
+      const csvWriter = createCsvWriter({
+        path: tempFilePath,
+        header: [
+          { id: 'email', title: 'email' },
+          { id: 'name', title: 'name' },
+          { id: 'store_id', title: 'store_id' },
+          { id: 'is_active', title: 'is_active' },
+          { id: 'created_at', title: 'created_at' },
+          { id: 'updated_at', title: 'updated_at' }
+        ]
+      });
+
+      await csvWriter.writeRecords([csvData]);
+
+      // Subir archivo a SFTP
+      const remotePath = '/out/users';
+      const remoteFileName = `${user.email}.csv`;
+      const remoteFilePath = `${remotePath}/${remoteFileName}`;
+
+      await this.sftp.put(tempFilePath, remoteFilePath);
+      console.log(`✓ CSV del usuario ${user.email} creado en: ${remoteFilePath}`);
+
+    } catch (error: any) {
+      console.error(`✗ Error creando CSV para usuario ${user.email}:`, error);
+      throw new Error(`Failed to create user CSV: ${error?.message || error}`);
+    } finally {
+      // Limpiar archivo temporal
+      if (tempFilePath) {
+        try {
+          await fs.unlink(tempFilePath);
+        } catch (cleanupError: any) {
+          console.warn(`⚠️ Error eliminando archivo temporal: ${cleanupError?.message || cleanupError}`);
+        }
+      }
+      await this.disconnect();
+    }
+  }
+
+  /**
+   * Crea un archivo CSV para una tienda
+   */
+  public async createStoreCSV(store: any): Promise<void> {
+    let tempFilePath: string | null = null;
+    
+    try {
+      console.log(`📤 Creando CSV para tienda ${store.code}...`);
+      
+      // Conectar al SFTP
+      await this.connect();
+
+      // Preparar datos CSV
+      const csvData: StoreCSVData = {
+        code: store.code,
+        name: store.name,
+        delivery_center_code: store.delivery_center_code,
+        address: store.address,
+        city: store.city,
+        province: store.province,
+        postal_code: store.postal_code,
+        country: store.country,
+        phone: store.phone,
+        responsible_email: store.responsible_email,
+        is_active: store.is_active,
+        created_at: store.created_at.toISOString(),
+        updated_at: store.updated_at.toISOString()
+      };
+
+      // Crear archivo CSV temporal
+      const createCsvWriter = (await import('csv-writer')).createObjectCsvWriter;
+      tempFilePath = path.join(os.tmpdir(), `store_${store.code}_${Date.now()}.csv`);
+      
+      const csvWriter = createCsvWriter({
+        path: tempFilePath,
+        header: [
+          { id: 'code', title: 'code' },
+          { id: 'name', title: 'name' },
+          { id: 'delivery_center_code', title: 'delivery_center_code' },
+          { id: 'address', title: 'address' },
+          { id: 'city', title: 'city' },
+          { id: 'province', title: 'province' },
+          { id: 'postal_code', title: 'postal_code' },
+          { id: 'country', title: 'country' },
+          { id: 'phone', title: 'phone' },
+          { id: 'responsible_email', title: 'responsible_email' },
+          { id: 'is_active', title: 'is_active' },
+          { id: 'created_at', title: 'created_at' },
+          { id: 'updated_at', title: 'updated_at' }
+        ]
+      });
+
+      await csvWriter.writeRecords([csvData]);
+
+      // Subir archivo a SFTP
+      const remotePath = '/out/stores';
+      const remoteFileName = `${store.code}.csv`;
+      const remoteFilePath = `${remotePath}/${remoteFileName}`;
+
+      await this.sftp.put(tempFilePath, remoteFilePath);
+      console.log(`✓ CSV de la tienda ${store.code} creado en: ${remoteFilePath}`);
+
+    } catch (error: any) {
+      console.error(`✗ Error creando CSV para tienda ${store.code}:`, error);
+      throw new Error(`Failed to create store CSV: ${error?.message || error}`);
+    } finally {
+      // Limpiar archivo temporal
+      if (tempFilePath) {
+        try {
+          await fs.unlink(tempFilePath);
+        } catch (cleanupError: any) {
+          console.warn(`⚠️ Error eliminando archivo temporal: ${cleanupError?.message || cleanupError}`);
+        }
+      }
+      await this.disconnect();
+    }
+  }
+
+  /**
+   * Crea un archivo CSV para un tax
+   */
+  public async createTaxCSV(tax: any): Promise<void> {
+    let tempFilePath: string | null = null;
+    
+    try {
+      console.log(`📤 Creando CSV para tax ${tax.code}...`);
+      
+      // Conectar al SFTP
+      await this.connect();
+
+      // Preparar datos CSV
+      const csvData: TaxCSVData = {
+        code: tax.code,
+        name: tax.name,
+        tax_rate: tax.tax_rate,
+        created_at: tax.created_at.toISOString(),
+        updated_at: tax.updated_at.toISOString()
+      };
+
+      // Crear archivo CSV temporal
+      const createCsvWriter = (await import('csv-writer')).createObjectCsvWriter;
+      tempFilePath = path.join(os.tmpdir(), `tax_${tax.code}_${Date.now()}.csv`);
+      
+      const csvWriter = createCsvWriter({
+        path: tempFilePath,
+        header: [
+          { id: 'code', title: 'code' },
+          { id: 'name', title: 'name' },
+          { id: 'tax_rate', title: 'tax_rate' },
+          { id: 'created_at', title: 'created_at' },
+          { id: 'updated_at', title: 'updated_at' }
+        ]
+      });
+
+      await csvWriter.writeRecords([csvData]);
+
+      // Subir archivo a SFTP
+      const remotePath = '/out/taxes';
+      const remoteFileName = `${tax.code}.csv`;
+      const remoteFilePath = `${remotePath}/${remoteFileName}`;
+
+      await this.sftp.put(tempFilePath, remoteFilePath);
+      console.log(`✓ CSV del tax ${tax.code} creado en: ${remoteFilePath}`);
+
+    } catch (error: any) {
+      console.error(`✗ Error creando CSV para tax ${tax.code}:`, error);
+      throw new Error(`Failed to create tax CSV: ${error?.message || error}`);
+    } finally {
+      // Limpiar archivo temporal
+      if (tempFilePath) {
+        try {
+          await fs.unlink(tempFilePath);
+        } catch (cleanupError: any) {
+          console.warn(`⚠️ Error eliminando archivo temporal: ${cleanupError?.message || cleanupError}`);
+        }
+      }
       await this.disconnect();
     }
   }
