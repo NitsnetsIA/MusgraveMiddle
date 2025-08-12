@@ -2168,6 +2168,7 @@ export default function Products() {
                       <Table>
                         <TableHeader>
                           <TableRow>
+                            <TableHead>Imagen</TableHead>
                             <TableHead>EAN</TableHead>
                             <TableHead>Producto</TableHead>
                             <TableHead>Precio Base</TableHead>
@@ -2184,6 +2185,22 @@ export default function Products() {
                             const finalPrice = product.base_price * (1 + (product.tax?.tax_rate || 0));
                             return (
                               <TableRow key={product.ean}>
+                                <TableCell>
+                                  {product.image_url ? (
+                                    <img 
+                                      src={product.image_url} 
+                                      alt={product.title}
+                                      className="w-12 h-12 object-cover rounded"
+                                      onError={(e) => {
+                                        e.currentTarget.style.display = 'none';
+                                      }}
+                                    />
+                                  ) : (
+                                    <div className="w-12 h-12 bg-gray-200 rounded flex items-center justify-center">
+                                      <span className="text-xs text-gray-500">Sin imagen</span>
+                                    </div>
+                                  )}
+                                </TableCell>
                                 <TableCell className="font-mono">{product.ean}</TableCell>
                                 <TableCell>
                                   <div>
