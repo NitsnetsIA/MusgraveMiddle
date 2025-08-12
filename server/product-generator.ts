@@ -327,8 +327,8 @@ export function generateRandomProduct(timestampOffset: string): {
   ];
   const description = descriptions[Math.floor(Math.random() * descriptions.length)];
   
-  // Use real category image URL
-  const imageUrl = category.imageUrl;
+  // Use real category image URL with EAN as query string to prevent client caching
+  const imageUrl = `${category.imageUrl}?ean=${ean}`;
   
   // Calculate timestamps
   const offsetDate = new Date(timestampOffset);
