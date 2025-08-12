@@ -39,15 +39,9 @@ interface PurchaseOrderCSVData {
   item_ean: string;
   item_ref: string;
   item_title: string;
-  item_description: string;
-  unit_of_measure: string;
-  quantity_measure: number;
-  image_url: string;
   quantity: number;
   base_price_at_order: number;
   tax_rate_at_order: number;
-  item_created_at: string;
-  item_updated_at: string;
 }
 
 export class MusgraveSftpService {
@@ -116,15 +110,9 @@ export class MusgraveSftpService {
         item_ean: '',
         item_ref: '',
         item_title: '',
-        item_description: '',
-        unit_of_measure: '',
-        quantity_measure: 0,
-        image_url: '',
         quantity: 0,
         base_price_at_order: 0,
-        tax_rate_at_order: 0,
-        item_created_at: '',
-        item_updated_at: ''
+        tax_rate_at_order: 0
       });
     } else {
       // Crear una línea por cada item
@@ -143,15 +131,9 @@ export class MusgraveSftpService {
           item_ean: item.item_ean,
           item_ref: item.item_ref || '',
           item_title: item.item_title || '',
-          item_description: item.item_description || '',
-          unit_of_measure: item.unit_of_measure || '',
-          quantity_measure: item.quantity_measure || 0,
-          image_url: item.image_url || '',
           quantity: item.quantity,
           base_price_at_order: item.base_price_at_order,
-          tax_rate_at_order: item.tax_rate_at_order,
-          item_created_at: item.created_at.toISOString(),
-          item_updated_at: item.updated_at.toISOString()
+          tax_rate_at_order: item.tax_rate_at_order
         });
       }
     }
@@ -178,15 +160,9 @@ export class MusgraveSftpService {
         { id: 'item_ean', title: 'item_ean' },
         { id: 'item_ref', title: 'item_ref' },
         { id: 'item_title', title: 'item_title' },
-        { id: 'item_description', title: 'item_description' },
-        { id: 'unit_of_measure', title: 'unit_of_measure' },
-        { id: 'quantity_measure', title: 'quantity_measure' },
-        { id: 'image_url', title: 'image_url' },
         { id: 'quantity', title: 'quantity' },
         { id: 'base_price_at_order', title: 'base_price_at_order' },
-        { id: 'tax_rate_at_order', title: 'tax_rate_at_order' },
-        { id: 'item_created_at', title: 'item_created_at' },
-        { id: 'item_updated_at', title: 'item_updated_at' }
+        { id: 'tax_rate_at_order', title: 'tax_rate_at_order' }
       ]
     });
 
