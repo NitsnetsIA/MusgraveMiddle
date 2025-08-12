@@ -37,6 +37,9 @@ This is a headless GraphQL microservice for managing grocery products and Spanis
 - **SFTP Status: Working correctly - orders transmitted successfully to /in/purchase_orders directory**
 - **Background Processing: SFTP transmission runs asynchronously without blocking client responses**
 - **Error Handling: Comprehensive error handling with cleanup of temporary CSV files**
+- **Item Reference Field: Added item_ref field to purchase order and order items (August 2025)**
+- **CSV Enhancement: item_ref field included in CSV exports sent to Musgrave SFTP**
+- **Data Integrity: item_ref field properly saved and synchronized across all entity types**
 
 ## User Preferences
 

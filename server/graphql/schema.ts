@@ -83,6 +83,7 @@ export const typeDefs = `#graphql
     item_id: Int!
     purchase_order_id: String!
     item_ean: String!
+    item_ref: String
     item_title: String
     item_description: String
     unit_of_measure: String
@@ -117,6 +118,7 @@ export const typeDefs = `#graphql
     item_id: Int!
     order_id: String!
     item_ean: String!
+    item_ref: String
     item_title: String
     item_description: String
     unit_of_measure: String
@@ -241,6 +243,7 @@ export const typeDefs = `#graphql
   input PurchaseOrderItemInput {
     purchase_order_id: String
     item_ean: String!
+    item_ref: String
     item_title: String
     item_description: String
     unit_of_measure: String
@@ -256,6 +259,7 @@ export const typeDefs = `#graphql
   input UpdatePurchaseOrderItemInput {
     purchase_order_id: String
     item_ean: String
+    item_ref: String
     item_title: String
     item_description: String
     unit_of_measure: String
@@ -290,6 +294,7 @@ export const typeDefs = `#graphql
   input OrderItemInput {
     order_id: String!
     item_ean: String!
+    item_ref: String
     item_title: String
     item_description: String
     unit_of_measure: String
@@ -303,6 +308,7 @@ export const typeDefs = `#graphql
   input UpdateOrderItemInput {
     order_id: String
     item_ean: String
+    item_ref: String
     item_title: String
     item_description: String
     unit_of_measure: String

@@ -52,6 +52,7 @@ export async function createSimulatedOrder(sourcePurchaseOrder: any): Promise<an
       simulatedItems.push({
         order_id: orderId,
         item_ean: item.item_ean,
+        item_ref: item.item_ref,
         item_title: item.item_title,
         item_description: item.item_description,
         unit_of_measure: item.unit_of_measure,
@@ -70,6 +71,7 @@ export async function createSimulatedOrder(sourcePurchaseOrder: any): Promise<an
         simulatedItems.push({
           order_id: orderId,
           item_ean: item.item_ean,
+          item_ref: item.item_ref,
           item_title: item.item_title,
           item_description: item.item_description,
           unit_of_measure: item.unit_of_measure,
@@ -87,6 +89,7 @@ export async function createSimulatedOrder(sourcePurchaseOrder: any): Promise<an
         simulatedItems.push({
           order_id: orderId,
           item_ean: substituteProduct.ean,
+          item_ref: substituteProduct.ref,
           item_title: substituteProduct.title,
           item_description: substituteProduct.description,
           unit_of_measure: substituteProduct.unit_of_measure,

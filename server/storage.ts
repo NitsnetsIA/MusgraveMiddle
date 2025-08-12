@@ -1072,6 +1072,7 @@ export class DatabaseStorage implements IStorage {
         const itemData: any = {
           purchase_order_id: created.purchase_order_id,
           item_ean: item.item_ean,
+          item_ref: item.item_ref,
           item_title: item.item_title,
           item_description: item.item_description,
           unit_of_measure: item.unit_of_measure,
@@ -1252,6 +1253,7 @@ export class DatabaseStorage implements IStorage {
       .set({
         ...(item.purchase_order_id && { purchase_order_id: item.purchase_order_id }),
         ...(item.item_ean && { item_ean: item.item_ean }),
+        ...(item.item_ref && { item_ref: item.item_ref }),
         ...(item.item_title && { item_title: item.item_title }),
         ...(item.item_description && { item_description: item.item_description }),
         ...(item.unit_of_measure && { unit_of_measure: item.unit_of_measure }),

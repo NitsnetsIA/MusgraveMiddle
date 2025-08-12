@@ -37,6 +37,7 @@ interface PurchaseOrderCSVData {
   created_at: string;
   updated_at: string;
   item_ean: string;
+  item_ref: string;
   item_title: string;
   item_description: string;
   unit_of_measure: string;
@@ -113,6 +114,7 @@ export class MusgraveSftpService {
         created_at: purchaseOrder.created_at.toISOString(),
         updated_at: purchaseOrder.updated_at.toISOString(),
         item_ean: '',
+        item_ref: '',
         item_title: '',
         item_description: '',
         unit_of_measure: '',
@@ -139,6 +141,7 @@ export class MusgraveSftpService {
           created_at: purchaseOrder.created_at.toISOString(),
           updated_at: purchaseOrder.updated_at.toISOString(),
           item_ean: item.item_ean,
+          item_ref: item.item_ref || '',
           item_title: item.item_title || '',
           item_description: item.item_description || '',
           unit_of_measure: item.unit_of_measure || '',
@@ -173,6 +176,7 @@ export class MusgraveSftpService {
         { id: 'created_at', title: 'created_at' },
         { id: 'updated_at', title: 'updated_at' },
         { id: 'item_ean', title: 'item_ean' },
+        { id: 'item_ref', title: 'item_ref' },
         { id: 'item_title', title: 'item_title' },
         { id: 'item_description', title: 'item_description' },
         { id: 'unit_of_measure', title: 'unit_of_measure' },
