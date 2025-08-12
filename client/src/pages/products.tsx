@@ -849,6 +849,7 @@ async function fetchPurchaseOrderItems(purchaseOrderId: string) {
     query GetPurchaseOrderItems($purchase_order_id: String!) {
       purchaseOrderItems(purchase_order_id: $purchase_order_id) {
         item_ean
+        item_ref
         item_title
         item_description
         unit_of_measure
@@ -892,6 +893,7 @@ async function fetchOrderItems(orderId: string) {
     query GetOrderItems($order_id: String!) {
       orderItems(order_id: $order_id) {
         item_ean
+        item_ref
         item_title
         item_description
         unit_of_measure
@@ -938,6 +940,7 @@ interface OrderDetailsContentProps {
 
 interface OrderItem {
   item_ean: string;
+  item_ref: string | null;
   item_title: string;
   item_description: string | null;
   unit_of_measure: string;
@@ -1036,7 +1039,7 @@ function OrderDetailsContent({ order, orderType }: OrderDetailsContentProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>EAN</TableHead>
+              <TableHead>EAN / Ref</TableHead>
               <TableHead>Producto</TableHead>
               <TableHead>Cantidad</TableHead>
               <TableHead>Precio Unitario</TableHead>
@@ -1052,7 +1055,12 @@ function OrderDetailsContent({ order, orderType }: OrderDetailsContentProps) {
               
               return (
                 <TableRow key={`${item.item_ean}-${index}`}>
-                  <TableCell className="font-mono">{item.item_ean}</TableCell>
+                  <TableCell className="font-mono">
+                    <div>{item.item_ean}</div>
+                    {item.item_ref && (
+                      <div className="text-xs text-muted-foreground">Ref: {item.item_ref}</div>
+                    )}
+                  </TableCell>
                   <TableCell>
                     <div>
                       <div className="font-medium">{item.item_title}</div>
