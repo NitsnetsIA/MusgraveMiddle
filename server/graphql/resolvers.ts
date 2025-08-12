@@ -214,10 +214,12 @@ export const resolvers = {
       // Establecer server_sent_at con la fecha del servidor cuando se recibe la orden de una app cliente
       const serverTimestamp = new Date();
       
+      let createdPurchaseOrder;
+      
       // Si hay items incluidos, usar el método que crea todo junto
       if (input.items && input.items.length > 0) {
         const { items, ...purchaseOrderData } = input;
-        return await storage.createPurchaseOrderWithItems({
+        createdPurchaseOrder = await storage.createPurchaseOrderWithItems({
           purchaseOrder: { 
             ...purchaseOrderData, 
             server_sent_at: serverTimestamp 
@@ -227,11 +229,29 @@ export const resolvers = {
       } else {
         // Si no hay items, usar el método tradicional
         const { items, ...purchaseOrderData } = input;
-        return await storage.createPurchaseOrder({
+        createdPurchaseOrder = await storage.createPurchaseOrder({
           ...purchaseOrderData,
           server_sent_at: serverTimestamp
         });
       }
+
+      // Enviar purchase order a Musgrave SFTP (en segundo plano, no bloquear la respuesta)
+      try {
+        const { musgraveSftpService } = await import('../services/musgrave-sftp.js');
+        // Ejecutar en background para no bloquear la respuesta al cliente
+        setImmediate(async () => {
+          try {
+            await musgraveSftpService.sendPurchaseOrderToMusgrave(createdPurchaseOrder);
+          } catch (sftpError) {
+            console.error('Error enviando purchase order a Musgrave SFTP:', sftpError);
+            // Nota: No lanzar error para no afectar la respuesta al cliente
+          }
+        });
+      } catch (importError) {
+        console.error('Error importando servicio SFTP de Musgrave:', importError);
+      }
+
+      return createdPurchaseOrder;
     },
 
     // Crear Purchase Order con simulación automática opcional
@@ -249,6 +269,20 @@ export const resolvers = {
           },
           items: items
         });
+
+        // Enviar purchase order a Musgrave SFTP (en segundo plano)
+        try {
+          const { musgraveSftpService } = await import('../services/musgrave-sftp.js');
+          setImmediate(async () => {
+            try {
+              await musgraveSftpService.sendPurchaseOrderToMusgrave(createdPurchaseOrder);
+            } catch (sftpError) {
+              console.error('Error enviando purchase order a Musgrave SFTP:', sftpError);
+            }
+          });
+        } catch (importError) {
+          console.error('Error importando servicio SFTP de Musgrave:', importError);
+        }
 
         let simulatedOrder = null;
         let message = 'Purchase order created successfully';

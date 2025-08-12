@@ -31,6 +31,9 @@ This is a headless GraphQL microservice for managing grocery products and Spanis
 - **Enhanced: server_sent_at field now visible in Purchase Orders table interface (January 2025)**
 - **Automated: server_sent_at automatically set to server timestamp when apps send purchase orders**
 - **Server timestamp: All purchase orders from client apps now have consistent server-side timestamps**
+- **Integrated: Musgrave SFTP service for legacy system communication (August 2025)**
+- **CSV Export: Purchase orders automatically sent to Musgrave SFTP in CSV format**
+- **Legacy Support: SFTP integration with musgraveapp.blob.core.windows.net for order processing**
 
 ## User Preferences
 
