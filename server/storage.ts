@@ -833,7 +833,7 @@ export class DatabaseStorage implements IStorage {
     return order || undefined;
   }
 
-  async createPurchaseOrder(order: InsertPurchaseOrder & { created_at?: Date | string; updated_at?: Date | string }): Promise<PurchaseOrder> {
+  async createPurchaseOrder(order: InsertPurchaseOrder & { created_at?: Date | string; updated_at?: Date | string; server_sent_at?: Date | string }): Promise<PurchaseOrder> {
     const now = new Date();
     
     // Construir el objeto con solo campos no-undefined
@@ -858,9 +858,12 @@ export class DatabaseStorage implements IStorage {
       if (!isNaN(updatedAt.getTime())) insertData.updated_at = updatedAt;
     }
 
-    if (order.server_sent_at) {
+    // Siempre agregar server_sent_at si está definido (cuando la orden viene de una app cliente)
+    if (order.server_sent_at !== undefined && order.server_sent_at !== null) {
       const serverSentAt = order.server_sent_at instanceof Date ? order.server_sent_at : new Date(order.server_sent_at);
-      if (!isNaN(serverSentAt.getTime())) insertData.server_sent_at = serverSentAt;
+      if (!isNaN(serverSentAt.getTime())) {
+        insertData.server_sent_at = serverSentAt;
+      }
     }
     
     const [created] = await db
@@ -1022,7 +1025,7 @@ export class DatabaseStorage implements IStorage {
 
   // Método para crear purchase order con items de una vez
   async createPurchaseOrderWithItems(orderData: {
-    purchaseOrder: InsertPurchaseOrder & { created_at?: Date | string; updated_at?: Date | string };
+    purchaseOrder: InsertPurchaseOrder & { created_at?: Date | string; updated_at?: Date | string; server_sent_at?: Date | string };
     items: (InsertPurchaseOrderItem & { created_at?: Date | string; updated_at?: Date | string })[];
   }): Promise<PurchaseOrder> {
     const order = orderData.purchaseOrder;
@@ -1049,9 +1052,12 @@ export class DatabaseStorage implements IStorage {
       if (!isNaN(updatedAt.getTime())) insertData.updated_at = updatedAt;
     }
 
-    if (order.server_sent_at) {
+    // Siempre agregar server_sent_at si está definido (cuando la orden viene de una app cliente)
+    if (order.server_sent_at !== undefined && order.server_sent_at !== null) {
       const serverSentAt = order.server_sent_at instanceof Date ? order.server_sent_at : new Date(order.server_sent_at);
-      if (!isNaN(serverSentAt.getTime())) insertData.server_sent_at = serverSentAt;
+      if (!isNaN(serverSentAt.getTime())) {
+        insertData.server_sent_at = serverSentAt;
+      }
     }
     
     // Crear la purchase order

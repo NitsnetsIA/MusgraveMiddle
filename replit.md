@@ -28,6 +28,9 @@ This is a headless GraphQL microservice for managing grocery products and Spanis
 - **RESOLVED: Fixed automatic order simulation for frontend apps (August 2025)**
 - **Issue solved: createPurchaseOrderWithItems now includes automatic simulation logic**
 - **Confirmed working: Frontend apps automatically generate processed orders when sending purchase orders**
+- **Enhanced: server_sent_at field now visible in Purchase Orders table interface (January 2025)**
+- **Automated: server_sent_at automatically set to server timestamp when apps send purchase orders**
+- **Server timestamp: All purchase orders from client apps now have consistent server-side timestamps**
 
 ## User Preferences
 

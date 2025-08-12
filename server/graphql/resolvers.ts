@@ -211,27 +211,42 @@ export const resolvers = {
 
     // Purchase Orders mutations
     createPurchaseOrder: async (_: any, { input }: { input: any }) => {
+      // Establecer server_sent_at con la fecha del servidor cuando se recibe la orden de una app cliente
+      const serverTimestamp = new Date();
+      
       // Si hay items incluidos, usar el método que crea todo junto
       if (input.items && input.items.length > 0) {
         const { items, ...purchaseOrderData } = input;
         return await storage.createPurchaseOrderWithItems({
-          purchaseOrder: purchaseOrderData,
+          purchaseOrder: { 
+            ...purchaseOrderData, 
+            server_sent_at: serverTimestamp 
+          },
           items: items
         });
       } else {
         // Si no hay items, usar el método tradicional
         const { items, ...purchaseOrderData } = input;
-        return await storage.createPurchaseOrder(purchaseOrderData);
+        return await storage.createPurchaseOrder({
+          ...purchaseOrderData,
+          server_sent_at: serverTimestamp
+        });
       }
     },
 
     // Crear Purchase Order con simulación automática opcional
     createPurchaseOrderWithSimulation: async (_: any, { input, simulateOrder }: { input: any; simulateOrder: boolean }) => {
       try {
+        // Establecer server_sent_at con la fecha del servidor
+        const serverTimestamp = new Date();
+        
         // Crear la purchase order con sus items
         const { items, ...purchaseOrderData } = input;
         const createdPurchaseOrder = await storage.createPurchaseOrderWithItems({
-          purchaseOrder: purchaseOrderData,
+          purchaseOrder: { 
+            ...purchaseOrderData, 
+            server_sent_at: serverTimestamp 
+          },
           items: items
         });
 
