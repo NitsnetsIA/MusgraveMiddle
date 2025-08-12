@@ -237,6 +237,7 @@ export const resolvers = {
 
       // Enviar purchase order a Musgrave SFTP (en segundo plano, no bloquear la respuesta)
       try {
+        console.log(`📤 Enviando purchase order ${createdPurchaseOrder.purchase_order_id} a Musgrave SFTP...`);
         const { musgraveSftpService } = await import('../services/musgrave-sftp.js');
         // Ejecutar en background para no bloquear la respuesta al cliente
         setImmediate(async () => {
@@ -272,6 +273,7 @@ export const resolvers = {
 
         // Enviar purchase order a Musgrave SFTP (en segundo plano)
         try {
+          console.log(`📤 Enviando purchase order ${createdPurchaseOrder.purchase_order_id} a Musgrave SFTP...`);
           const { musgraveSftpService } = await import('../services/musgrave-sftp.js');
           setImmediate(async () => {
             try {

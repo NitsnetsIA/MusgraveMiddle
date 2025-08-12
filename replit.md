@@ -34,6 +34,9 @@ This is a headless GraphQL microservice for managing grocery products and Spanis
 - **Integrated: Musgrave SFTP service for legacy system communication (August 2025)**
 - **CSV Export: Purchase orders automatically sent to Musgrave SFTP in CSV format**
 - **Legacy Support: SFTP integration with musgraveapp.blob.core.windows.net for order processing**
+- **SFTP Status: Working correctly - orders transmitted successfully to /in/purchase_orders directory**
+- **Background Processing: SFTP transmission runs asynchronously without blocking client responses**
+- **Error Handling: Comprehensive error handling with cleanup of temporary CSV files**
 
 ## User Preferences
 
