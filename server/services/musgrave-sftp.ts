@@ -1347,6 +1347,86 @@ export class MusgraveSftpService {
     }
   }
 
+  public async generateProductsCSVBulk(): Promise<void> {
+    let tempFilePath: string | null = null;
+    
+    try {
+      console.log(`🚀 Generando CSV masivo de products...`);
+      
+      // Obtener todos los products de la base de datos
+      const { products } = await import('../../shared/schema.js');
+      const productsList = await db.select().from(products).execute();
+      
+      if (productsList.length === 0) {
+        console.log(`ℹ️ No hay products para exportar`);
+        return;
+      }
+
+      // Conectar al SFTP
+      await this.connect();
+
+      // Crear archivo temporal
+      tempFilePath = path.join(os.tmpdir(), `products_bulk_${Date.now()}.csv`);
+      
+      // Preparar datos
+      const csvData = productsList.map(product => ({
+        ean: product.ean,
+        ref: product.ref || '',
+        title: product.title,
+        description: product.description || '',
+        base_price: product.base_price,
+        tax_code: product.tax_code,
+        unit_of_measure: product.unit_of_measure,
+        quantity_measure: product.quantity_measure,
+        image_url: product.image_url || '',
+        is_active: product.is_active,
+        created_at: product.created_at.toISOString(),
+        updated_at: product.updated_at.toISOString()
+      }));
+
+      // Escribir archivo CSV
+      const createCsvWriter = (await import('csv-writer')).createObjectCsvWriter;
+      const csvWriter = createCsvWriter({
+        path: tempFilePath,
+        header: [
+          { id: 'ean', title: 'ean' },
+          { id: 'ref', title: 'ref' },
+          { id: 'title', title: 'title' },
+          { id: 'description', title: 'description' },
+          { id: 'base_price', title: 'base_price' },
+          { id: 'tax_code', title: 'tax_code' },
+          { id: 'unit_of_measure', title: 'unit_of_measure' },
+          { id: 'quantity_measure', title: 'quantity_measure' },
+          { id: 'image_url', title: 'image_url' },
+          { id: 'is_active', title: 'is_active' },
+          { id: 'created_at', title: 'created_at' },
+          { id: 'updated_at', title: 'updated_at' }
+        ]
+      });
+
+      await csvWriter.writeRecords(csvData);
+
+      // Subir archivo completo de una vez con timestamp
+      const timestamp = getTimestamp();
+      const remotePath = `/out/products/products_${timestamp}.csv`;
+      await this.sftp.put(tempFilePath, remotePath);
+      console.log(`✅ CSV masivo de products generado: ${remotePath} (${productsList.length} registros)`);
+
+    } catch (error: any) {
+      console.error(`✗ Error generando CSV masivo de products:`, error);
+      throw error;
+    } finally {
+      if (tempFilePath) {
+        try {
+          await fs.unlink(tempFilePath);
+        } catch (cleanupError) {
+          console.warn(`⚠️ Error eliminando archivo temporal`);
+        }
+      }
+      await this.disconnect();
+    }
+  }
+
   /**
    * Genera todos los CSV de entidades de forma masiva
    */

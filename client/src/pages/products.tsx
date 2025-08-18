@@ -2058,7 +2058,7 @@ export default function Products() {
       if (!productsResult.success) {
         throw new Error(productsResult.message);
       }
-      addProgressMessage("✅ Productos generados exitosamente");
+      addProgressMessage("✅ CSV masivo de products generado exitosamente");
       queryClient.invalidateQueries({ queryKey: ["products"] });
 
       // Step 3: Generate 20 delivery centers

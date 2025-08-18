@@ -302,11 +302,23 @@ export class DatabaseStorage implements IStorage {
         }
       }
 
+      // Generar CSV masivo optimizado (una sola operación SFTP)
+      const { musgraveSftpService } = await import('./services/musgrave-sftp.js');
+      let csvGenerated = false;
+
+      try {
+        await musgraveSftpService.generateProductsCSVBulk();
+        csvGenerated = true;
+        console.log(`✅ CSV masivo de products generado exitosamente`);
+      } catch (error) {
+        console.warn(`⚠️ No se pudo generar CSV masivo para products:`, error);
+      }
+
       return {
         success: true,
         createdCount: insertedProducts.length,
         products: insertedProducts,
-        message: `Successfully generated ${insertedProducts.length} random products${insertedProducts.length < count ? ` (${count - insertedProducts.length} skipped due to EAN conflicts)` : ''}`
+        message: `Successfully generated ${insertedProducts.length} random products${csvGenerated ? ` and CSV bulk export` : ''}${insertedProducts.length < count ? ` (${count - insertedProducts.length} skipped due to EAN conflicts)` : ''}`
       };
     } catch (error) {
       console.error("Error generating random products:", error);
