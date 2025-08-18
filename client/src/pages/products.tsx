@@ -2222,6 +2222,14 @@ export default function Products() {
       addExportProgressMessage("🚀 Iniciando exportación masiva a SFTP...");
       toast({ title: "Exportación iniciada", description: "Exportando todos los datos actuales a SFTP Musgrave..." });
       
+      // Add initial progress messages immediately
+      addExportProgressMessage("📤 Preparando exportación de taxes...");
+      addExportProgressMessage("📤 Preparando exportación de delivery centers...");
+      addExportProgressMessage("📤 Preparando exportación de stores...");
+      addExportProgressMessage("📤 Preparando exportación de users...");
+      addExportProgressMessage("📤 Preparando exportación de products...");
+      addExportProgressMessage("⏳ Conectando al servidor SFTP Musgrave...");
+      
       const response = await fetch(GRAPHQL_ENDPOINT, {
         method: "POST",
         headers: {
@@ -2254,31 +2262,26 @@ export default function Products() {
 
       const exportResult = result.data.exportAllDataToSFTP;
       
+      // Clear the preparation messages and show actual results
+      setExportProgressMessages([]);
+      
       // Add detailed progress messages from backend
       if (exportResult.details) {
         const detailLines = exportResult.details.split('\n').filter((line: string) => line.trim());
-        detailLines.forEach((line: string, index: number) => {
+        detailLines.forEach((line: string) => {
           if (line.trim()) {
-            // Add a small delay to show messages progressively
-            setTimeout(() => {
-              addExportProgressMessage(line.trim());
-            }, index * 100);
+            addExportProgressMessage(line.trim());
           }
         });
       }
       
-      // Add final success message with delay
-      setTimeout(() => {
-        addExportProgressMessage(`🎉 Exportación completada: ${exportResult.exportedEntities.join(', ')}`);
-        
-        toast({
-          title: exportResult.success ? "Exportación completada" : "Error en exportación",
-          description: exportResult.message,
-          variant: exportResult.success ? "default" : "destructive",
-        });
-      }, (exportResult.details?.split('\n').length || 0) * 100);
+      addExportProgressMessage(`🎉 Exportación completada: ${exportResult.exportedEntities.join(', ')}`);
       
-      // Don't show toast immediately if we have details to process
+      toast({
+        title: exportResult.success ? "Exportación completada" : "Error en exportación",
+        description: exportResult.message,
+        variant: exportResult.success ? "default" : "destructive",
+      });
 
     } catch (error) {
       addExportProgressMessage("❌ Error durante la exportación a SFTP");
