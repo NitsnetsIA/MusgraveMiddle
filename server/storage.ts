@@ -2577,15 +2577,13 @@ export class DatabaseStorage implements IStorage {
       try {
         const productData = {
           ean: record.ean,
+          ref: record.ref || '',
           title: record.name || record.title,
-          brand: record.brand || '',
-          category: record.category || 'Alimentación',
           description: record.description || '',
           base_price: parseFloat(record.unit_price || record.base_price) || 0,
-          unit_cost: parseFloat(record.unit_cost) || 0,
+          tax_code: record.tax_code || 'ALI',
           unit_of_measure: record.unit_of_measure || 'unidad',
           quantity_measure: parseFloat(record.quantity_measure) || 1,
-          tax_code: record.tax_code || 'ALI',
           is_active: record.is_active === 'true' || record.is_active === '1' || record.is_active === true,
           image_url: record.image_url || `https://placehold.co/300x300/e5e7eb/6b7280?text=${encodeURIComponent((record.name || record.title) || 'Producto')}`
         };
@@ -2598,32 +2596,48 @@ export class DatabaseStorage implements IStorage {
             
             if (existingProduct.length > 0) {
               const existing = existingProduct[0];
+              
+              // Log detailed comparison for debugging (first product and every 500)
+              if (imported === 0 || imported % 500 === 0) {
+                console.log(`🔍 Comparing product ${productData.ean}:`);
+                console.log(`   Title: "${existing.title}" vs "${productData.title}"`);
+                console.log(`   Base price: ${existing.base_price} (${typeof existing.base_price}) vs ${productData.base_price} (${typeof productData.base_price})`);
+                console.log(`   Active: ${existing.is_active} (${typeof existing.is_active}) vs ${productData.is_active} (${typeof productData.is_active})`);
+                console.log(`   Normalized base price: ${normalizeNumber(existing.base_price)} vs ${normalizeNumber(productData.base_price)}`);
+                console.log(`   Boolean active: ${Boolean(existing.is_active)} vs ${Boolean(productData.is_active)}`);
+              }
+              
+              // Normalize values for proper comparison
+              const normalizeNumber = (val: number | string): number => {
+                return typeof val === 'string' ? parseFloat(val) || 0 : (val || 0);
+              };
+              
               const hasChanges = (
+                existing.ref !== productData.ref ||
                 existing.title !== productData.title ||
-                existing.brand !== productData.brand ||
-                existing.category !== productData.category ||
                 existing.description !== productData.description ||
-                existing.base_price !== productData.base_price ||
-                existing.unit_cost !== productData.unit_cost ||
-                existing.unit_of_measure !== productData.unit_of_measure ||
-                existing.quantity_measure !== productData.quantity_measure ||
+                normalizeNumber(existing.base_price) !== normalizeNumber(productData.base_price) ||
                 existing.tax_code !== productData.tax_code ||
-                existing.is_active !== productData.is_active ||
+                existing.unit_of_measure !== productData.unit_of_measure ||
+                normalizeNumber(existing.quantity_measure) !== normalizeNumber(productData.quantity_measure) ||
+                Boolean(existing.is_active) !== Boolean(productData.is_active) ||
                 existing.image_url !== productData.image_url
               );
+              
+              if (imported === 0 || imported % 500 === 0) {
+                console.log(`   Has changes: ${hasChanges}`);
+              }
               
               if (hasChanges) {
                 await db.update(products)
                   .set({
+                    ref: productData.ref,
                     title: productData.title,
-                    brand: productData.brand,
-                    category: productData.category,
                     description: productData.description,
                     base_price: productData.base_price,
-                    unit_cost: productData.unit_cost,
+                    tax_code: productData.tax_code,
                     unit_of_measure: productData.unit_of_measure,
                     quantity_measure: productData.quantity_measure,
-                    tax_code: productData.tax_code,
                     is_active: productData.is_active,
                     image_url: productData.image_url,
                     updated_at: new Date()
