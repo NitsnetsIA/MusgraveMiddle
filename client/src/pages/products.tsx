@@ -2262,17 +2262,24 @@ export default function Products() {
 
       const exportResult = result.data.exportAllDataToSFTP;
       
+      console.log('Export result received:', exportResult);
+      console.log('Details field:', exportResult.details);
+      
       // Clear the preparation messages and show actual results
       setExportProgressMessages([]);
       
       // Add detailed progress messages from backend
       if (exportResult.details) {
         const detailLines = exportResult.details.split('\n').filter((line: string) => line.trim());
+        console.log('Detail lines:', detailLines);
         detailLines.forEach((line: string) => {
           if (line.trim()) {
+            console.log('Adding message:', line.trim());
             addExportProgressMessage(line.trim());
           }
         });
+      } else {
+        console.log('No details found in export result');
       }
       
       addExportProgressMessage(`🎉 Exportación completada: ${exportResult.exportedEntities.join(', ')}`);
