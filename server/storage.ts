@@ -2573,6 +2573,12 @@ export class DatabaseStorage implements IStorage {
     let imported = 0;
     let updated = 0;
     let skipped = 0;
+    
+    // Normalize values for proper comparison
+    const normalizeNumber = (val: number | string): number => {
+      return typeof val === 'string' ? parseFloat(val) || 0 : (val || 0);
+    };
+    
     for (const record of records) {
       try {
         const productData = {
@@ -2596,11 +2602,6 @@ export class DatabaseStorage implements IStorage {
             
             if (existingProduct.length > 0) {
               const existing = existingProduct[0];
-              
-              // Normalize values for proper comparison
-              const normalizeNumber = (val: number | string): number => {
-                return typeof val === 'string' ? parseFloat(val) || 0 : (val || 0);
-              };
               
               // Log detailed comparison for debugging (first product and every 500)
               if (imported === 0 || imported % 500 === 0) {
