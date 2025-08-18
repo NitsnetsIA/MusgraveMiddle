@@ -2608,7 +2608,8 @@ export class DatabaseStorage implements IStorage {
     let skipped = 0;
     
     // Optimización: verificar si la DB está vacía para usar inserción masiva
-    const productCount = await this.getProductCount();
+    const productCountResult = await db.select({ count: sql`count(*)` }).from(products);
+    const productCount = parseInt(productCountResult[0]?.count as string) || 0;
     const isEmptyDatabase = productCount === 0;
     
     console.log(`🚀 Base de datos de productos ${isEmptyDatabase ? 'vacía' : `tiene ${productCount} productos`} - usando estrategia ${isEmptyDatabase ? 'inserción masiva' : 'verificación individual'}`);
