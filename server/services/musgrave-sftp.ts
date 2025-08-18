@@ -1366,6 +1366,87 @@ export class MusgraveSftpService {
   /**
    * Genera todos los CSV de entidades de forma masiva
    */
+  /**
+   * Lista archivos CSV en un directorio SFTP específico
+   */
+  public async listCSVFiles(directory: string): Promise<{ name: string; size: number; modifyTime: number }[]> {
+    try {
+      console.log(`📂 Listando archivos CSV en ${directory}...`);
+      
+      await this.connect();
+      
+      // Crear directorio si no existe
+      try {
+        await this.sftp.mkdir(directory, true);
+      } catch (error) {
+        // El directorio ya existe, continuar
+      }
+      
+      const files = await this.sftp.list(directory);
+      
+      // Filtrar solo archivos CSV
+      const csvFiles = files.filter((file: any) => 
+        file.type === '-' && file.name.toLowerCase().endsWith('.csv')
+      );
+      
+      console.log(`📄 Encontrados ${csvFiles.length} archivos CSV en ${directory}`);
+      
+      return csvFiles.map((file: any) => ({
+        name: file.name,
+        size: file.size,
+        modifyTime: file.modifyTime
+      }));
+      
+    } catch (error: any) {
+      console.error(`✗ Error listando archivos CSV en ${directory}:`, error);
+      throw new Error(`Failed to list CSV files: ${error?.message || error}`);
+    } finally {
+      await this.disconnect();
+    }
+  }
+
+  /**
+   * Descarga un archivo desde SFTP y devuelve su contenido
+   */
+  public async downloadFile(remotePath: string): Promise<string> {
+    let tempFilePath: string | null = null;
+    
+    try {
+      console.log(`📥 Descargando ${remotePath}...`);
+      
+      await this.connect();
+      
+      // Crear archivo temporal
+      tempFilePath = path.join(os.tmpdir(), `download_${Date.now()}.csv`);
+      
+      // Descargar archivo
+      await this.sftp.get(remotePath, tempFilePath);
+      
+      // Leer contenido
+      const content = await fs.readFile(tempFilePath, 'utf-8');
+      
+      console.log(`✅ Archivo descargado exitosamente: ${remotePath}`);
+      return content;
+      
+    } catch (error: any) {
+      console.error(`✗ Error descargando ${remotePath}:`, error);
+      throw new Error(`Failed to download file: ${error?.message || error}`);
+    } finally {
+      // Limpiar archivo temporal
+      if (tempFilePath) {
+        try {
+          await fs.unlink(tempFilePath);
+        } catch (cleanupError) {
+          console.warn(`⚠️ Error eliminando archivo temporal`);
+        }
+      }
+      await this.disconnect();
+    }
+  }
+
+  /**
+   * Genera todos los CSV de forma masiva
+   */
   public async generateAllCSVsBulk(): Promise<void> {
     try {
       console.log(`🚀 Iniciando generación masiva de todos los CSV...`);

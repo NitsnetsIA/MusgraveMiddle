@@ -2307,6 +2307,356 @@ export class DatabaseStorage implements IStorage {
       };
     }
   }
+
+  // Import all data from SFTP
+  async importAllDataFromSFTP(): Promise<{ success: boolean; message: string; details?: string }> {
+    try {
+      console.log("🚀 Starting complete SFTP data import...");
+      
+      const sftpService = await import('./services/musgrave-sftp');
+      let importDetails = "";
+      
+      // Import in dependency order
+      const importOrder = ['taxes', 'products', 'deliveryCenters', 'stores', 'users'];
+      
+      for (const entityType of importOrder) {
+        console.log(`📦 Importing ${entityType}...`);
+        importDetails += `📦 Importing ${entityType}...\n`;
+        
+        const result = await this.importEntityFromSFTP(entityType);
+        importDetails += result.details || result.message + '\n';
+        
+        if (!result.success) {
+          throw new Error(`Failed to import ${entityType}: ${result.message}`);
+        }
+      }
+      
+      console.log("🎉 All data imported successfully from SFTP");
+      importDetails += "🎉 All data imported successfully from SFTP\n";
+      
+      return {
+        success: true,
+        message: "Todos los datos han sido importados desde SFTP correctamente.",
+        details: importDetails
+      };
+      
+    } catch (error) {
+      console.error('Error importing all data from SFTP:', error);
+      return {
+        success: false,
+        message: `Error durante la importación masiva: ${error instanceof Error ? error.message : String(error)}`
+      };
+    }
+  }
+
+  // Import specific entity from SFTP
+  async importEntityFromSFTP(entityType: string): Promise<{ success: boolean; message: string; details?: string; importedCount?: number }> {
+    try {
+      console.log(`📦 Starting SFTP import for ${entityType}...`);
+      
+      const sftpService = await import('./services/musgrave-sftp');
+      const sftp = new sftpService.MusgraveSFTPService();
+      
+      // Map entity types to SFTP directories
+      const directoryMap: { [key: string]: string } = {
+        'taxes': '/out/taxes/',
+        'products': '/out/products/',
+        'delivery-centers': '/out/deliveryCenters/',
+        'deliveryCenters': '/out/deliveryCenters/',
+        'stores': '/out/stores/',
+        'users': '/out/users/'
+      };
+      
+      const directory = directoryMap[entityType];
+      if (!directory) {
+        throw new Error(`Tipo de entidad no válido: ${entityType}`);
+      }
+      
+      // Get CSV files from SFTP directory
+      const csvFiles = await sftp.listCSVFiles(directory);
+      
+      if (csvFiles.length === 0) {
+        return {
+          success: true,
+          message: `No se encontraron archivos CSV en ${directory}`,
+          importedCount: 0
+        };
+      }
+      
+      // Sort files by date (oldest first, then newest)
+      csvFiles.sort((a, b) => a.name.localeCompare(b.name));
+      
+      let totalImported = 0;
+      let importDetails = `Procesando ${csvFiles.length} archivos CSV de ${entityType}:\n`;
+      
+      for (const file of csvFiles) {
+        const filePath = directory + file.name;
+        console.log(`📄 Processing ${filePath}...`);
+        importDetails += `📄 Processing ${file.name}...\n`;
+        
+        const csvContent = await sftp.downloadFile(filePath);
+        const records = this.parseCSV(csvContent);
+        
+        if (records.length === 0) {
+          importDetails += `⚠️ No hay registros en ${file.name}\n`;
+          continue;
+        }
+        
+        // Import records based on entity type
+        let imported = 0;
+        
+        switch (entityType) {
+          case 'taxes':
+            imported = await this.importTaxesFromCSV(records);
+            break;
+          case 'products':
+            imported = await this.importProductsFromCSV(records);
+            break;
+          case 'deliveryCenters':
+          case 'delivery-centers':
+            imported = await this.importDeliveryCentersFromCSV(records);
+            break;
+          case 'stores':
+            imported = await this.importStoresFromCSV(records);
+            break;
+          case 'users':
+            imported = await this.importUsersFromCSV(records);
+            break;
+          default:
+            throw new Error(`Importación no implementada para ${entityType}`);
+        }
+        
+        totalImported += imported;
+        importDetails += `✅ Importados ${imported} registros de ${file.name}\n`;
+      }
+      
+      console.log(`✅ ${entityType} import completed: ${totalImported} records`);
+      importDetails += `🎉 Importación de ${entityType} completada: ${totalImported} registros totales`;
+      
+      return {
+        success: true,
+        message: `${entityType} importado correctamente`,
+        details: importDetails,
+        importedCount: totalImported
+      };
+      
+    } catch (error) {
+      console.error(`Error importing ${entityType} from SFTP:`, error);
+      return {
+        success: false,
+        message: `Error importando ${entityType}: ${error instanceof Error ? error.message : String(error)}`
+      };
+    }
+  }
+
+  // Parse CSV content
+  private parseCSV(csvContent: string): any[] {
+    const lines = csvContent.trim().split('\n');
+    if (lines.length < 2) return [];
+    
+    const headers = lines[0].split(',').map(h => h.trim());
+    const records = [];
+    
+    for (let i = 1; i < lines.length; i++) {
+      const values = lines[i].split(',').map(v => v.trim());
+      if (values.length === headers.length) {
+        const record: any = {};
+        headers.forEach((header, index) => {
+          record[header] = values[index] || '';
+        });
+        records.push(record);
+      }
+    }
+    
+    return records;
+  }
+
+  // Import taxes from CSV records
+  private async importTaxesFromCSV(records: any[]): Promise<number> {
+    let imported = 0;
+    
+    for (const record of records) {
+      if (!record.code || !record.name || record.rate === undefined) continue;
+      
+      try {
+        // Check if tax already exists
+        const existing = await db.select().from(taxes).where(eq(taxes.code, record.code)).limit(1);
+        
+        const taxData = {
+          code: record.code,
+          name: record.name,
+          rate: parseFloat(record.rate) || 0,
+          is_active: record.is_active === 'true' || record.is_active === '1'
+        };
+        
+        if (existing.length > 0) {
+          // Update existing
+          await db.update(taxes).set(taxData).where(eq(taxes.code, record.code));
+        } else {
+          // Insert new
+          await db.insert(taxes).values(taxData);
+        }
+        
+        imported++;
+      } catch (error) {
+        console.error(`Error importing tax ${record.code}:`, error);
+      }
+    }
+    
+    return imported;
+  }
+
+  // Import products from CSV records
+  private async importProductsFromCSV(records: any[]): Promise<number> {
+    let imported = 0;
+    
+    for (const record of records) {
+      if (!record.ean || !record.name) continue;
+      
+      try {
+        // Check if product already exists
+        const existing = await db.select().from(products).where(eq(products.ean, record.ean)).limit(1);
+        
+        const productData = {
+          ean: record.ean,
+          name: record.name,
+          brand: record.brand || '',
+          category: record.category || 'Alimentación',
+          description: record.description || '',
+          unit_cost: parseFloat(record.unit_cost) || 0,
+          unit_price: parseFloat(record.unit_price) || 0,
+          tax_code: record.tax_code || 'ALI',
+          is_active: record.is_active === 'true' || record.is_active === '1',
+          image_url: record.image_url || `https://placehold.co/300x300/e5e7eb/6b7280?text=${encodeURIComponent(record.name || 'Producto')}`
+        };
+        
+        if (existing.length > 0) {
+          // Update existing
+          await db.update(products).set(productData).where(eq(products.ean, record.ean));
+        } else {
+          // Insert new
+          await db.insert(products).values(productData);
+        }
+        
+        imported++;
+      } catch (error) {
+        console.error(`Error importing product ${record.ean}:`, error);
+      }
+    }
+    
+    return imported;
+  }
+
+  // Import delivery centers from CSV records
+  private async importDeliveryCentersFromCSV(records: any[]): Promise<number> {
+    let imported = 0;
+    
+    for (const record of records) {
+      if (!record.code || !record.name) continue;
+      
+      try {
+        // Check if delivery center already exists
+        const existing = await db.select().from(deliveryCenters).where(eq(deliveryCenters.code, record.code)).limit(1);
+        
+        const centerData = {
+          code: record.code,
+          name: record.name,
+          is_active: record.is_active === 'true' || record.is_active === '1'
+        };
+        
+        if (existing.length > 0) {
+          // Update existing
+          await db.update(deliveryCenters).set(centerData).where(eq(deliveryCenters.code, record.code));
+        } else {
+          // Insert new
+          await db.insert(deliveryCenters).values(centerData);
+        }
+        
+        imported++;
+      } catch (error) {
+        console.error(`Error importing delivery center ${record.code}:`, error);
+      }
+    }
+    
+    return imported;
+  }
+
+  // Import stores from CSV records
+  private async importStoresFromCSV(records: any[]): Promise<number> {
+    let imported = 0;
+    
+    for (const record of records) {
+      if (!record.code || !record.name || !record.delivery_center_code) continue;
+      
+      try {
+        // Check if store already exists
+        const existing = await db.select().from(stores).where(eq(stores.code, record.code)).limit(1);
+        
+        const storeData = {
+          code: record.code,
+          name: record.name,
+          delivery_center_code: record.delivery_center_code,
+          is_active: record.is_active === 'true' || record.is_active === '1'
+        };
+        
+        if (existing.length > 0) {
+          // Update existing
+          await db.update(stores).set(storeData).where(eq(stores.code, record.code));
+        } else {
+          // Insert new
+          await db.insert(stores).values(storeData);
+        }
+        
+        imported++;
+      } catch (error) {
+        console.error(`Error importing store ${record.code}:`, error);
+      }
+    }
+    
+    return imported;
+  }
+
+  // Import users from CSV records
+  private async importUsersFromCSV(records: any[]): Promise<number> {
+    let imported = 0;
+    
+    for (const record of records) {
+      if (!record.email || !record.name || !record.store_code) continue;
+      
+      try {
+        // Check if user already exists
+        const existing = await db.select().from(users).where(eq(users.email, record.email)).limit(1);
+        
+        // Use SHA3-256 with email as salt for password (default: 'password123')
+        const crypto = await import('crypto');
+        const password = record.password || 'password123';
+        const saltedPassword = password + record.email;
+        const passwordHash = crypto.createHash('sha3-256').update(saltedPassword).digest('hex');
+        
+        const userData = {
+          email: record.email,
+          name: record.name,
+          password_hash: passwordHash,
+          store_code: record.store_code,
+          is_active: record.is_active === 'true' || record.is_active === '1'
+        };
+        
+        if (existing.length > 0) {
+          // Update existing
+          await db.update(users).set(userData).where(eq(users.email, record.email));
+        } else {
+          // Insert new
+          await db.insert(users).values(userData);
+        }
+        
+        imported++;
+      } catch (error) {
+        console.error(`Error importing user ${record.email}:`, error);
+      }
+    }
+    
+    return imported;
+  }
 }
 
 export const storage = new DatabaseStorage();

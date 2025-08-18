@@ -1134,6 +1134,12 @@ export default function Products() {
   // Simulación automática de pedidos
   const [autoSimulateOrders, setAutoSimulateOrders] = useState(true);
   
+  // Import data states
+  const [isImportingAllData, setIsImportingAllData] = useState(false);
+  const [isImportingEntity, setIsImportingEntity] = useState<string | null>(null);
+  const [importProgress, setImportProgress] = useState<string>('');
+  const [importEntityProgress, setImportEntityProgress] = useState<string>('');
+  
   // Pagination states
   const [currentPage, setCurrentPage] = useState(0);
   const pageSize = 20;
@@ -2100,6 +2106,164 @@ export default function Products() {
     }
   };
 
+  // Import all data from SFTP
+  const importAllDataFromSFTP = async () => {
+    setIsImportingAllData(true);
+    setImportProgress('');
+    
+    const addProgressMessage = (message: string) => {
+      setImportProgress(prev => prev + message + '\n');
+    };
+    
+    try {
+      addProgressMessage("🚀 Iniciando importación masiva desde SFTP...");
+      toast({ title: "Importación iniciada", description: "Importando todos los datos desde SFTP Musgrave..." });
+      
+      const response = await fetch(GRAPHQL_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Apollo-Require-Preflight": "true",
+        },
+        body: JSON.stringify({
+          query: `
+            mutation ImportAllDataFromSFTP {
+              importAllDataFromSFTP {
+                success
+                message
+                details
+              }
+            }
+          `
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      if (result.errors) {
+        throw new Error(result.errors[0]?.message || "GraphQL error");
+      }
+
+      const importResult = result.data.importAllDataFromSFTP;
+      addProgressMessage(importResult.details || importResult.message);
+      
+      if (importResult.success) {
+        addProgressMessage("🎉 ¡Importación masiva completada exitosamente!");
+        toast({
+          title: "¡Importación completada!",
+          description: "Todos los datos han sido importados desde SFTP.",
+        });
+        
+        // Invalidate all queries to refresh data
+        queryClient.invalidateQueries({ queryKey: ["products"] });
+        queryClient.invalidateQueries({ queryKey: ["delivery-centers"] });
+        queryClient.invalidateQueries({ queryKey: ["stores"] });
+        queryClient.invalidateQueries({ queryKey: ["users"] });
+        queryClient.invalidateQueries({ queryKey: ["taxes"] });
+        queryClient.invalidateQueries({ queryKey: ["purchase-orders"] });
+        queryClient.invalidateQueries({ queryKey: ["orders"] });
+      } else {
+        throw new Error(importResult.message);
+      }
+
+    } catch (error) {
+      addProgressMessage("❌ Error durante la importación de datos");
+      toast({
+        title: "Error en importación",
+        description: error instanceof Error ? error.message : "Error durante la importación de datos",
+        variant: "destructive",
+      });
+    } finally {
+      setIsImportingAllData(false);
+    }
+  };
+
+  // Import specific entity from SFTP
+  const importEntityFromSFTP = async (entityType: string) => {
+    setIsImportingEntity(entityType);
+    setImportEntityProgress('');
+    
+    const addProgressMessage = (message: string) => {
+      setImportEntityProgress(prev => prev + message + '\n');
+    };
+    
+    try {
+      addProgressMessage(`🚀 Importando ${entityType} desde SFTP...`);
+      toast({ title: `Importando ${entityType}`, description: `Procesando archivos CSV de ${entityType}...` });
+      
+      const response = await fetch(GRAPHQL_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Apollo-Require-Preflight": "true",
+        },
+        body: JSON.stringify({
+          query: `
+            mutation ImportEntityFromSFTP($entityType: String!) {
+              importEntityFromSFTP(entityType: $entityType) {
+                success
+                message
+                details
+                importedCount
+              }
+            }
+          `,
+          variables: { entityType }
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      if (result.errors) {
+        throw new Error(result.errors[0]?.message || "GraphQL error");
+      }
+
+      const importResult = result.data.importEntityFromSFTP;
+      addProgressMessage(importResult.details || importResult.message);
+      
+      if (importResult.success) {
+        addProgressMessage(`✅ ${entityType} importado exitosamente (${importResult.importedCount || 0} registros)`);
+        toast({
+          title: `¡${entityType} importado!`,
+          description: `Se han importado ${importResult.importedCount || 0} registros.`,
+        });
+        
+        // Invalidate relevant queries
+        if (entityType === 'products') {
+          queryClient.invalidateQueries({ queryKey: ["products"] });
+        } else if (entityType === 'delivery-centers') {
+          queryClient.invalidateQueries({ queryKey: ["delivery-centers"] });
+        } else if (entityType === 'stores') {
+          queryClient.invalidateQueries({ queryKey: ["stores"] });
+        } else if (entityType === 'users') {
+          queryClient.invalidateQueries({ queryKey: ["users"] });
+        } else if (entityType === 'taxes') {
+          queryClient.invalidateQueries({ queryKey: ["taxes"] });
+        }
+      } else {
+        throw new Error(importResult.message);
+      }
+
+    } catch (error) {
+      addProgressMessage(`❌ Error importando ${entityType}`);
+      toast({
+        title: `Error importando ${entityType}`,
+        description: error instanceof Error ? error.message : `Error durante la importación de ${entityType}`,
+        variant: "destructive",
+      });
+    } finally {
+      setIsImportingEntity(null);
+    }
+  };
+
   return (
     <div className="container mx-auto p-6 space-y-8">
       {/* Header */}
@@ -2121,10 +2285,14 @@ export default function Products() {
 
       {/* Main Navigation Tabs */}
       <Tabs defaultValue="view-data" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 mb-8">
+        <TabsList className="grid w-full grid-cols-3 mb-8">
           <TabsTrigger value="view-data" className="flex items-center gap-2" data-testid="tab-view-data">
             <Eye className="h-4 w-4" />
             Ver Datos
+          </TabsTrigger>
+          <TabsTrigger value="import-data" className="flex items-center gap-2" data-testid="tab-import-data">
+            <RefreshCw className="h-4 w-4" />
+            Importar datos SFTP
           </TabsTrigger>
           <TabsTrigger value="generate-data" className="flex items-center gap-2" data-testid="tab-generate-data">
             <Settings className="h-4 w-4" />
@@ -2900,6 +3068,199 @@ export default function Products() {
               </Card>
             </TabsContent>
           </Tabs>
+        </TabsContent>
+
+        {/* Import Data Tab */}
+        <TabsContent value="import-data" className="mt-6">
+          <div className="space-y-6">
+            {/* Bulk Data Import */}
+            <Card className="border-2 border-blue-500/20">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-blue-600">
+                  <RefreshCw className="h-6 w-6" />
+                  Importación Masiva desde SFTP
+                </CardTitle>
+                <CardDescription>
+                  Importa todos los datos desde el servidor SFTP Musgrave en orden correcto: delivery centers, taxes, stores, users y products. Si existen múltiples archivos, se importa desde el más antiguo al más reciente.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button
+                  onClick={importAllDataFromSFTP}
+                  disabled={isImportingAllData}
+                  size="lg"
+                  className="w-full bg-blue-600 hover:bg-blue-700"
+                  data-testid="button-import-all-data"
+                >
+                  {isImportingAllData ? (
+                    <>
+                      <RefreshCw className="h-5 w-5 mr-2 animate-spin" />
+                      Importando todos los datos...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="h-5 w-5 mr-2" />
+                      Importar Todos los Datos del SFTP
+                    </>
+                  )}
+                </Button>
+                {isImportingAllData && (
+                  <div className="mt-4 space-y-2">
+                    <p className="text-center text-sm text-muted-foreground">
+                      Procesando archivos CSV desde el servidor SFTP...
+                    </p>
+                    {importProgress && (
+                      <div className="bg-muted p-3 rounded text-sm font-mono text-muted-foreground whitespace-pre-wrap">
+                        {importProgress}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Individual Entity Import */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Package className="h-5 w-5" />
+                  Importación Individual de Entidades
+                </CardTitle>
+                <CardDescription>
+                  Importa datos específicos desde el SFTP. Respeta el orden de dependencias para evitar errores de referencia.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {/* Delivery Centers Import */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Centros de Distribución</Label>
+                    <Button
+                      onClick={() => importEntityFromSFTP('delivery-centers')}
+                      disabled={isImportingEntity === 'delivery-centers'}
+                      variant="outline"
+                      className="w-full"
+                      data-testid="button-import-delivery-centers"
+                    >
+                      {isImportingEntity === 'delivery-centers' ? (
+                        <>
+                          <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                          Importando...
+                        </>
+                      ) : (
+                        <>
+                          <Building2 className="h-4 w-4 mr-2" />
+                          Importar Centros
+                        </>
+                      )}
+                    </Button>
+                  </div>
+
+                  {/* Taxes Import */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Impuestos IVA</Label>
+                    <Button
+                      onClick={() => importEntityFromSFTP('taxes')}
+                      disabled={isImportingEntity === 'taxes'}
+                      variant="outline"
+                      className="w-full"
+                      data-testid="button-import-taxes"
+                    >
+                      {isImportingEntity === 'taxes' ? (
+                        <>
+                          <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                          Importando...
+                        </>
+                      ) : (
+                        <>
+                          <Receipt className="h-4 w-4 mr-2" />
+                          Importar Impuestos
+                        </>
+                      )}
+                    </Button>
+                  </div>
+
+                  {/* Stores Import */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Tiendas</Label>
+                    <Button
+                      onClick={() => importEntityFromSFTP('stores')}
+                      disabled={isImportingEntity === 'stores'}
+                      variant="outline"
+                      className="w-full"
+                      data-testid="button-import-stores"
+                    >
+                      {isImportingEntity === 'stores' ? (
+                        <>
+                          <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                          Importando...
+                        </>
+                      ) : (
+                        <>
+                          <Store className="h-4 w-4 mr-2" />
+                          Importar Tiendas
+                        </>
+                      )}
+                    </Button>
+                  </div>
+
+                  {/* Users Import */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Usuarios</Label>
+                    <Button
+                      onClick={() => importEntityFromSFTP('users')}
+                      disabled={isImportingEntity === 'users'}
+                      variant="outline"
+                      className="w-full"
+                      data-testid="button-import-users"
+                    >
+                      {isImportingEntity === 'users' ? (
+                        <>
+                          <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                          Importando...
+                        </>
+                      ) : (
+                        <>
+                          <Users className="h-4 w-4 mr-2" />
+                          Importar Usuarios
+                        </>
+                      )}
+                    </Button>
+                  </div>
+
+                  {/* Products Import */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Productos</Label>
+                    <Button
+                      onClick={() => importEntityFromSFTP('products')}
+                      disabled={isImportingEntity === 'products'}
+                      variant="outline"
+                      className="w-full"
+                      data-testid="button-import-products"
+                    >
+                      {isImportingEntity === 'products' ? (
+                        <>
+                          <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                          Importando...
+                        </>
+                      ) : (
+                        <>
+                          <Package className="h-4 w-4 mr-2" />
+                          Importar Productos
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+
+                {importEntityProgress && (
+                  <div className="mt-4 bg-muted p-3 rounded text-sm font-mono text-muted-foreground whitespace-pre-wrap">
+                    {importEntityProgress}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         {/* Generate Data Tab */}

@@ -467,6 +467,10 @@ export const typeDefs = `#graphql
     generateOrders(count: Int!, clearExisting: Boolean = false, timestampOffset: String): SingleEntityGenerationResult!
     generateEntities(input: GenerateEntitiesInput!): GenerateEntitiesResult!
     
+    # Data import from SFTP
+    importAllDataFromSFTP: ImportDataResult!
+    importEntityFromSFTP(entityType: String!): ImportEntityResult!
+    
     # Delete all data
     deleteAllData: DeleteAllDataResult!
   }
@@ -518,6 +522,19 @@ export const typeDefs = `#graphql
     success: Boolean!
     summary: EntityGenerationSummary!
     message: String!
+  }
+
+  type ImportDataResult {
+    success: Boolean!
+    message: String!
+    details: String
+  }
+
+  type ImportEntityResult {
+    success: Boolean!
+    message: String!
+    details: String
+    importedCount: Int
   }
 
   type EntityGenerationSummary {

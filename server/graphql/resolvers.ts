@@ -426,6 +426,15 @@ export const resolvers = {
       return await storage.generateEntities(input);
     },
 
+    // Data import from SFTP
+    importAllDataFromSFTP: async () => {
+      return await storage.importAllDataFromSFTP();
+    },
+
+    importEntityFromSFTP: async (_: any, { entityType }: { entityType: string }) => {
+      return await storage.importEntityFromSFTP(entityType);
+    },
+
     // Delete all data
     deleteAllData: async () => {
       return await storage.deleteAllData();
