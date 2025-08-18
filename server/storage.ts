@@ -1540,24 +1540,23 @@ export class DatabaseStorage implements IStorage {
         createdTaxes = await db.insert(taxes).values(newTaxes).returning();
       }
 
-      // Crear archivos CSV individuales para cada tax
+      // Generar CSV masivo optimizado (una sola operación SFTP)
       const { musgraveSftpService } = await import('./services/musgrave-sftp.js');
-      let csvCount = 0;
+      let csvGenerated = false;
 
-      for (const tax of createdTaxes) {
-        try {
-          await musgraveSftpService.appendTaxToCSV(tax);
-          csvCount++;
-        } catch (error) {
-          console.warn(`⚠️ No se pudo agregar CSV para tax ${tax.code}:`, error);
-        }
+      try {
+        await musgraveSftpService.generateTaxesCSVBulk();
+        csvGenerated = true;
+        console.log(`✅ CSV masivo de taxes generado exitosamente`);
+      } catch (error) {
+        console.warn(`⚠️ No se pudo generar CSV masivo para taxes:`, error);
       }
 
       return {
         success: true,
         entityType: "taxes",
         createdCount: newTaxes.length,
-        message: `Successfully created ${newTaxes.length} Spanish IVA tax types${csvCount > 0 ? ` and ${csvCount} CSV files` : ''}. ${existingCodes.size > 0 ? `${existingCodes.size} taxes already existed.` : ''}`
+        message: `Successfully created ${newTaxes.length} Spanish IVA tax types${csvGenerated ? ` and CSV bulk export` : ''}. ${existingCodes.size > 0 ? `${existingCodes.size} taxes already existed.` : ''}`
       };
     } catch (error) {
       console.error('Error generating taxes:', error);
@@ -1623,36 +1622,23 @@ export class DatabaseStorage implements IStorage {
 
       const createdCenters = await db.insert(deliveryCenters).values(centersToCreate).returning();
 
-      // Crear archivos CSV individuales para cada delivery center con datos extendidos
+      // Generar CSV masivo optimizado (una sola operación SFTP)
       const { musgraveSftpService } = await import('./services/musgrave-sftp.js');
-      let csvCount = 0;
+      let csvGenerated = false;
 
-      for (const center of createdCenters) {
-        try {
-          // Crear datos extendidos para CSV sin modificar esquema DB
-          const extendedCenter = {
-            ...center,
-            address: `Calle ${Math.floor(Math.random() * 999) + 1} ${center.name}`,
-            city: center.name.split(' ').slice(-1)[0], // Extraer ciudad del nombre
-            province: SPANISH_PROVINCES[SPANISH_CITIES.indexOf(center.name.split(' ').slice(-1)[0])] || center.name.split(' ').slice(-1)[0],
-            postal_code: `${(Math.floor(Math.random() * 50000) + 1000).toString().padStart(5, '0')}`,
-            country: 'España',
-            phone: `+34 9${Math.floor(Math.random() * 100000000).toString().padStart(8, '0')}`,
-            email: `info@${center.code.toLowerCase()}.${center.name.split(' ').slice(-1)[0].toLowerCase()}.es`
-          };
-          
-          await musgraveSftpService.appendDeliveryCenterToCSV(extendedCenter);
-          csvCount++;
-        } catch (error) {
-          console.warn(`⚠️ No se pudo agregar CSV para delivery center ${center.code}:`, error);
-        }
+      try {
+        await musgraveSftpService.generateDeliveryCentersCSVBulk();
+        csvGenerated = true;
+        console.log(`✅ CSV masivo de delivery centers generado exitosamente`);
+      } catch (error) {
+        console.warn(`⚠️ No se pudo generar CSV masivo para delivery centers:`, error);
       }
 
       return {
         success: true,
         entityType: "delivery_centers",
         createdCount: createdCenters.length,
-        message: `Successfully created ${createdCenters.length} delivery centers${csvCount > 0 ? ` and ${csvCount} CSV files` : ''}.`
+        message: `Successfully created ${createdCenters.length} delivery centers${csvGenerated ? ` and CSV bulk export` : ''}.`
       };
     } catch (error) {
       console.error('Error generating delivery centers:', error);
@@ -1745,35 +1731,23 @@ export class DatabaseStorage implements IStorage {
 
       const createdStores = await db.insert(stores).values(storesToCreate).returning();
 
-      // Crear archivos CSV individuales para cada store con datos extendidos
+      // Generar CSV masivo optimizado (una sola operación SFTP)
       const { musgraveSftpService } = await import('./services/musgrave-sftp.js');
-      let csvCount = 0;
+      let csvGenerated = false;
 
-      for (const store of createdStores) {
-        try {
-          // Crear datos extendidos para CSV sin modificar esquema DB
-          const extendedStore = {
-            ...store,
-            address: `Calle ${Math.floor(Math.random() * 999) + 1} ${store.name.split(' ').slice(1).join(' ')}`,
-            city: store.name.split(' ')[1] || 'Madrid', // Extraer ciudad del nombre o usar Madrid
-            province: SPANISH_PROVINCES[SPANISH_CITIES.indexOf(store.name.split(' ')[1] || 'Madrid')] || store.name.split(' ')[1] || 'Madrid',
-            postal_code: `${(Math.floor(Math.random() * 50000) + 1000).toString().padStart(5, '0')}`,
-            country: 'España',
-            phone: `+34 9${Math.floor(Math.random() * 100000000).toString().padStart(8, '0')}`
-          };
-          
-          await musgraveSftpService.appendStoreToCSV(extendedStore);
-          csvCount++;
-        } catch (error) {
-          console.warn(`⚠️ No se pudo agregar CSV para store ${store.code}:`, error);
-        }
+      try {
+        await musgraveSftpService.generateStoresCSVBulk();
+        csvGenerated = true;
+        console.log(`✅ CSV masivo de stores generado exitosamente`);
+      } catch (error) {
+        console.warn(`⚠️ No se pudo generar CSV masivo para stores:`, error);
       }
 
       return {
         success: true,
         entityType: "stores",
         createdCount: createdStores.length,
-        message: `Successfully created ${createdStores.length} stores${csvCount > 0 ? ` and ${csvCount} CSV files` : ''} across ${existingDeliveryCenters.length} delivery centers.`
+        message: `Successfully created ${createdStores.length} stores${csvGenerated ? ` and CSV bulk export` : ''} across ${existingDeliveryCenters.length} delivery centers.`
       };
     } catch (error) {
       console.error('Error generating stores:', error);
@@ -1872,24 +1846,23 @@ export class DatabaseStorage implements IStorage {
 
       const createdUsers = await db.insert(users).values(usersToCreate).returning();
 
-      // Crear archivos CSV individuales para cada user
+      // Generar CSV masivo optimizado (una sola operación SFTP)
       const { musgraveSftpService } = await import('./services/musgrave-sftp.js');
-      let csvCount = 0;
+      let csvGenerated = false;
 
-      for (const user of createdUsers) {
-        try {
-          await musgraveSftpService.appendUserToCSV(user);
-          csvCount++;
-        } catch (error) {
-          console.warn(`⚠️ No se pudo agregar CSV para usuario ${user.email}:`, error);
-        }
+      try {
+        await musgraveSftpService.generateUsersCSVBulk();
+        csvGenerated = true;
+        console.log(`✅ CSV masivo de users generado exitosamente`);
+      } catch (error) {
+        console.warn(`⚠️ No se pudo generar CSV masivo para users:`, error);
       }
 
       return {
         success: true,
         entityType: "users",
         createdCount: createdUsers.length,
-        message: `Successfully created ${createdUsers.length} users${csvCount > 0 ? ` and ${csvCount} CSV files` : ''} across ${existingStores.length} stores.`
+        message: `Successfully created ${createdUsers.length} users${csvGenerated ? ` and CSV bulk export` : ''} across ${existingStores.length} stores.`
       };
     } catch (error) {
       console.error('Error generating users:', error);
