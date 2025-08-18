@@ -2479,7 +2479,7 @@ export class DatabaseStorage implements IStorage {
           code: record.code,
           name: record.name,
           tax_rate: parseFloat(record.rate || record.tax_rate) || 0,
-          is_active: record.is_active === 'true' || record.is_active === '1' || true
+          is_active: record.is_active === 'true' || record.is_active === '1' || record.is_active === true
         };
 
         // Insert or update
@@ -2511,7 +2511,7 @@ export class DatabaseStorage implements IStorage {
           unit_of_measure: record.unit_of_measure || 'unidad',
           quantity_measure: parseFloat(record.quantity_measure) || 1,
           tax_code: record.tax_code || 'ALI',
-          is_active: record.is_active === 'true' || record.is_active === '1' || true,
+          is_active: record.is_active === 'true' || record.is_active === '1' || record.is_active === true,
           image_url: record.image_url || `https://placehold.co/300x300/e5e7eb/6b7280?text=${encodeURIComponent((record.name || record.title) || 'Producto')}`
         };
 
@@ -2535,7 +2535,7 @@ export class DatabaseStorage implements IStorage {
         const centerData = {
           code: record.code,
           name: record.name,
-          is_active: record.is_active === 'true' || record.is_active === '1' || true
+          is_active: record.is_active === 'true' || record.is_active === '1' || record.is_active === true
         };
 
         await db.insert(deliveryCenters).values(centerData)
@@ -2560,7 +2560,7 @@ export class DatabaseStorage implements IStorage {
           name: record.name,
           delivery_center_code: record.delivery_center_code,
           responsible_email: record.responsible_email || '',
-          is_active: record.is_active === 'true' || record.is_active === '1' || true
+          is_active: record.is_active === 'true' || record.is_active === '1' || record.is_active === true
         };
 
         await db.insert(stores).values(storeData)
@@ -2590,7 +2590,7 @@ export class DatabaseStorage implements IStorage {
           name: record.name,
           password_hash: passwordHash,
           store_id: record.store_code || record.store_id,
-          is_active: record.is_active === 'true' || record.is_active === '1' || true
+          is_active: record.is_active === 'true' || record.is_active === '1' || record.is_active === true
         };
 
         await db.insert(users).values(userData)
@@ -2661,7 +2661,7 @@ export class DatabaseStorage implements IStorage {
           base_price: parseFloat(record.unit_price || record.base_price) || 0,
           unit_cost: parseFloat(record.unit_cost) || 0,
           tax_code: record.tax_code || 'ALI',
-          is_active: record.is_active === 'true' || record.is_active === '1' || true,
+          is_active: record.is_active === 'true' || record.is_active === '1' || record.is_active === true,
           image_url: record.image_url || `https://placehold.co/300x300/e5e7eb/6b7280?text=${encodeURIComponent((record.name || record.title) || 'Producto')}`
         };
         
@@ -2773,7 +2773,7 @@ export class DatabaseStorage implements IStorage {
           name: record.name,
           password_hash: passwordHash,
           store_id: record.store_code || record.store_id,
-          is_active: record.is_active === 'true' || record.is_active === '1' || true
+          is_active: record.is_active === 'true' || record.is_active === '1' || record.is_active === true
         };
         
         if (existing.length > 0) {

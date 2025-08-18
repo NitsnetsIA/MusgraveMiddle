@@ -41,6 +41,9 @@ This is a headless GraphQL microservice for managing grocery products and Spanis
 - **CSV Data Processing: Successfully imports taxes, delivery centers, stores, users, and products from SFTP**
 - **Data Validation: Handles missing fields, foreign key constraints, and data type conversions**
 - **Real Data Import: Successfully imported 20 delivery centers and 4 tax types from Musgrave SFTP**
+- **FIXED: CSV Export/Import Active/Inactive Products - Corrected logic to export and import both active and inactive products correctly (August 2025)**
+- **RESOLVED: Removed erroneous '|| true' fallback that was forcing all imported entities to active status**
+- **VALIDATED: Both CSV export and SFTP import now preserve correct is_active status for all entity types**
 - **Item Reference Field: Added item_ref field to purchase order and order items (August 2025)**
 - **CSV Enhancement: item_ref field included in CSV exports sent to Musgrave SFTP**
 - **Data Integrity: item_ref field properly saved and synchronized across all entity types**
