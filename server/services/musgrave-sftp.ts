@@ -1365,6 +1365,13 @@ export class MusgraveSftpService {
       // Conectar al SFTP
       await this.connect();
 
+      // Asegurar que el directorio /out/products/ existe
+      try {
+        await this.sftp.mkdir('/out/products/', true);
+      } catch (error) {
+        // Directorio ya existe o no se puede crear, continuar
+      }
+
       // Crear archivo temporal
       tempFilePath = path.join(os.tmpdir(), `products_bulk_${Date.now()}.csv`);
       

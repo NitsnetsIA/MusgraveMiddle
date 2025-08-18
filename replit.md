@@ -46,7 +46,11 @@ This is a headless GraphQL microservice for managing grocery products and Spanis
 - **SFTP /out/ Structure: Organized CSV exports by entity type - /out/users/users.csv, /out/stores/stores.csv, /out/deliveryCenters/deliveryCenters.csv, /out/taxes/taxes.csv**
 - **Extended Data Generation: CSV files include enriched data (addresses, phone numbers, provinces) not stored in database schema**
 - **Incremental CSV Updates: Each entity creation appends to consolidated CSV file, maintaining existing records and adding new ones**
-- **CSV File Management: Downloads existing CSV, merges new data, and uploads updated consolidated file****
+- **CSV File Management: Downloads existing CSV, merges new data, and uploads updated consolidated file**
+- **Products CSV Integration: Complete CSV export system for products with timestamp filenames (August 2025)**
+- **SFTP Products Directory: Automatic creation of /out/products/ directory structure for product CSV exports**
+- **Optimized Product Generation: Bulk CSV generation with single SFTP operation instead of per-product operations**
+- **Real-time Progress UI: Frontend displays live progress messages during CSV generation processes (August 2025)**
 
 ## User Preferences
 
