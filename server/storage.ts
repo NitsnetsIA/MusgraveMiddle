@@ -2597,6 +2597,11 @@ export class DatabaseStorage implements IStorage {
             if (existingProduct.length > 0) {
               const existing = existingProduct[0];
               
+              // Normalize values for proper comparison
+              const normalizeNumber = (val: number | string): number => {
+                return typeof val === 'string' ? parseFloat(val) || 0 : (val || 0);
+              };
+              
               // Log detailed comparison for debugging (first product and every 500)
               if (imported === 0 || imported % 500 === 0) {
                 console.log(`🔍 Comparing product ${productData.ean}:`);
@@ -2606,11 +2611,6 @@ export class DatabaseStorage implements IStorage {
                 console.log(`   Normalized base price: ${normalizeNumber(existing.base_price)} vs ${normalizeNumber(productData.base_price)}`);
                 console.log(`   Boolean active: ${Boolean(existing.is_active)} vs ${Boolean(productData.is_active)}`);
               }
-              
-              // Normalize values for proper comparison
-              const normalizeNumber = (val: number | string): number => {
-                return typeof val === 'string' ? parseFloat(val) || 0 : (val || 0);
-              };
               
               const hasChanges = (
                 existing.ref !== productData.ref ||
