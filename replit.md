@@ -53,6 +53,9 @@ This is a headless GraphQL microservice for managing grocery products and Spanis
 - **Real-time Progress UI: Frontend displays live progress messages during CSV generation processes (August 2025)**
 - **CSV Content Simplification: Removed created_at and updated_at fields from all CSV exports for cleaner data integration (August 2025)**
 - **CSV Field Optimization: Removed address, city, province, postal_code, country, phone fields from delivery centers and stores CSV for focused data export (August 2025)**
+- **CRITICAL BUG FIX: EAN-13 Generation Corrected - Fixed algorithm that was generating invalid EANs with missing characters or NaN values (August 2025)**
+- **EAN Validation: Added comprehensive validation to ensure all generated EANs are exactly 13 digits with proper checksum calculation**
+- **Spanish EAN Format: EANs now correctly start with 8414 prefix for Spanish products with proper mathematical validation**
 
 ## User Preferences
 

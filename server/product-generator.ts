@@ -303,13 +303,38 @@ export function generateRandomProduct(timestampOffset: string): {
   // Generate price within range
   const price = Number((Math.random() * (category.priceRange.max - category.priceRange.min) + category.priceRange.min).toFixed(2));
   
-  // Generate EAN code with maximum uniqueness (starts with 841471 for Spanish products)
-  // Use high-resolution timestamp + counter + random for uniqueness
+  // Generate EAN-13 code with maximum uniqueness (starts with 8414 for Spanish products)
+  // Structure: 8414 + 7 digits + 1 check digit = 13 total
   const now = Date.now();
-  const microseconds = (performance.now() * 1000) % 1000; // Get microsecond precision
-  const timestampPart = (now % 100000).toString().padStart(5, '0'); // Last 5 digits
-  const microPart = Math.floor(microseconds).toString().padStart(1, '0'); // 1 digit
-  const ean = `84147${timestampPart.slice(0,4)}${microPart}${timestampPart.slice(4,5)}`;
+  const microseconds = Math.floor((performance.now() * 1000) % 1000); // 0-999
+  const timestampPart = (now % 100000).toString().padStart(5, '0'); // Last 5 digits of timestamp
+  const microPart = microseconds.toString().padStart(3, '0').slice(-2); // Last 2 digits of microseconds
+  
+  // Build 12-digit base: 8414 (4) + timestampPart (5) + microPart (2) + random (1) = 12 digits
+  const randomDigit = Math.floor(Math.random() * 10); // Single random digit
+  const eanWithoutCheck = `8414${timestampPart}${microPart}${randomDigit}`;
+  
+  // Validate we have exactly 12 digits before checksum
+  if (eanWithoutCheck.length !== 12) {
+    throw new Error(`EAN base should be 12 digits, got ${eanWithoutCheck.length}: ${eanWithoutCheck}`);
+  }
+  
+  // Calculate EAN-13 check digit
+  let sum = 0;
+  for (let i = 0; i < 12; i++) {
+    const digit = parseInt(eanWithoutCheck[i]);
+    if (isNaN(digit)) {
+      throw new Error(`Invalid digit at position ${i}: '${eanWithoutCheck[i]}' in EAN base: ${eanWithoutCheck}`);
+    }
+    sum += (i % 2 === 0) ? digit : digit * 3;
+  }
+  const checkDigit = (10 - (sum % 10)) % 10;
+  const ean = `${eanWithoutCheck}${checkDigit}`;
+  
+  // Final validation - must be exactly 13 digits
+  if (ean.length !== 13 || !/^\d{13}$/.test(ean)) {
+    throw new Error(`Generated EAN invalid: length=${ean.length}, format check failed. EAN: ${ean}`);
+  }
   
   // Generate product reference
   const ref = `${brand.toUpperCase().replace(/\s/g, '').substring(0, 4)}${Math.floor(Math.random() * 9999).toString().padStart(4, '0')}`;
