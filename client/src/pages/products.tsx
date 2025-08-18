@@ -1604,6 +1604,7 @@ export default function Products() {
 
   // Bulk data generation
   const [isGeneratingBulkData, setIsGeneratingBulkData] = useState(false);
+  const [progressMessages, setProgressMessages] = useState<string[]>([]);
 
   // Delete mutations for all entities
   const deleteProductMutation = useMutation({
@@ -2036,44 +2037,59 @@ export default function Products() {
 
   const generateCompleteDataset = async () => {
     setIsGeneratingBulkData(true);
+    setProgressMessages([]);
+    
+    const addProgressMessage = (message: string) => {
+      setProgressMessages(prev => [...prev, message]);
+    };
     
     try {
       // Step 1: Generate Spanish IVA taxes first
+      addProgressMessage("🚀 Generando impuestos IVA españoles...");
       toast({ title: "Iniciando generación masiva", description: "Generando impuestos IVA españoles..." });
       await generateTaxes(true, timestampOffset);
+      addProgressMessage("✅ CSV masivo de taxes generado exitosamente");
       queryClient.invalidateQueries({ queryKey: ["taxes"] });
 
       // Step 2: Generate 1,000 products
-      toast({ title: "Paso 2/7", description: "Generando 1,000 productos..." });
+      addProgressMessage("🚀 Generando 1,000 productos...");
+      toast({ title: "Paso 2/5", description: "Generando 1,000 productos..." });
       const productsResult = await generateProducts(1000, timestampOffset);
       if (!productsResult.success) {
         throw new Error(productsResult.message);
       }
+      addProgressMessage("✅ Productos generados exitosamente");
       queryClient.invalidateQueries({ queryKey: ["products"] });
 
       // Step 3: Generate 20 delivery centers
-      toast({ title: "Paso 3/7", description: "Generando 20 centros de distribución..." });
+      addProgressMessage("🚀 Generando CSV masivo de delivery centers...");
+      toast({ title: "Paso 3/5", description: "Generando 20 centros de distribución..." });
       await generateDeliveryCenters(20, true, timestampOffset);
+      addProgressMessage("✅ CSV masivo de delivery centers generado exitosamente");
       queryClient.invalidateQueries({ queryKey: ["delivery-centers"] });
 
       // Step 4: Generate stores (2 per center = 40 stores)
-      toast({ title: "Paso 4/7", description: "Generando tiendas..." });
+      addProgressMessage("🚀 Generando CSV masivo de stores...");
+      toast({ title: "Paso 4/5", description: "Generando tiendas..." });
       await generateStores(2, true, timestampOffset);
+      addProgressMessage("✅ CSV masivo de stores generado exitosamente");
       queryClient.invalidateQueries({ queryKey: ["stores"] });
 
       // Step 5: Generate users (2 per store = 80 users)
-      toast({ title: "Paso 5/7", description: "Generando usuarios..." });
+      addProgressMessage("🚀 Generando CSV masivo de users...");
+      toast({ title: "Paso 5/5", description: "Generando usuarios..." });
       await generateUsers(2, true, timestampOffset);
+      addProgressMessage("✅ CSV masivo de users generado exitosamente");
       queryClient.invalidateQueries({ queryKey: ["users"] });
 
-      // Ya no generamos purchase orders ni orders - el ciclo completo se maneja desde apps frontales
-
+      addProgressMessage("🎉 ¡Generación completa finalizada!");
       toast({
         title: "¡Datos completos generados!",
-        description: "Se han creado 4 impuestos IVA, 1,000 productos, 20 centros, 40 tiendas y 80 usuarios. Las órdenes se manejan desde apps frontales.",
+        description: "Se han creado 4 impuestos IVA, 1,000 productos, 20 centros, 40 tiendas y 80 usuarios con archivos CSV timestampeados.",
       });
 
     } catch (error) {
+      addProgressMessage("❌ Error durante la generación de datos");
       toast({
         title: "Error en generación masiva",
         description: error instanceof Error ? error.message : "Error durante la generación de datos",
@@ -2921,9 +2937,22 @@ export default function Products() {
                   )}
                 </Button>
                 {isGeneratingBulkData && (
-                  <p className="text-center text-sm text-muted-foreground mt-2">
-                    Esto puede tomar varios minutos. Por favor, espera...
-                  </p>
+                  <div className="mt-4 space-y-2">
+                    <p className="text-center text-sm text-muted-foreground">
+                      Esto puede tomar varios minutos. Por favor, espera...
+                    </p>
+                    {progressMessages.length > 0 && (
+                      <div className="bg-muted rounded-lg p-3 max-h-32 overflow-y-auto">
+                        <div className="space-y-1 text-sm">
+                          {progressMessages.map((message, index) => (
+                            <div key={index} className="font-mono">
+                              {message}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 )}
               </CardContent>
             </Card>

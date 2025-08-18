@@ -25,6 +25,19 @@ const MUSGRAVE_CONFIG: MusgraveSftpConfig = {
   password: 'fMPatTqKM9KKTrPLosMigiDC9MdNMtUT'
 };
 
+// Función utilitaria para generar timestamp YYYYMMDDHHMMSS
+function getTimestamp(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const seconds = String(now.getSeconds()).padStart(2, '0');
+  
+  return `${year}${month}${day}${hours}${minutes}${seconds}`;
+}
+
 interface PurchaseOrderCSVData {
   purchase_order_id: string;
   user_email: string;
@@ -1088,8 +1101,9 @@ export class MusgraveSftpService {
 
       await csvWriter.writeRecords(csvData);
 
-      // Subir archivo completo de una vez
-      const remotePath = '/out/deliveryCenters/deliveryCenters.csv';
+      // Subir archivo completo de una vez con timestamp
+      const timestamp = getTimestamp();
+      const remotePath = `/out/deliveryCenters/deliveryCenters_${timestamp}.csv`;
       await this.sftp.put(tempFilePath, remotePath);
       console.log(`✅ CSV masivo de delivery centers generado: ${remotePath} (${centers.length} registros)`);
 
@@ -1172,8 +1186,9 @@ export class MusgraveSftpService {
 
       await csvWriter.writeRecords(csvData);
 
-      // Subir archivo completo de una vez
-      const remotePath = '/out/stores/stores.csv';
+      // Subir archivo completo de una vez con timestamp
+      const timestamp = getTimestamp();
+      const remotePath = `/out/stores/stores_${timestamp}.csv`;
       await this.sftp.put(tempFilePath, remotePath);
       console.log(`✅ CSV masivo de stores generado: ${remotePath} (${storesList.length} registros)`);
 
@@ -1242,8 +1257,9 @@ export class MusgraveSftpService {
 
       await csvWriter.writeRecords(csvData);
 
-      // Subir archivo completo de una vez
-      const remotePath = '/out/users/users.csv';
+      // Subir archivo completo de una vez con timestamp
+      const timestamp = getTimestamp();
+      const remotePath = `/out/users/users_${timestamp}.csv`;
       await this.sftp.put(tempFilePath, remotePath);
       console.log(`✅ CSV masivo de users generado: ${remotePath} (${usersList.length} registros)`);
 
@@ -1310,8 +1326,9 @@ export class MusgraveSftpService {
 
       await csvWriter.writeRecords(csvData);
 
-      // Subir archivo completo de una vez
-      const remotePath = '/out/taxes/taxes.csv';
+      // Subir archivo completo de una vez con timestamp
+      const timestamp = getTimestamp();
+      const remotePath = `/out/taxes/taxes_${timestamp}.csv`;
       await this.sftp.put(tempFilePath, remotePath);
       console.log(`✅ CSV masivo de taxes generado: ${remotePath} (${taxesList.length} registros)`);
 
