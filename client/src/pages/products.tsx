@@ -625,6 +625,8 @@ async function generateDeliveryCenters(count: number, clearExisting?: boolean, t
         mutation GenerateDeliveryCenters($count: Int!, $clearExisting: Boolean, $timestampOffset: String) {
           generateDeliveryCenters(count: $count, clearExisting: $clearExisting, timestampOffset: $timestampOffset) {
             success
+            entityType
+            createdCount
             message
           }
         }
@@ -691,6 +693,8 @@ async function generateStores(storesPerCenter: number, clearExisting?: boolean, 
         mutation GenerateStores($storesPerCenter: Int!, $clearExisting: Boolean, $timestampOffset: String) {
           generateStores(storesPerCenter: $storesPerCenter, clearExisting: $clearExisting, timestampOffset: $timestampOffset) {
             success
+            entityType
+            createdCount
             message
           }
         }
@@ -724,6 +728,8 @@ async function generateUsers(usersPerStore: number, clearExisting?: boolean, tim
         mutation GenerateUsers($usersPerStore: Int!, $clearExisting: Boolean, $timestampOffset: String) {
           generateUsers(usersPerStore: $usersPerStore, clearExisting: $clearExisting, timestampOffset: $timestampOffset) {
             success
+            entityType
+            createdCount
             message
           }
         }
