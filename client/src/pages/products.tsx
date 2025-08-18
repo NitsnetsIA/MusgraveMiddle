@@ -1137,7 +1137,6 @@ export default function Products() {
   // Import data states
   const [isImportingAllData, setIsImportingAllData] = useState(false);
   const [isImportingEntity, setIsImportingEntity] = useState<string | null>(null);
-  const [importProgress, setImportProgress] = useState<string>('');
   const [importEntityProgress, setImportEntityProgress] = useState<string>('');
   
   // Pagination states
@@ -2109,10 +2108,10 @@ export default function Products() {
   // Import all data from SFTP
   const importAllDataFromSFTP = async () => {
     setIsImportingAllData(true);
-    setImportProgress('');
+    setProgressMessages([]);
     
     const addProgressMessage = (message: string) => {
-      setImportProgress(prev => prev + message + '\n');
+      setProgressMessages(prev => [...prev, message]);
     };
     
     try {
@@ -2124,7 +2123,8 @@ export default function Products() {
       let totalRecordsImported = 0;
       
       for (const entityType of importOrder) {
-        addProgressMessage(`\n📦 Importando ${entityType}...`);
+        addProgressMessage(`🚀 Importando ${entityType}...`);
+        toast({ title: `Importando ${entityType}`, description: `Procesando archivos CSV de ${entityType}...` });
         
         const response = await fetch(GRAPHQL_ENDPOINT, {
           method: "POST",
@@ -2161,14 +2161,12 @@ export default function Products() {
         
         // Add detailed progress messages from backend
         if (importResult.details) {
-          const detailLines = importResult.details.split('\n').filter(line => line.trim());
-          detailLines.forEach(line => {
+          const detailLines = importResult.details.split('\n').filter((line: string) => line.trim());
+          detailLines.forEach((line: string) => {
             if (line.trim()) {
               addProgressMessage(line.trim());
             }
           });
-        } else {
-          addProgressMessage(importResult.message);
         }
         
         if (!importResult.success) {
@@ -2176,10 +2174,10 @@ export default function Products() {
         }
         
         totalRecordsImported += importResult.importedCount || 0;
+        addProgressMessage(`✅ ${entityType} importado correctamente (${importResult.importedCount || 0} registros)`);
       }
       
-      addProgressMessage(`\n🎉 ¡Importación masiva completada exitosamente!`);
-      addProgressMessage(`📊 Total de registros importados: ${totalRecordsImported}`);
+      addProgressMessage("🎉 ¡Importación masiva completada exitosamente!");
       
       toast({
         title: "¡Importación completada!",
@@ -3134,9 +3132,15 @@ export default function Products() {
                     <p className="text-center text-sm text-muted-foreground">
                       Procesando archivos CSV desde el servidor SFTP...
                     </p>
-                    {importProgress && (
-                      <div className="bg-muted p-3 rounded text-sm font-mono text-muted-foreground whitespace-pre-wrap">
-                        {importProgress}
+                    {progressMessages.length > 0 && (
+                      <div className="bg-muted rounded-lg p-3 max-h-32 overflow-y-auto">
+                        <div className="space-y-1 text-sm">
+                          {progressMessages.map((message, index) => (
+                            <div key={index} className="font-mono">
+                              {message}
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>
