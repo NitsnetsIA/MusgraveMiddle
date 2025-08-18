@@ -2513,6 +2513,8 @@ export class DatabaseStorage implements IStorage {
   // Simplified CSV import methods
   private async importTaxesFromCSVSimple(records: any[]): Promise<number> {
     let imported = 0;
+    let updated = 0;
+    let skipped = 0;
     for (const record of records) {
       try {
         const taxData = {
@@ -2547,6 +2549,11 @@ export class DatabaseStorage implements IStorage {
                     updated_at: new Date()
                   })
                   .where(eq(taxes.code, taxData.code));
+                console.log(`💰 Tax ${taxData.code} updated - data changed`);
+                updated++;
+              } else {
+                console.log(`💰 Tax ${taxData.code} skipped - no changes detected`);
+                skipped++;
               }
             }
           } else {
@@ -2558,11 +2565,14 @@ export class DatabaseStorage implements IStorage {
         console.error(`Error importing tax ${record.code}:`, error);
       }
     }
+    console.log(`💰 Tax import summary: ${imported} total, ${updated} updated, ${skipped} skipped`);
     return imported;
   }
 
   private async importProductsFromCSVSimple(records: any[]): Promise<number> {
     let imported = 0;
+    let updated = 0;
+    let skipped = 0;
     for (const record of records) {
       try {
         const productData = {
@@ -2619,6 +2629,15 @@ export class DatabaseStorage implements IStorage {
                     updated_at: new Date()
                   })
                   .where(eq(products.ean, productData.ean));
+                updated++;
+                if (updated % 100 === 0) { // Log every 100 updated products
+                  console.log(`📦 ${updated} products updated so far (${imported} total processed)`);
+                }
+              } else {
+                skipped++;
+                if (skipped % 200 === 0) { // Log every 200 skipped products
+                  console.log(`📦 ${skipped} products skipped so far (${imported} total processed)`);
+                }
               }
             }
           } else {
@@ -2630,11 +2649,14 @@ export class DatabaseStorage implements IStorage {
         console.error(`Error importing product ${record.ean}:`, error);
       }
     }
+    console.log(`📦 Product import summary: ${imported} total, ${updated} updated, ${skipped} skipped`);
     return imported;
   }
 
   private async importDeliveryCentersFromCSVSimple(records: any[]): Promise<number> {
     let imported = 0;
+    let updated = 0;
+    let skipped = 0;
     for (const record of records) {
       try {
         const centerData = {
@@ -2664,6 +2686,11 @@ export class DatabaseStorage implements IStorage {
                     updated_at: new Date()
                   })
                   .where(eq(deliveryCenters.code, centerData.code));
+                console.log(`🏢 Delivery center ${centerData.code} updated - data changed`);
+                updated++;
+              } else {
+                console.log(`🏢 Delivery center ${centerData.code} skipped - no changes detected`);
+                skipped++;
               }
             }
           } else {
@@ -2675,11 +2702,14 @@ export class DatabaseStorage implements IStorage {
         console.error(`Error importing delivery center ${record.code}:`, error);
       }
     }
+    console.log(`🏢 Delivery center import summary: ${imported} total, ${updated} updated, ${skipped} skipped`);
     return imported;
   }
 
   private async importStoresFromCSVSimple(records: any[]): Promise<number> {
     let imported = 0;
+    let updated = 0;
+    let skipped = 0;
     for (const record of records) {
       try {
         const storeData = {
@@ -2715,6 +2745,11 @@ export class DatabaseStorage implements IStorage {
                     updated_at: new Date()
                   })
                   .where(eq(stores.code, storeData.code));
+                console.log(`🏪 Store ${storeData.code} updated - data changed`);
+                updated++;
+              } else {
+                console.log(`🏪 Store ${storeData.code} skipped - no changes detected`);
+                skipped++;
               }
             }
           } else {
@@ -2726,12 +2761,15 @@ export class DatabaseStorage implements IStorage {
         console.error(`Error importing store ${record.code}:`, error);
       }
     }
+    console.log(`🏪 Store import summary: ${imported} total, ${updated} updated, ${skipped} skipped`);
     return imported;
   }
 
   private async importUsersFromCSVSimple(records: any[]): Promise<number> {
     const crypto = await import('crypto');
     let imported = 0;
+    let updated = 0;
+    let skipped = 0;
     for (const record of records) {
       try {
         const password = record.password || 'password123';
@@ -2784,8 +2822,10 @@ export class DatabaseStorage implements IStorage {
                   })
                   .where(eq(users.email, userData.email));
                 console.log(`✅ User ${record.email} updated - data changed`);
+                updated++;
               } else {
                 console.log(`ℹ️ User ${record.email} skipped - no changes detected`);
+                skipped++;
               }
             }
           } else {
@@ -2797,6 +2837,7 @@ export class DatabaseStorage implements IStorage {
         console.error(`Error importing user ${record.email}:`, error);
       }
     }
+    console.log(`👤 User import summary: ${imported} total, ${updated} updated, ${skipped} skipped`);
     return imported;
   }
 
