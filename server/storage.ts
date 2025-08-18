@@ -2515,13 +2515,18 @@ export class DatabaseStorage implements IStorage {
     let imported = 0;
     let updated = 0;
     let skipped = 0;
+    
+    // Normalize values for proper comparison
+    const normalizeNumber = (val: number | string): number => {
+      return typeof val === 'string' ? parseFloat(val) || 0 : (val || 0);
+    };
+    
     for (const record of records) {
       try {
         const taxData = {
           code: record.code,
           name: record.name,
-          tax_rate: parseFloat(record.rate || record.tax_rate) || 0,
-          is_active: record.is_active === 'true' || record.is_active === '1' || record.is_active === true
+          tax_rate: parseFloat(record.rate || record.tax_rate) || 0
         };
 
         // First try to insert
@@ -2534,18 +2539,30 @@ export class DatabaseStorage implements IStorage {
             
             if (existingTax.length > 0) {
               const existing = existingTax[0];
+              
+              // Log detailed comparison for debugging (first tax and every 10)
+              if (imported === 0 || imported % 10 === 0) {
+                console.log(`🔍 Comparing tax ${taxData.code}:`);
+                console.log(`   Name: "${existing.name}" vs "${taxData.name}"`);
+                console.log(`   Tax rate: ${existing.tax_rate} (${typeof existing.tax_rate}) vs ${taxData.tax_rate} (${typeof taxData.tax_rate})`);
+                console.log(`   Normalized tax rate: ${normalizeNumber(existing.tax_rate)} vs ${normalizeNumber(taxData.tax_rate)}`);
+              }
+              
               const hasChanges = (
                 existing.name !== taxData.name ||
-                existing.tax_rate !== taxData.tax_rate ||
-                existing.is_active !== taxData.is_active
+                normalizeNumber(existing.tax_rate) !== normalizeNumber(taxData.tax_rate)
               );
+              
+              if (imported === 0 || imported % 10 === 0) {
+                console.log(`   Has changes: ${hasChanges}`);
+              }
+
               
               if (hasChanges) {
                 await db.update(taxes)
                   .set({
                     name: taxData.name,
                     tax_rate: taxData.tax_rate,
-                    is_active: taxData.is_active,
                     updated_at: new Date()
                   })
                   .where(eq(taxes.code, taxData.code));

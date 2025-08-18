@@ -1,173 +1,70 @@
 # Grocery PIM System
 
 ## Overview
-
-This is a headless GraphQL microservice for managing grocery products and Spanish VAT taxes with timestamp-based synchronization. The system provides a complete CRUD API for grocery products and tax information via GraphQL, specifically designed to serve as a backend for frontend applications requiring product and tax data synchronization. The system uses PostgreSQL for persistence and includes timezone-aware timestamps for efficient data synchronization.
-
-**Recent Updates (January 2025):**
-- Added automatic product image generation using Placehold.co service
-- Implemented GraphQL proxy for production deployment compatibility  
-- Fixed public endpoint accessibility for Replit deployments
-- Products now include category-appropriate placeholder images with EAN codes
-- Simplified to headless-only GraphQL API for production (removed web interfaces)
-- GraphQL Playground available only in development environment via Apollo Server
-- **Created individual entity generation methods with dependency validation**
-- **Added Spanish-contextualized entity generation with coherent relationships**
-- **Implemented granular control for generating specific entity types**
-- **Added eye button functionality for viewing order details in both purchase orders and processed orders**
-- **Implemented SHA3 password hashing with individual email as salt for enhanced security**
-- **Enforced default user Luis Romero Pérez (luis@esgranvia.es) with store ES001 and password 'password123'**
-- **Guaranteed ES001 store creation as first store for default user assignment**
-- **Added client synchronization support with server_sent_at field in purchase orders**
-- **Implemented frontend-controlled timestamps for created_at, updated_at, and server_sent_at**
-- **Created atomic purchase order creation with items using createPurchaseOrderWithItems mutation**
-- **Added global system configuration for automatic order simulation with system_config table**
-- **Implemented automatic order simulation when purchase orders are created from frontend apps**
-- **Enhanced bulk purchase order generation with automatic simulation toggle**
-- **Fixed critical bug where bulk generation wasn't triggering simulation automatically**
-- **RESOLVED: Fixed automatic order simulation for frontend apps (August 2025)**
-- **Issue solved: createPurchaseOrderWithItems now includes automatic simulation logic**
-- **Confirmed working: Frontend apps automatically generate processed orders when sending purchase orders**
-- **Enhanced: server_sent_at field now visible in Purchase Orders table interface (January 2025)**
-- **Automated: server_sent_at automatically set to server timestamp when apps send purchase orders**
-- **Server timestamp: All purchase orders from client apps now have consistent server-side timestamps**
-- **Integrated: Musgrave SFTP service for legacy system communication (August 2025)**
-- **CSV Export: Purchase orders automatically sent to Musgrave SFTP in CSV format**
-- **Legacy Support: SFTP integration with musgraveapp.blob.core.windows.net for order processing**
-- **SFTP Status: Working correctly - orders transmitted successfully to /in/purchase_orders directory**
-- **Background Processing: SFTP transmission runs asynchronously without blocking client responses**  
-- **Error Handling: Comprehensive error handling with cleanup of temporary CSV files**
-- **SFTP Data Import: Complete SFTP import functionality working correctly (August 2025)**
-- **CSV Data Processing: Successfully imports taxes, delivery centers, stores, users, and products from SFTP**
-- **Data Validation: Handles missing fields, foreign key constraints, and data type conversions**
-- **Real Data Import: Successfully imported 20 delivery centers and 4 tax types from Musgrave SFTP**
-- **FIXED: CSV Export/Import Active/Inactive Products - Corrected logic to export and import both active and inactive products correctly (August 2025)**
-- **RESOLVED: Removed erroneous '|| true' fallback that was forcing all imported entities to active status**
-- **VALIDATED: Both CSV export and SFTP import now preserve correct is_active status for all entity types**
-- **Item Reference Field: Added item_ref field to purchase order and order items (August 2025)**
-- **CSV Enhancement: item_ref field included in CSV exports sent to Musgrave SFTP**
-- **Data Integrity: item_ref field properly saved and synchronized across all entity types**
-- **CSV Simplification: Removed unnecessary fields from CSV export (item_description, unit_of_measure, quantity_measure, image_url, item_created_at, item_updated_at) for cleaner legacy system integration (August 2025)
-- **Real Simulation CSV Export: Implemented comprehensive entity data export to SFTP /out/ folders (August 2025)**
-- **Consolidated CSV Files: Single CSV file per entity type - deliveryCenters.csv, users.csv, stores.csv, taxes.csv (August 2025)**
-- **SFTP /out/ Structure: Organized CSV exports by entity type - /out/users/users.csv, /out/stores/stores.csv, /out/deliveryCenters/deliveryCenters.csv, /out/taxes/taxes.csv**
-- **Extended Data Generation: CSV files include enriched data (addresses, phone numbers, provinces) not stored in database schema**
-- **Incremental CSV Updates: Each entity creation appends to consolidated CSV file, maintaining existing records and adding new ones**
-- **CSV File Management: Downloads existing CSV, merges new data, and uploads updated consolidated file**
-- **Products CSV Integration: Complete CSV export system for products with timestamp filenames (August 2025)**
-- **SFTP Products Directory: Automatic creation of /out/products/ directory structure for product CSV exports**
-- **Optimized Product Generation: Bulk CSV generation with single SFTP operation instead of per-product operations**
-- **Real-time Progress UI: Frontend displays live progress messages during CSV generation processes (August 2025)**
-- **CSV Content Simplification: Removed created_at and updated_at fields from all CSV exports for cleaner data integration (August 2025)**
-- **CSV Field Optimization: Removed address, city, province, postal_code, country, phone fields from delivery centers and stores CSV for focused data export (August 2025)**
-- **CRITICAL BUG FIX: EAN-13 Generation Corrected - Fixed algorithm that was generating invalid EANs with missing characters or NaN values (August 2025)**
-- **EAN Validation: Added comprehensive validation to ensure all generated EANs are exactly 13 digits with proper checksum calculation**
-- **Spanish EAN Format: EANs now correctly start with 8414 prefix for Spanish products with proper mathematical validation**
-- **RESOLVED: EAN Duplicate Issue - Fixed product generation to create exactly 1000 unique products (August 2025)**
-- **EAN Algorithm Enhancement: Implemented global counter and database uniqueness verification for guaranteed unique EAN generation**
-- **Product Generation Optimization: System now generates exactly the requested number of products without duplicates or omissions**
-- **CRITICAL BUG FIX: CSV Import updated_at Field - Fixed CSV import upsert operations to properly update updated_at timestamps (August 2025)**
-- **Database Integrity: All CSV import functions now correctly set updated_at to current timestamp when overwriting existing records**
-- **Import Timestamp Fix: Resolved issue where updated_at remained unchanged during CSV import record updates for all entity types**
-- **INTELLIGENT IMPORT OPTIMIZATION: Enhanced CSV import system with smart data comparison (August 2025)**
-- **Efficient Change Detection: INSERT → detect conflict → compare fields → UPDATE only when data actually differs**
-- **Performance Optimization: updated_at timestamp only changes when real data differences exist, preventing unnecessary database updates**
-- **Comprehensive Import Logging: Added detailed progress tracking with entity-specific emojis and summary statistics (inserted/updated/skipped)**
-- **RESOLVED: JavaScript normalizeNumber function initialization error - Function moved to start of import methods (August 2025)**
-- **VERIFIED: All entity import functions working correctly with intelligent comparison and selective updates**
-- **CONFIRMED: System only updates database records when real field differences exist, preserving performance and data integrity**
+This project provides a headless GraphQL microservice for managing grocery products and Spanish VAT taxes. It serves as a backend for frontend applications, offering a complete CRUD API for product and tax data synchronization. The system utilizes PostgreSQL for persistence, features timezone-aware timestamps for efficient data synchronization, and includes functionality for automatic order simulation and SFTP integration with legacy systems. The business vision is to provide a robust, scalable backend solution for grocery product information management, enabling seamless data flow between various client applications and legacy systems.
 
 ## User Preferences
-
 Preferred communication style: Simple, everyday language.
 
 ## System Architecture
 
-### Frontend Architecture
-- **React 18** with TypeScript for type safety and modern React features
-- **Vite** as the build tool for fast development and optimized production builds
-- **Wouter** for client-side routing instead of React Router for a lighter footprint
-- **TanStack Query** for server state management and API caching
-- **shadcn/ui** component library built on Radix UI primitives for accessible UI components
-- **Tailwind CSS** for utility-first styling with CSS variables for theming
-- **React Hook Form** with Zod resolvers for form validation
+### UI/UX Decisions
+The frontend utilizes **React 18** with **TypeScript**, built with **Vite**. **shadcn/ui** components, based on **Radix UI** primitives, provide accessible UI elements, styled with **Tailwind CSS** for a utility-first approach and theming. **Wouter** is used for client-side routing.
 
-### Backend Architecture
-- **Express.js** server with TypeScript serving as application host
-- **Apollo Server v5** providing standalone GraphQL API on port 4000
-- **Drizzle ORM** for type-safe database operations and schema management
-- **PostgreSQL** as the primary database with timezone-aware timestamps
-- **Headless architecture** designed for consumption by frontend applications
+### Technical Implementations
+The backend is an **Express.js** server hosting an **Apollo Server v5** GraphQL API. **Drizzle ORM** manages type-safe database operations with **PostgreSQL**. The architecture is headless, designed for consumption by frontend applications. Key features include:
+- Timestamp-based synchronization for all entities.
+- SHA3 password hashing with email as salt for user authentication.
+- Atomic purchase order creation with line items via `createPurchaseOrderWithItems` mutation.
+- Automatic order simulation upon purchase order creation from frontend apps.
+- SFTP integration for legacy system communication (Musgrave SFTP), including CSV export of purchase orders and comprehensive CSV import for master data (taxes, delivery centers, stores, users, products).
+- Intelligent CSV import optimization with smart data comparison to update records only when data actually differs.
+- Robust EAN-13 generation with proper checksums and uniqueness guarantees.
+- Client synchronization support via `server_sent_at` field in purchase orders, allowing frontend-controlled timestamps for `created_at`, `updated_at`, and `server_sent_at`.
+- Real-time progress feedback for CSV generation processes in the frontend.
 
-### Database Design
-- **Products table**: Stores grocery items with EAN codes, pricing, descriptions, and tax associations
-- **Taxes table**: Manages Spanish VAT tax rates (General, Reducido, Superreducido, Alimentación, Exento)
-- **Delivery Centers table**: Manages distribution centers for order fulfillment
-- **Stores table**: Individual store locations linked to delivery centers, ES001 guaranteed as first store
-- **Users table**: Store personnel with SHA3 authentication using email as salt, Luis Romero Pérez as default user
-- **Purchase Orders table**: Customer orders before processing and confirmation
-- **Purchase Order Items table**: Individual line items within purchase orders
-- **Orders table**: Final processed orders derived from purchase orders
-- **Order Items table**: Line items for final processed orders
-- **Foreign key relationships**: Complete referential integrity across all entities
-- **Timestamps**: Automatic created_at and updated_at tracking for all entities, with frontend-controlled timestamp support
-- **Client Synchronization**: server_sent_at field in purchase orders for mobile/web app sync tracking
-- **Security**: SHA3-256 password hashing with individual email salt for each user
+### Feature Specifications
+The system supports:
+- CRUD operations for products, taxes, delivery centers, stores, users, purchase orders, and processed orders.
+- Spanish VAT tax codes (General, Reducido, Superreducido, Alimentación, Exento).
+- Pagination support for large datasets.
+- Sync info endpoint (`sync_info`) providing last updated timestamps for all key entities to facilitate client synchronization.
+- Granular control and Spanish-contextualized entity generation with dependency validation.
+- Export of comprehensive entity data to SFTP `/out/` folders in consolidated CSV files, including enriched data not directly stored in the database.
 
-### API Architecture
-- **GraphQL schema** with queries for products and taxes, including timestamp-based filtering
-- **Mutations** for complete CRUD operations on both products and taxes  
-- **Timestamp synchronization** supporting UTC timestamps for data change tracking
-- **Spanish VAT tax codes** including General (21%), Reducido (10%), Superreducido (4% for food), and Exento (0%)
-- **Pagination support** with configurable limits (default 100) for handling large datasets
-- **Type-safe resolvers** with database relation queries
-- **Error handling** with formatted GraphQL errors and comprehensive logging
-- **Sync info endpoint** (`sync_info`) providing last updated timestamps for client synchronization across users, products, stores, delivery_centers, purchase_orders, and taxes entities
-- **Individual entity generation methods** with dependency validation for granular control
-- **Entity generation with Spanish context** using authentic Spanish names, cities, and business structures
-- **Dependency validation** preventing creation of child entities without required parent entities
-- **Client-controlled timestamps** allowing frontend applications to set specific created_at, updated_at, and server_sent_at values for offline synchronization
-- **Atomic purchase order creation** with createPurchaseOrderWithItems mutation for creating orders with line items in a single transaction
-
-### Development Environment
-- **Replit integration** with custom plugins for development banner and cartographer
-- **Hot reload** through Vite's development server
-- **Database migrations** managed through Drizzle Kit
-- **TypeScript compilation** with strict mode enabled
-
-### State Management
-- **Server state**: Managed by TanStack Query with automatic caching and background updates
-- **Form state**: Handled by React Hook Form with Zod schema validation
-- **UI state**: Local React state and context for modals, toasts, and component interactions
+### System Design Choices
+- **Headless architecture**: Decoupled backend for flexible frontend development.
+- **GraphQL API**: Provides a flexible and efficient way to query and manipulate data.
+- **PostgreSQL with Drizzle ORM**: For robust, type-safe, and scalable data persistence.
+- **Timezone-aware timestamps**: For accurate global data synchronization.
+- **Security**: SHA3-256 hashing with individual email salt for user passwords.
+- **Automated workflows**: Order simulation and SFTP data exchange are automated.
 
 ## External Dependencies
 
 ### Database & Storage
-- **Neon PostgreSQL**: Serverless PostgreSQL database hosting
-- **Drizzle ORM**: Type-safe database client and migration tool
+- **Neon PostgreSQL**: Serverless PostgreSQL database hosting.
+- **Drizzle ORM**: Type-safe database client and migration tool.
 
 ### UI & Styling
-- **Radix UI**: Accessible component primitives for complex UI elements
-- **Tailwind CSS**: Utility-first CSS framework
-- **Lucide React**: Icon library for consistent iconography
-- **shadcn/ui**: Pre-built component library with customizable design system
+- **Radix UI**: Accessible component primitives.
+- **Tailwind CSS**: Utility-first CSS framework.
+- **Lucide React**: Icon library.
+- **shadcn/ui**: Pre-built component library.
 
 ### Development Tools
-- **Vite**: Fast build tool and development server
-- **TypeScript**: Static type checking and enhanced developer experience
-- **ESBuild**: Fast JavaScript bundler for production builds
+- **Vite**: Fast build tool and development server.
+- **TypeScript**: Static type checking.
 
 ### API & Data Fetching
-- **Apollo Server**: GraphQL server implementation
-- **TanStack Query**: Powerful data synchronization for React applications
-- **GraphQL**: Query language for APIs providing flexible data fetching
+- **Apollo Server**: GraphQL server implementation.
+- **TanStack Query**: Data synchronization for React applications.
+- **GraphQL**: Query language for APIs.
 
 ### Form Handling
-- **React Hook Form**: Performant forms with easy validation
-- **Hookform Resolvers**: Integration between React Hook Form and validation libraries
-- **Zod**: TypeScript-first schema validation
+- **React Hook Form**: Performant forms with validation.
+- **Zod**: TypeScript-first schema validation.
 
 ### Utilities
-- **date-fns**: Modern JavaScript date utility library
-- **clsx & class-variance-authority**: Utility functions for conditional CSS classes
-- **nanoid**: URL-safe unique string ID generator
+- **date-fns**: JavaScript date utility library.
+- **nanoid**: URL-safe unique string ID generator.
