@@ -73,6 +73,9 @@ This is a headless GraphQL microservice for managing grocery products and Spanis
 - **Efficient Change Detection: INSERT → detect conflict → compare fields → UPDATE only when data actually differs**
 - **Performance Optimization: updated_at timestamp only changes when real data differences exist, preventing unnecessary database updates**
 - **Comprehensive Import Logging: Added detailed progress tracking with entity-specific emojis and summary statistics (inserted/updated/skipped)**
+- **RESOLVED: JavaScript normalizeNumber function initialization error - Function moved to start of import methods (August 2025)**
+- **VERIFIED: All entity import functions working correctly with intelligent comparison and selective updates**
+- **CONFIRMED: System only updates database records when real field differences exist, preserving performance and data integrity**
 
 ## User Preferences
 
