@@ -2333,25 +2333,34 @@ export class DatabaseStorage implements IStorage {
       
       // Import in dependency order
       const importOrder = ['taxes', 'deliveryCenters', 'stores', 'users', 'products'];
+      let totalRecordsImported = 0;
       
       for (const entityType of importOrder) {
         console.log(`📦 Importing ${entityType}...`);
-        importDetails += `📦 Importando ${entityType}...\n`;
+        importDetails += `\n📦 Importando ${entityType}...\n`;
         
         const result = await this.importEntityFromSFTP(entityType);
-        importDetails += result.details || result.message + '\n';
+        if (result.details) {
+          importDetails += result.details + '\n';
+        } else {
+          importDetails += result.message + '\n';
+        }
         
         if (!result.success) {
           throw new Error(`Failed to import ${entityType}: ${result.message}`);
         }
+        
+        // Add to total count
+        totalRecordsImported += result.importedCount || 0;
       }
       
       console.log("🎉 All data imported successfully from SFTP");
-      importDetails += "🎉 Todos los datos importados exitosamente desde SFTP\n";
+      importDetails += `\n🎉 Todos los datos importados exitosamente desde SFTP\n`;
+      importDetails += `📊 Total de registros importados: ${totalRecordsImported}\n`;
       
       return {
         success: true,
-        message: "Todos los datos han sido importados desde SFTP correctamente.",
+        message: `Todos los datos han sido importados desde SFTP correctamente. Total: ${totalRecordsImported} registros.`,
         details: importDetails
       };
       
@@ -2417,6 +2426,10 @@ export class DatabaseStorage implements IStorage {
           continue;
         }
         
+        // Count active/inactive records before import
+        const activeCount = records.filter(r => r.is_active === 'true' || r.is_active === '1' || r.is_active === true).length;
+        const inactiveCount = records.length - activeCount;
+        
         // Import records based on entity type
         let imported = 0;
         
@@ -2442,15 +2455,26 @@ export class DatabaseStorage implements IStorage {
         }
         
         totalImported += imported;
-        importDetails += `✅ Importados ${imported} registros de ${file.name}\n`;
+        
+        // Detailed import message with active/inactive breakdown
+        let statusMessage = '';
+        if (inactiveCount > 0) {
+          statusMessage = ` (${activeCount} activos, ${inactiveCount} inactivos)`;
+        } else if (activeCount === records.length) {
+          statusMessage = ` (todos activos)`;
+        }
+        
+        const importMessage = `✅ ${imported} ${entityType}${statusMessage} importados del fichero ${file.name}`;
+        console.log(importMessage);
+        importDetails += importMessage + '\n';
       }
       
       console.log(`✅ ${entityType} import completed: ${totalImported} records`);
-      importDetails += `🎉 Importación de ${entityType} completada: ${totalImported} registros totales`;
+      importDetails += `🎉 Importación de ${entityType} completada: ${totalImported} registros totales de ${csvFiles.length} archivo(s)`;
       
       return {
         success: true,
-        message: `${entityType} importado correctamente`,
+        message: `${totalImported} ${entityType} importados correctamente de ${csvFiles.length} archivo(s) CSV`,
         details: importDetails,
         importedCount: totalImported
       };
