@@ -2527,7 +2527,9 @@ export class DatabaseStorage implements IStorage {
           .onConflictDoUpdate({
             target: taxes.code,
             set: {
-              ...taxData,
+              name: taxData.name,
+              tax_rate: taxData.tax_rate,
+              is_active: taxData.is_active,
               updated_at: new Date()
             }
           });
@@ -2562,7 +2564,17 @@ export class DatabaseStorage implements IStorage {
           .onConflictDoUpdate({
             target: products.ean,
             set: {
-              ...productData,
+              title: productData.title,
+              brand: productData.brand,
+              category: productData.category,
+              description: productData.description,
+              base_price: productData.base_price,
+              unit_cost: productData.unit_cost,
+              unit_of_measure: productData.unit_of_measure,
+              quantity_measure: productData.quantity_measure,
+              tax_code: productData.tax_code,
+              is_active: productData.is_active,
+              image_url: productData.image_url,
               updated_at: new Date()
             }
           });
@@ -2588,7 +2600,8 @@ export class DatabaseStorage implements IStorage {
           .onConflictDoUpdate({
             target: deliveryCenters.code,
             set: {
-              ...centerData,
+              name: centerData.name,
+              is_active: centerData.is_active,
               updated_at: new Date()
             }
           });
@@ -2616,7 +2629,10 @@ export class DatabaseStorage implements IStorage {
           .onConflictDoUpdate({
             target: stores.code,
             set: {
-              ...storeData,
+              name: storeData.name,
+              delivery_center_code: storeData.delivery_center_code,
+              responsible_email: storeData.responsible_email,
+              is_active: storeData.is_active,
               updated_at: new Date()
             }
           });
@@ -2645,14 +2661,29 @@ export class DatabaseStorage implements IStorage {
           is_active: record.is_active === 'true' || record.is_active === '1' || record.is_active === true
         };
 
-        await db.insert(users).values(userData)
-          .onConflictDoUpdate({
-            target: users.email,
-            set: {
-              ...userData,
-              updated_at: new Date()
-            }
-          });
+        console.log(`🔄 Importing user: ${record.email} with data:`, userData);
+
+        // First try to insert
+        try {
+          await db.insert(users).values(userData);
+          console.log(`✅ New user ${record.email} inserted`);
+        } catch (error: any) {
+          // If conflict (user exists), update with current timestamp
+          if (error.code === '23505') { // PostgreSQL unique violation
+            await db.update(users)
+              .set({
+                name: userData.name,
+                password_hash: userData.password_hash,
+                store_id: userData.store_id,
+                is_active: userData.is_active,
+                updated_at: new Date()
+              })
+              .where(eq(users.email, userData.email));
+            console.log(`✅ Existing user ${record.email} updated with new timestamp`);
+          } else {
+            throw error; // Re-throw if it's not a unique violation
+          }
+        }
         imported++;
       } catch (error) {
         console.error(`Error importing user ${record.email}:`, error);
