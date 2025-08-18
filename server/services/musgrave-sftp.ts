@@ -61,13 +61,6 @@ interface PurchaseOrderCSVData {
 interface DeliveryCenterCSVData {
   code: string;
   name: string;
-  address: string;
-  city: string;
-  province: string;
-  postal_code: string;
-  country: string;
-  phone: string;
-  email: string;
   is_active: boolean;
 }
 
@@ -82,12 +75,6 @@ interface StoreCSVData {
   code: string;
   name: string;
   delivery_center_code: string;
-  address: string;
-  city: string;
-  province: string;
-  postal_code: string;
-  country: string;
-  phone: string;
   responsible_email: string;
   is_active: boolean;
 }
@@ -1055,13 +1042,6 @@ export class MusgraveSftpService {
       const csvData = centers.map(center => ({
         code: center.code,
         name: center.name,
-        address: `Calle ${Math.floor(Math.random() * 999) + 1} ${center.name}`,
-        city: center.name.split(' ').slice(-1)[0], // Extraer ciudad del nombre
-        province: 'Madrid', // Simplificado para el ejemplo
-        postal_code: `${(Math.floor(Math.random() * 50000) + 1000).toString().padStart(5, '0')}`,
-        country: 'España',
-        phone: `+34 9${Math.floor(Math.random() * 100000000).toString().padStart(8, '0')}`,
-        email: `contacto@${center.code.toLowerCase()}.es`,
         is_active: true
       }));
 
@@ -1072,14 +1052,7 @@ export class MusgraveSftpService {
         header: [
           { id: 'code', title: 'code' },
           { id: 'name', title: 'name' },
-          { id: 'address', title: 'address' },
-          { id: 'city', title: 'city' },
-          { id: 'province', title: 'province' },
-          { id: 'postal_code', title: 'postal_code' },
-          { id: 'country', title: 'country' },
-          { id: 'phone', title: 'phone' },
-          { id: 'email', title: 'email' },
-          { id: 'is_active', title: 'is_active' },
+          { id: 'is_active', title: 'is_active' }
         ]
       });
 
@@ -1135,12 +1108,6 @@ export class MusgraveSftpService {
         code: store.code,
         name: store.name,
         delivery_center_code: store.delivery_center_code,
-        address: `Calle ${Math.floor(Math.random() * 999) + 1} ${store.name}`,
-        city: store.name.split(' ').slice(-1)[0] || 'Madrid',
-        province: 'Madrid',
-        postal_code: `${(Math.floor(Math.random() * 50000) + 1000).toString().padStart(5, '0')}`,
-        country: 'España',
-        phone: `+34 9${Math.floor(Math.random() * 100000000).toString().padStart(8, '0')}`,
         responsible_email: store.responsible_email || '',
         is_active: store.is_active
       }));
@@ -1153,12 +1120,6 @@ export class MusgraveSftpService {
           { id: 'code', title: 'code' },
           { id: 'name', title: 'name' },
           { id: 'delivery_center_code', title: 'delivery_center_code' },
-          { id: 'address', title: 'address' },
-          { id: 'city', title: 'city' },
-          { id: 'province', title: 'province' },
-          { id: 'postal_code', title: 'postal_code' },
-          { id: 'country', title: 'country' },
-          { id: 'phone', title: 'phone' },
           { id: 'responsible_email', title: 'responsible_email' },
           { id: 'is_active', title: 'is_active' }
         ]

@@ -52,6 +52,7 @@ This is a headless GraphQL microservice for managing grocery products and Spanis
 - **Optimized Product Generation: Bulk CSV generation with single SFTP operation instead of per-product operations**
 - **Real-time Progress UI: Frontend displays live progress messages during CSV generation processes (August 2025)**
 - **CSV Content Simplification: Removed created_at and updated_at fields from all CSV exports for cleaner data integration (August 2025)**
+- **CSV Field Optimization: Removed address, city, province, postal_code, country, phone fields from delivery centers and stores CSV for focused data export (August 2025)**
 
 ## User Preferences
 
