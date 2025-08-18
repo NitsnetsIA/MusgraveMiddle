@@ -2607,6 +2607,43 @@ export class DatabaseStorage implements IStorage {
     let updated = 0;
     let skipped = 0;
     
+    // Optimización: verificar si la DB está vacía para usar inserción masiva
+    const productCount = await this.getProductCount();
+    const isEmptyDatabase = productCount === 0;
+    
+    console.log(`🚀 Base de datos de productos ${isEmptyDatabase ? 'vacía' : `tiene ${productCount} productos`} - usando estrategia ${isEmptyDatabase ? 'inserción masiva' : 'verificación individual'}`);
+    
+    if (isEmptyDatabase && records.length > 0) {
+      // Estrategia optimizada: inserción masiva sin verificaciones
+      console.log(`⚡ Insertando ${records.length} productos de forma masiva...`);
+      
+      const productBatch = records.map(record => ({
+        ean: record.ean,
+        ref: record.ref || '',
+        title: record.name || record.title,
+        description: record.description || '',
+        base_price: parseFloat(record.unit_price || record.base_price) || 0,
+        tax_code: record.tax_code || 'ALI',
+        unit_of_measure: record.unit_of_measure || 'unidad',
+        quantity_measure: parseFloat(record.quantity_measure) || 1,
+        is_active: record.is_active === 'true' || record.is_active === '1' || record.is_active === true,
+        image_url: record.image_url || `https://placehold.co/300x300/e5e7eb/6b7280?text=${encodeURIComponent((record.name || record.title) || 'Producto')}`
+      }));
+      
+      try {
+        await db.insert(products).values(productBatch);
+        imported = productBatch.length;
+        console.log(`✅ ${imported} productos insertados masivamente`);
+        return imported;
+      } catch (error) {
+        console.error('Error en inserción masiva, fallback a método individual:', error);
+        // Si falla la inserción masiva, usar el método tradicional
+      }
+    }
+    
+    // Estrategia tradicional: verificación producto por producto
+    console.log(`🔄 Procesando ${records.length} productos individualmente...`);
+    
     // Normalize values for proper comparison
     const normalizeNumber = (val: number | string): number => {
       return typeof val === 'string' ? parseFloat(val) || 0 : (val || 0);
