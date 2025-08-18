@@ -69,8 +69,6 @@ interface DeliveryCenterCSVData {
   phone: string;
   email: string;
   is_active: boolean;
-  created_at: string;
-  updated_at: string;
 }
 
 interface UserCSVData {
@@ -78,8 +76,6 @@ interface UserCSVData {
   name: string;
   store_id: string;
   is_active: boolean;
-  created_at: string;
-  updated_at: string;
 }
 
 interface StoreCSVData {
@@ -94,16 +90,12 @@ interface StoreCSVData {
   phone: string;
   responsible_email: string;
   is_active: boolean;
-  created_at: string;
-  updated_at: string;
 }
 
 interface TaxCSVData {
   code: string;
   name: string;
   tax_rate: number;
-  created_at: string;
-  updated_at: string;
 }
 
 
@@ -966,9 +958,7 @@ export class MusgraveSftpService {
       const csvData: TaxCSVData = {
         code: tax.code,
         name: tax.name,
-        tax_rate: tax.tax_rate,
-        created_at: tax.created_at.toISOString(),
-        updated_at: tax.updated_at.toISOString()
+        tax_rate: tax.tax_rate
       };
 
       // Crear archivo CSV temporal
@@ -980,9 +970,7 @@ export class MusgraveSftpService {
         header: [
           { id: 'code', title: 'code' },
           { id: 'name', title: 'name' },
-          { id: 'tax_rate', title: 'tax_rate' },
-          { id: 'created_at', title: 'created_at' },
-          { id: 'updated_at', title: 'updated_at' }
+          { id: 'tax_rate', title: 'tax_rate' }
         ]
       });
 
@@ -1074,9 +1062,7 @@ export class MusgraveSftpService {
         country: 'España',
         phone: `+34 9${Math.floor(Math.random() * 100000000).toString().padStart(8, '0')}`,
         email: `contacto@${center.code.toLowerCase()}.es`,
-        is_active: true,
-        created_at: center.created_at.toISOString(),
-        updated_at: center.updated_at.toISOString()
+        is_active: true
       }));
 
       // Escribir archivo CSV
@@ -1094,8 +1080,6 @@ export class MusgraveSftpService {
           { id: 'phone', title: 'phone' },
           { id: 'email', title: 'email' },
           { id: 'is_active', title: 'is_active' },
-          { id: 'created_at', title: 'created_at' },
-          { id: 'updated_at', title: 'updated_at' }
         ]
       });
 
@@ -1158,9 +1142,7 @@ export class MusgraveSftpService {
         country: 'España',
         phone: `+34 9${Math.floor(Math.random() * 100000000).toString().padStart(8, '0')}`,
         responsible_email: store.responsible_email || '',
-        is_active: store.is_active,
-        created_at: store.created_at.toISOString(),
-        updated_at: store.updated_at.toISOString()
+        is_active: store.is_active
       }));
 
       // Escribir archivo CSV
@@ -1178,9 +1160,7 @@ export class MusgraveSftpService {
           { id: 'country', title: 'country' },
           { id: 'phone', title: 'phone' },
           { id: 'responsible_email', title: 'responsible_email' },
-          { id: 'is_active', title: 'is_active' },
-          { id: 'created_at', title: 'created_at' },
-          { id: 'updated_at', title: 'updated_at' }
+          { id: 'is_active', title: 'is_active' }
         ]
       });
 
@@ -1236,9 +1216,7 @@ export class MusgraveSftpService {
         email: user.email,
         name: user.name,
         store_id: user.store_id,
-        is_active: user.is_active,
-        created_at: user.created_at.toISOString(),
-        updated_at: user.updated_at.toISOString()
+        is_active: user.is_active
       }));
 
       // Escribir archivo CSV
@@ -1249,9 +1227,7 @@ export class MusgraveSftpService {
           { id: 'email', title: 'email' },
           { id: 'name', title: 'name' },
           { id: 'store_id', title: 'store_id' },
-          { id: 'is_active', title: 'is_active' },
-          { id: 'created_at', title: 'created_at' },
-          { id: 'updated_at', title: 'updated_at' }
+          { id: 'is_active', title: 'is_active' }
         ]
       });
 
@@ -1306,9 +1282,7 @@ export class MusgraveSftpService {
       const csvData = taxesList.map(tax => ({
         code: tax.code,
         name: tax.name,
-        tax_rate: tax.tax_rate,
-        created_at: tax.created_at.toISOString(),
-        updated_at: tax.updated_at.toISOString()
+        tax_rate: tax.tax_rate
       }));
 
       // Escribir archivo CSV
@@ -1318,9 +1292,7 @@ export class MusgraveSftpService {
         header: [
           { id: 'code', title: 'code' },
           { id: 'name', title: 'name' },
-          { id: 'tax_rate', title: 'tax_rate' },
-          { id: 'created_at', title: 'created_at' },
-          { id: 'updated_at', title: 'updated_at' }
+          { id: 'tax_rate', title: 'tax_rate' }
         ]
       });
 
@@ -1386,9 +1358,7 @@ export class MusgraveSftpService {
         unit_of_measure: product.unit_of_measure,
         quantity_measure: product.quantity_measure,
         image_url: product.image_url || '',
-        is_active: product.is_active,
-        created_at: product.created_at.toISOString(),
-        updated_at: product.updated_at.toISOString()
+        is_active: product.is_active
       }));
 
       // Escribir archivo CSV
@@ -1405,9 +1375,7 @@ export class MusgraveSftpService {
           { id: 'unit_of_measure', title: 'unit_of_measure' },
           { id: 'quantity_measure', title: 'quantity_measure' },
           { id: 'image_url', title: 'image_url' },
-          { id: 'is_active', title: 'is_active' },
-          { id: 'created_at', title: 'created_at' },
-          { id: 'updated_at', title: 'updated_at' }
+          { id: 'is_active', title: 'is_active' }
         ]
       });
 
