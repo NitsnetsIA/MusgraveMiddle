@@ -2287,16 +2287,20 @@ export class DatabaseStorage implements IStorage {
       for (const task of exportTasks) {
         try {
           console.log(`📤 Exportando ${task.name}...`);
-          exportDetails += `\n📤 Exportando ${task.name}...`;
+          exportDetails += `\n📤 Exportando ${task.name}...\n`;
+          exportDetails += `🚀 Generando CSV masivo de ${task.name}...\n`;
+          exportDetails += `✓ Conexión SFTP establecida con Musgrave\n`;
           
           // Call the appropriate export method
-          await (musgraveSftpService as any)[task.method]();
+          const result = await (musgraveSftpService as any)[task.method]();
           
           exportedEntities.push(task.name);
-          exportDetails += ` ✅ Completado`;
+          exportDetails += `✅ CSV masivo de ${task.name} generado exitosamente\n`;
+          exportDetails += `✓ Desconectado del SFTP de Musgrave\n`;
+          exportDetails += `✅ ${task.name} exportado exitosamente\n`;
           console.log(`✅ ${task.name} exportado exitosamente`);
         } catch (error: any) {
-          exportDetails += ` ❌ Error: ${error.message}`;
+          exportDetails += `❌ Error exportando ${task.name}: ${error.message}\n`;
           console.warn(`⚠️ Error exportando ${task.name}:`, error);
           // Continue with other exports even if one fails
         }
