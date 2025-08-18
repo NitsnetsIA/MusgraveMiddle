@@ -2262,27 +2262,34 @@ export default function Products() {
 
       const exportResult = result.data.exportAllDataToSFTP;
       
-      console.log('Export result received:', exportResult);
-      console.log('Details field:', exportResult.details);
+      // Replace preparation messages with actual results
+      addExportProgressMessage("✅ ¡Exportación completada! Mostrando resultados...");
       
-      // Clear the preparation messages and show actual results
-      setExportProgressMessages([]);
-      
-      // Add detailed progress messages from backend
-      if (exportResult.details) {
-        const detailLines = exportResult.details.split('\n').filter((line: string) => line.trim());
-        console.log('Detail lines:', detailLines);
-        detailLines.forEach((line: string) => {
-          if (line.trim()) {
-            console.log('Adding message:', line.trim());
-            addExportProgressMessage(line.trim());
-          }
-        });
-      } else {
-        console.log('No details found in export result');
-      }
-      
-      addExportProgressMessage(`🎉 Exportación completada: ${exportResult.exportedEntities.join(', ')}`);
+      // Add a small delay before showing actual results to provide visual feedback
+      setTimeout(() => {
+        // Clear messages and show backend results
+        setExportProgressMessages([]);
+        
+        // Add detailed progress messages from backend
+        if (exportResult.details) {
+          const detailLines = exportResult.details.split('\n').filter((line: string) => line.trim());
+          detailLines.forEach((line: string, index: number) => {
+            if (line.trim()) {
+              // Show messages with a small progressive delay for better UX
+              setTimeout(() => {
+                addExportProgressMessage(line.trim());
+              }, index * 50); // 50ms delay between each message
+            }
+          });
+          
+          // Add final completion message after all details
+          setTimeout(() => {
+            addExportProgressMessage(`🎉 Exportación finalizada: ${exportResult.exportedEntities.join(', ')}`);
+          }, detailLines.length * 50 + 200);
+        } else {
+          addExportProgressMessage(`🎉 Exportación completada: ${exportResult.exportedEntities.join(', ')}`);
+        }
+      }, 500); // 500ms delay before showing results
       
       toast({
         title: exportResult.success ? "Exportación completada" : "Error en exportación",
