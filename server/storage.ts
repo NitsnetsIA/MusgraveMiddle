@@ -2526,7 +2526,10 @@ export class DatabaseStorage implements IStorage {
         await db.insert(taxes).values(taxData)
           .onConflictDoUpdate({
             target: taxes.code,
-            set: taxData
+            set: {
+              ...taxData,
+              updated_at: new Date()
+            }
           });
         imported++;
       } catch (error) {
@@ -2558,7 +2561,10 @@ export class DatabaseStorage implements IStorage {
         await db.insert(products).values(productData)
           .onConflictDoUpdate({
             target: products.ean,
-            set: productData
+            set: {
+              ...productData,
+              updated_at: new Date()
+            }
           });
         imported++;
       } catch (error) {
@@ -2581,7 +2587,10 @@ export class DatabaseStorage implements IStorage {
         await db.insert(deliveryCenters).values(centerData)
           .onConflictDoUpdate({
             target: deliveryCenters.code,
-            set: centerData
+            set: {
+              ...centerData,
+              updated_at: new Date()
+            }
           });
         imported++;
       } catch (error) {
@@ -2606,7 +2615,10 @@ export class DatabaseStorage implements IStorage {
         await db.insert(stores).values(storeData)
           .onConflictDoUpdate({
             target: stores.code,
-            set: storeData
+            set: {
+              ...storeData,
+              updated_at: new Date()
+            }
           });
         imported++;
       } catch (error) {
@@ -2636,7 +2648,10 @@ export class DatabaseStorage implements IStorage {
         await db.insert(users).values(userData)
           .onConflictDoUpdate({
             target: users.email,
-            set: userData
+            set: {
+              ...userData,
+              updated_at: new Date()
+            }
           });
         imported++;
       } catch (error) {

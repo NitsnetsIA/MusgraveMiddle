@@ -66,6 +66,9 @@ This is a headless GraphQL microservice for managing grocery products and Spanis
 - **RESOLVED: EAN Duplicate Issue - Fixed product generation to create exactly 1000 unique products (August 2025)**
 - **EAN Algorithm Enhancement: Implemented global counter and database uniqueness verification for guaranteed unique EAN generation**
 - **Product Generation Optimization: System now generates exactly the requested number of products without duplicates or omissions**
+- **CRITICAL BUG FIX: CSV Import updated_at Field - Fixed CSV import upsert operations to properly update updated_at timestamps (August 2025)**
+- **Database Integrity: All CSV import functions now correctly set updated_at to current timestamp when overwriting existing records**
+- **Import Timestamp Fix: Resolved issue where updated_at remained unchanged during CSV import record updates for all entity types**
 
 ## User Preferences
 
