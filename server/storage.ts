@@ -2522,17 +2522,37 @@ export class DatabaseStorage implements IStorage {
           is_active: record.is_active === 'true' || record.is_active === '1' || record.is_active === true
         };
 
-        // Insert or update
-        await db.insert(taxes).values(taxData)
-          .onConflictDoUpdate({
-            target: taxes.code,
-            set: {
-              name: taxData.name,
-              tax_rate: taxData.tax_rate,
-              is_active: taxData.is_active,
-              updated_at: new Date()
+        // First try to insert
+        try {
+          await db.insert(taxes).values(taxData);
+        } catch (error: any) {
+          // If conflict, check if data actually changed
+          if (error.code === '23505') { // PostgreSQL unique violation
+            const existingTax = await db.select().from(taxes).where(eq(taxes.code, taxData.code)).limit(1);
+            
+            if (existingTax.length > 0) {
+              const existing = existingTax[0];
+              const hasChanges = (
+                existing.name !== taxData.name ||
+                existing.tax_rate !== taxData.tax_rate ||
+                existing.is_active !== taxData.is_active
+              );
+              
+              if (hasChanges) {
+                await db.update(taxes)
+                  .set({
+                    name: taxData.name,
+                    tax_rate: taxData.tax_rate,
+                    is_active: taxData.is_active,
+                    updated_at: new Date()
+                  })
+                  .where(eq(taxes.code, taxData.code));
+              }
             }
-          });
+          } else {
+            throw error;
+          }
+        }
         imported++;
       } catch (error) {
         console.error(`Error importing tax ${record.code}:`, error);
@@ -2560,24 +2580,51 @@ export class DatabaseStorage implements IStorage {
           image_url: record.image_url || `https://placehold.co/300x300/e5e7eb/6b7280?text=${encodeURIComponent((record.name || record.title) || 'Producto')}`
         };
 
-        await db.insert(products).values(productData)
-          .onConflictDoUpdate({
-            target: products.ean,
-            set: {
-              title: productData.title,
-              brand: productData.brand,
-              category: productData.category,
-              description: productData.description,
-              base_price: productData.base_price,
-              unit_cost: productData.unit_cost,
-              unit_of_measure: productData.unit_of_measure,
-              quantity_measure: productData.quantity_measure,
-              tax_code: productData.tax_code,
-              is_active: productData.is_active,
-              image_url: productData.image_url,
-              updated_at: new Date()
+        try {
+          await db.insert(products).values(productData);
+        } catch (error: any) {
+          if (error.code === '23505') {
+            const existingProduct = await db.select().from(products).where(eq(products.ean, productData.ean)).limit(1);
+            
+            if (existingProduct.length > 0) {
+              const existing = existingProduct[0];
+              const hasChanges = (
+                existing.title !== productData.title ||
+                existing.brand !== productData.brand ||
+                existing.category !== productData.category ||
+                existing.description !== productData.description ||
+                existing.base_price !== productData.base_price ||
+                existing.unit_cost !== productData.unit_cost ||
+                existing.unit_of_measure !== productData.unit_of_measure ||
+                existing.quantity_measure !== productData.quantity_measure ||
+                existing.tax_code !== productData.tax_code ||
+                existing.is_active !== productData.is_active ||
+                existing.image_url !== productData.image_url
+              );
+              
+              if (hasChanges) {
+                await db.update(products)
+                  .set({
+                    title: productData.title,
+                    brand: productData.brand,
+                    category: productData.category,
+                    description: productData.description,
+                    base_price: productData.base_price,
+                    unit_cost: productData.unit_cost,
+                    unit_of_measure: productData.unit_of_measure,
+                    quantity_measure: productData.quantity_measure,
+                    tax_code: productData.tax_code,
+                    is_active: productData.is_active,
+                    image_url: productData.image_url,
+                    updated_at: new Date()
+                  })
+                  .where(eq(products.ean, productData.ean));
+              }
             }
-          });
+          } else {
+            throw error;
+          }
+        }
         imported++;
       } catch (error) {
         console.error(`Error importing product ${record.ean}:`, error);
@@ -2596,15 +2643,33 @@ export class DatabaseStorage implements IStorage {
           is_active: record.is_active === 'true' || record.is_active === '1' || record.is_active === true
         };
 
-        await db.insert(deliveryCenters).values(centerData)
-          .onConflictDoUpdate({
-            target: deliveryCenters.code,
-            set: {
-              name: centerData.name,
-              is_active: centerData.is_active,
-              updated_at: new Date()
+        try {
+          await db.insert(deliveryCenters).values(centerData);
+        } catch (error: any) {
+          if (error.code === '23505') {
+            const existingCenter = await db.select().from(deliveryCenters).where(eq(deliveryCenters.code, centerData.code)).limit(1);
+            
+            if (existingCenter.length > 0) {
+              const existing = existingCenter[0];
+              const hasChanges = (
+                existing.name !== centerData.name ||
+                existing.is_active !== centerData.is_active
+              );
+              
+              if (hasChanges) {
+                await db.update(deliveryCenters)
+                  .set({
+                    name: centerData.name,
+                    is_active: centerData.is_active,
+                    updated_at: new Date()
+                  })
+                  .where(eq(deliveryCenters.code, centerData.code));
+              }
             }
-          });
+          } else {
+            throw error;
+          }
+        }
         imported++;
       } catch (error) {
         console.error(`Error importing delivery center ${record.code}:`, error);
@@ -2625,17 +2690,37 @@ export class DatabaseStorage implements IStorage {
           is_active: record.is_active === 'true' || record.is_active === '1' || record.is_active === true
         };
 
-        await db.insert(stores).values(storeData)
-          .onConflictDoUpdate({
-            target: stores.code,
-            set: {
-              name: storeData.name,
-              delivery_center_code: storeData.delivery_center_code,
-              responsible_email: storeData.responsible_email,
-              is_active: storeData.is_active,
-              updated_at: new Date()
+        try {
+          await db.insert(stores).values(storeData);
+        } catch (error: any) {
+          if (error.code === '23505') {
+            const existingStore = await db.select().from(stores).where(eq(stores.code, storeData.code)).limit(1);
+            
+            if (existingStore.length > 0) {
+              const existing = existingStore[0];
+              const hasChanges = (
+                existing.name !== storeData.name ||
+                existing.delivery_center_code !== storeData.delivery_center_code ||
+                existing.responsible_email !== storeData.responsible_email ||
+                existing.is_active !== storeData.is_active
+              );
+              
+              if (hasChanges) {
+                await db.update(stores)
+                  .set({
+                    name: storeData.name,
+                    delivery_center_code: storeData.delivery_center_code,
+                    responsible_email: storeData.responsible_email,
+                    is_active: storeData.is_active,
+                    updated_at: new Date()
+                  })
+                  .where(eq(stores.code, storeData.code));
+              }
             }
-          });
+          } else {
+            throw error;
+          }
+        }
         imported++;
       } catch (error) {
         console.error(`Error importing store ${record.code}:`, error);
@@ -2668,18 +2753,35 @@ export class DatabaseStorage implements IStorage {
           await db.insert(users).values(userData);
           console.log(`✅ New user ${record.email} inserted`);
         } catch (error: any) {
-          // If conflict (user exists), update with current timestamp
+          // If conflict (user exists), check if data actually changed
           if (error.code === '23505') { // PostgreSQL unique violation
-            await db.update(users)
-              .set({
-                name: userData.name,
-                password_hash: userData.password_hash,
-                store_id: userData.store_id,
-                is_active: userData.is_active,
-                updated_at: new Date()
-              })
-              .where(eq(users.email, userData.email));
-            console.log(`✅ Existing user ${record.email} updated with new timestamp`);
+            // Get existing user data
+            const existingUser = await db.select().from(users).where(eq(users.email, userData.email)).limit(1);
+            
+            if (existingUser.length > 0) {
+              const existing = existingUser[0];
+              const hasChanges = (
+                existing.name !== userData.name ||
+                existing.password_hash !== userData.password_hash ||
+                existing.store_id !== userData.store_id ||
+                existing.is_active !== userData.is_active
+              );
+              
+              if (hasChanges) {
+                await db.update(users)
+                  .set({
+                    name: userData.name,
+                    password_hash: userData.password_hash,
+                    store_id: userData.store_id,
+                    is_active: userData.is_active,
+                    updated_at: new Date()
+                  })
+                  .where(eq(users.email, userData.email));
+                console.log(`✅ User ${record.email} updated - data changed`);
+              } else {
+                console.log(`ℹ️ User ${record.email} skipped - no changes detected`);
+              }
+            }
           } else {
             throw error; // Re-throw if it's not a unique violation
           }
