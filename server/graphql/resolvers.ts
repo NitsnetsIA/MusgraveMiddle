@@ -435,6 +435,11 @@ export const resolvers = {
       return await storage.importEntityFromSFTP(entityType);
     },
 
+    // Export all current DB data to SFTP
+    exportAllDataToSFTP: async () => {
+      return await storage.exportAllDataToSFTP();
+    },
+
     // Delete all data
     deleteAllData: async () => {
       return await storage.deleteAllData();

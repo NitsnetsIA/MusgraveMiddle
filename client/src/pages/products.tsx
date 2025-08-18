@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { ShoppingCart, Package, Trash2, Plus, RefreshCw, Building2, Store, Users, FileText, Receipt, ChevronLeft, ChevronRight, Eye, Settings } from "lucide-react";
+import { ShoppingCart, Package, Trash2, Plus, RefreshCw, Building2, Store, Users, FileText, Receipt, ChevronLeft, ChevronRight, Eye, Settings, Upload } from "lucide-react";
 import React, { useState } from "react";
 
 interface Product {
@@ -1139,6 +1139,10 @@ export default function Products() {
   const [isImportingEntity, setIsImportingEntity] = useState<string | null>(null);
   const [importEntityProgress, setImportEntityProgress] = useState<string>('');
   
+  // Export data states
+  const [isExportingAllData, setIsExportingAllData] = useState(false);
+  const [exportProgressMessages, setExportProgressMessages] = useState<string[]>([]);
+  
   // Pagination states
   const [currentPage, setCurrentPage] = useState(0);
   const pageSize = 20;
@@ -2205,6 +2209,81 @@ export default function Products() {
     }
   };
 
+  // Export all data to SFTP
+  const exportAllDataToSFTP = async () => {
+    setIsExportingAllData(true);
+    setExportProgressMessages([]);
+    
+    const addExportProgressMessage = (message: string) => {
+      setExportProgressMessages(prev => [...prev, message]);
+    };
+    
+    try {
+      addExportProgressMessage("🚀 Iniciando exportación masiva a SFTP...");
+      toast({ title: "Exportación iniciada", description: "Exportando todos los datos actuales a SFTP Musgrave..." });
+      
+      const response = await fetch(GRAPHQL_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Apollo-Require-Preflight": "true",
+        },
+        body: JSON.stringify({
+          query: `
+            mutation ExportAllDataToSFTP {
+              exportAllDataToSFTP {
+                success
+                message
+                details
+                exportedEntities
+              }
+            }
+          `,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      if (result.errors) {
+        throw new Error(result.errors[0]?.message || "GraphQL error");
+      }
+
+      const exportResult = result.data.exportAllDataToSFTP;
+      
+      // Add detailed progress messages from backend
+      if (exportResult.details) {
+        const detailLines = exportResult.details.split('\n').filter((line: string) => line.trim());
+        detailLines.forEach((line: string) => {
+          if (line.trim()) {
+            addExportProgressMessage(line.trim());
+          }
+        });
+      }
+      
+      addExportProgressMessage(`🎉 Exportación completada: ${exportResult.exportedEntities.join(', ')}`);
+      
+      toast({
+        title: exportResult.success ? "Exportación completada" : "Error en exportación",
+        description: exportResult.message,
+        variant: exportResult.success ? "default" : "destructive",
+      });
+
+    } catch (error) {
+      addExportProgressMessage("❌ Error durante la exportación a SFTP");
+      toast({
+        title: "Error en exportación",
+        description: error instanceof Error ? error.message : "Error durante la exportación a SFTP",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExportingAllData(false);
+    }
+  };
+
   // Import specific entity from SFTP
   const importEntityFromSFTP = async (entityType: string) => {
     setIsImportingEntity(entityType);
@@ -3136,6 +3215,58 @@ export default function Products() {
                       <div className="bg-muted rounded-lg p-3 max-h-32 overflow-y-auto">
                         <div className="space-y-1 text-sm">
                           {progressMessages.map((message, index) => (
+                            <div key={index} className="font-mono">
+                              {message}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Bulk Data Export */}
+            <Card className="border-2 border-green-500/20">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-green-600">
+                  <Upload className="h-6 w-6" />
+                  Exportación Masiva a SFTP
+                </CardTitle>
+                <CardDescription>
+                  Exporta todos los datos actuales de la base de datos a archivos CSV en el servidor SFTP Musgrave. Se crean archivos timestampeados para taxes, delivery centers, stores, users y products.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button
+                  onClick={exportAllDataToSFTP}
+                  disabled={isExportingAllData}
+                  size="lg"
+                  className="w-full bg-green-600 hover:bg-green-700"
+                  data-testid="button-export-all-data"
+                >
+                  {isExportingAllData ? (
+                    <>
+                      <Upload className="h-5 w-5 mr-2 animate-spin" />
+                      Exportando todos los datos...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="h-5 w-5 mr-2" />
+                      Exportar Todos los Datos a SFTP
+                    </>
+                  )}
+                </Button>
+                {isExportingAllData && (
+                  <div className="mt-4 space-y-2">
+                    <p className="text-center text-sm text-muted-foreground">
+                      Generando archivos CSV y enviando al servidor SFTP...
+                    </p>
+                    {exportProgressMessages.length > 0 && (
+                      <div className="bg-muted rounded-lg p-3 max-h-32 overflow-y-auto">
+                        <div className="space-y-1 text-sm">
+                          {exportProgressMessages.map((message, index) => (
                             <div key={index} className="font-mono">
                               {message}
                             </div>

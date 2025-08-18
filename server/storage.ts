@@ -318,23 +318,11 @@ export class DatabaseStorage implements IStorage {
         }
       }
 
-      // Generar CSV masivo optimizado (una sola operación SFTP)
-      const { musgraveSftpService } = await import('./services/musgrave-sftp.js');
-      let csvGenerated = false;
-
-      try {
-        await musgraveSftpService.generateProductsCSVBulk();
-        csvGenerated = true;
-        console.log(`✅ CSV masivo de products generado exitosamente`);
-      } catch (error) {
-        console.warn(`⚠️ No se pudo generar CSV masivo para products:`, error);
-      }
-
       return {
         success: true,
         createdCount: insertedProducts.length,
         products: insertedProducts,
-        message: `Successfully generated ${insertedProducts.length} random products${csvGenerated ? ` and CSV bulk export` : ''}${insertedProducts.length < count ? ` (${count - insertedProducts.length} skipped due to EAN conflicts)` : ''}`
+        message: `Successfully generated ${insertedProducts.length} random products${insertedProducts.length < count ? ` (${count - insertedProducts.length} skipped due to EAN conflicts)` : ''}`
       };
     } catch (error) {
       console.error("Error generating random products:", error);
@@ -1568,23 +1556,11 @@ export class DatabaseStorage implements IStorage {
         createdTaxes = await db.insert(taxes).values(newTaxes).returning();
       }
 
-      // Generar CSV masivo optimizado (una sola operación SFTP)
-      const { musgraveSftpService } = await import('./services/musgrave-sftp.js');
-      let csvGenerated = false;
-
-      try {
-        await musgraveSftpService.generateTaxesCSVBulk();
-        csvGenerated = true;
-        console.log(`✅ CSV masivo de taxes generado exitosamente`);
-      } catch (error) {
-        console.warn(`⚠️ No se pudo generar CSV masivo para taxes:`, error);
-      }
-
       return {
         success: true,
         entityType: "taxes",
         createdCount: newTaxes.length,
-        message: `Successfully created ${newTaxes.length} Spanish IVA tax types${csvGenerated ? ` and CSV bulk export` : ''}. ${existingCodes.size > 0 ? `${existingCodes.size} taxes already existed.` : ''}`
+        message: `Successfully created ${newTaxes.length} Spanish IVA tax types. ${existingCodes.size > 0 ? `${existingCodes.size} taxes already existed.` : ''}`
       };
     } catch (error) {
       console.error('Error generating taxes:', error);
@@ -1650,23 +1626,11 @@ export class DatabaseStorage implements IStorage {
 
       const createdCenters = await db.insert(deliveryCenters).values(centersToCreate).returning();
 
-      // Generar CSV masivo optimizado (una sola operación SFTP)
-      const { musgraveSftpService } = await import('./services/musgrave-sftp.js');
-      let csvGenerated = false;
-
-      try {
-        await musgraveSftpService.generateDeliveryCentersCSVBulk();
-        csvGenerated = true;
-        console.log(`✅ CSV masivo de delivery centers generado exitosamente`);
-      } catch (error) {
-        console.warn(`⚠️ No se pudo generar CSV masivo para delivery centers:`, error);
-      }
-
       return {
         success: true,
         entityType: "delivery_centers",
         createdCount: createdCenters.length,
-        message: `Successfully created ${createdCenters.length} delivery centers${csvGenerated ? ` and CSV bulk export` : ''}.`
+        message: `Successfully created ${createdCenters.length} delivery centers.`
       };
     } catch (error) {
       console.error('Error generating delivery centers:', error);
@@ -1759,23 +1723,11 @@ export class DatabaseStorage implements IStorage {
 
       const createdStores = await db.insert(stores).values(storesToCreate).returning();
 
-      // Generar CSV masivo optimizado (una sola operación SFTP)
-      const { musgraveSftpService } = await import('./services/musgrave-sftp.js');
-      let csvGenerated = false;
-
-      try {
-        await musgraveSftpService.generateStoresCSVBulk();
-        csvGenerated = true;
-        console.log(`✅ CSV masivo de stores generado exitosamente`);
-      } catch (error) {
-        console.warn(`⚠️ No se pudo generar CSV masivo para stores:`, error);
-      }
-
       return {
         success: true,
         entityType: "stores",
         createdCount: createdStores.length,
-        message: `Successfully created ${createdStores.length} stores${csvGenerated ? ` and CSV bulk export` : ''} across ${existingDeliveryCenters.length} delivery centers.`
+        message: `Successfully created ${createdStores.length} stores across ${existingDeliveryCenters.length} delivery centers.`
       };
     } catch (error) {
       console.error('Error generating stores:', error);
@@ -1874,23 +1826,11 @@ export class DatabaseStorage implements IStorage {
 
       const createdUsers = await db.insert(users).values(usersToCreate).returning();
 
-      // Generar CSV masivo optimizado (una sola operación SFTP)
-      const { musgraveSftpService } = await import('./services/musgrave-sftp.js');
-      let csvGenerated = false;
-
-      try {
-        await musgraveSftpService.generateUsersCSVBulk();
-        csvGenerated = true;
-        console.log(`✅ CSV masivo de users generado exitosamente`);
-      } catch (error) {
-        console.warn(`⚠️ No se pudo generar CSV masivo para users:`, error);
-      }
-
       return {
         success: true,
         entityType: "users",
         createdCount: createdUsers.length,
-        message: `Successfully created ${createdUsers.length} users${csvGenerated ? ` and CSV bulk export` : ''} across ${existingStores.length} stores.`
+        message: `Successfully created ${createdUsers.length} users across ${existingStores.length} stores.`
       };
     } catch (error) {
       console.error('Error generating users:', error);
@@ -2320,6 +2260,64 @@ export class DatabaseStorage implements IStorage {
       return {
         success: false,
         message: `Error al eliminar los datos: ${error instanceof Error ? error.message : String(error)}`
+      };
+    }
+  }
+
+  // Export all current database data to SFTP
+  async exportAllDataToSFTP(): Promise<{ success: boolean; message: string; details?: string; exportedEntities: string[] }> {
+    try {
+      console.log("🚀 Starting complete database export to SFTP...");
+      
+      let exportDetails = "🚀 Iniciando exportación completa de la BD a SFTP...\n";
+      const exportedEntities: string[] = [];
+      
+      // Import SFTP service
+      const { musgraveSftpService } = await import('./services/musgrave-sftp.js');
+      
+      // Export all entity types that have data
+      const exportTasks = [
+        { name: 'taxes', method: 'generateTaxesCSVBulk' },
+        { name: 'delivery centers', method: 'generateDeliveryCentersCSVBulk' },
+        { name: 'stores', method: 'generateStoresCSVBulk' },
+        { name: 'users', method: 'generateUsersCSVBulk' },
+        { name: 'products', method: 'generateProductsCSVBulk' }
+      ];
+      
+      for (const task of exportTasks) {
+        try {
+          console.log(`📤 Exportando ${task.name}...`);
+          exportDetails += `\n📤 Exportando ${task.name}...`;
+          
+          // Call the appropriate export method
+          await (musgraveSftpService as any)[task.method]();
+          
+          exportedEntities.push(task.name);
+          exportDetails += ` ✅ Completado`;
+          console.log(`✅ ${task.name} exportado exitosamente`);
+        } catch (error: any) {
+          exportDetails += ` ❌ Error: ${error.message}`;
+          console.warn(`⚠️ Error exportando ${task.name}:`, error);
+          // Continue with other exports even if one fails
+        }
+      }
+      
+      exportDetails += `\n\n✅ Exportación completada. ${exportedEntities.length} entidades exportadas exitosamente.`;
+      console.log(`✅ Exportación completa finalizada. Entidades exportadas: ${exportedEntities.join(', ')}`);
+      
+      return {
+        success: true,
+        message: `Exportación masiva completada. ${exportedEntities.length} entidades exportadas a SFTP.`,
+        details: exportDetails,
+        exportedEntities
+      };
+    } catch (error) {
+      console.error('❌ Error durante la exportación masiva a SFTP:', error);
+      return {
+        success: false,
+        message: `Error durante la exportación: ${error instanceof Error ? error.message : String(error)}`,
+        details: `❌ Error crítico durante la exportación: ${error instanceof Error ? error.message : String(error)}`,
+        exportedEntities: []
       };
     }
   }

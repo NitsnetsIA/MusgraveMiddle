@@ -471,6 +471,9 @@ export const typeDefs = `#graphql
     importAllDataFromSFTP: ImportDataResult!
     importEntityFromSFTP(entityType: String!): ImportEntityResult!
     
+    # Bulk export current DB data to SFTP
+    exportAllDataToSFTP: ExportDataResult!
+    
     # Delete all data
     deleteAllData: DeleteAllDataResult!
   }
@@ -535,6 +538,13 @@ export const typeDefs = `#graphql
     message: String!
     details: String
     importedCount: Int
+  }
+
+  type ExportDataResult {
+    success: Boolean!
+    message: String!
+    details: String
+    exportedEntities: [String!]!
   }
 
   type EntityGenerationSummary {
