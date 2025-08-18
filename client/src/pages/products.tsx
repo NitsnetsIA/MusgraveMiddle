@@ -2057,7 +2057,7 @@ export default function Products() {
       addProgressMessage("🚀 Generando impuestos IVA españoles...");
       toast({ title: "Iniciando generación masiva", description: "Generando impuestos IVA españoles..." });
       await generateTaxes(true, timestampOffset);
-      addProgressMessage("✅ CSV masivo de taxes generado exitosamente");
+      addProgressMessage("✅ Impuestos IVA españoles generados exitosamente");
       queryClient.invalidateQueries({ queryKey: ["taxes"] });
 
       // Step 2: Generate 1,000 products
@@ -2067,34 +2067,34 @@ export default function Products() {
       if (!productsResult.success) {
         throw new Error(productsResult.message);
       }
-      addProgressMessage("✅ CSV masivo de products generado exitosamente");
+      addProgressMessage("✅ 1,000 productos generados exitosamente");
       queryClient.invalidateQueries({ queryKey: ["products"] });
 
       // Step 3: Generate 20 delivery centers
-      addProgressMessage("🚀 Generando CSV masivo de delivery centers...");
+      addProgressMessage("🚀 Generando 20 centros de distribución...");
       toast({ title: "Paso 3/5", description: "Generando 20 centros de distribución..." });
       await generateDeliveryCenters(20, true, timestampOffset);
-      addProgressMessage("✅ CSV masivo de delivery centers generado exitosamente");
+      addProgressMessage("✅ 20 centros de distribución generados exitosamente");
       queryClient.invalidateQueries({ queryKey: ["delivery-centers"] });
 
       // Step 4: Generate stores (2 per center = 40 stores)
-      addProgressMessage("🚀 Generando CSV masivo de stores...");
+      addProgressMessage("🚀 Generando tiendas...");
       toast({ title: "Paso 4/5", description: "Generando tiendas..." });
       await generateStores(2, true, timestampOffset);
-      addProgressMessage("✅ CSV masivo de stores generado exitosamente");
+      addProgressMessage("✅ Tiendas generadas exitosamente");
       queryClient.invalidateQueries({ queryKey: ["stores"] });
 
       // Step 5: Generate users (2 per store = 80 users)
-      addProgressMessage("🚀 Generando CSV masivo de users...");
+      addProgressMessage("🚀 Generando usuarios...");
       toast({ title: "Paso 5/5", description: "Generando usuarios..." });
       await generateUsers(2, true, timestampOffset);
-      addProgressMessage("✅ CSV masivo de users generado exitosamente");
+      addProgressMessage("✅ Usuarios generados exitosamente");
       queryClient.invalidateQueries({ queryKey: ["users"] });
 
       addProgressMessage("🎉 ¡Generación completa finalizada!");
       toast({
         title: "¡Datos completos generados!",
-        description: "Se han creado 4 impuestos IVA, 1,000 productos, 20 centros, 40 tiendas y 80 usuarios con archivos CSV timestampeados.",
+        description: "Se han creado 4 impuestos IVA, 1,000 productos, 20 centros, 40 tiendas y 80 usuarios en la base de datos.",
       });
 
     } catch (error) {
@@ -2257,20 +2257,28 @@ export default function Products() {
       // Add detailed progress messages from backend
       if (exportResult.details) {
         const detailLines = exportResult.details.split('\n').filter((line: string) => line.trim());
-        detailLines.forEach((line: string) => {
+        detailLines.forEach((line: string, index: number) => {
           if (line.trim()) {
-            addExportProgressMessage(line.trim());
+            // Add a small delay to show messages progressively
+            setTimeout(() => {
+              addExportProgressMessage(line.trim());
+            }, index * 100);
           }
         });
       }
       
-      addExportProgressMessage(`🎉 Exportación completada: ${exportResult.exportedEntities.join(', ')}`);
+      // Add final success message with delay
+      setTimeout(() => {
+        addExportProgressMessage(`🎉 Exportación completada: ${exportResult.exportedEntities.join(', ')}`);
+        
+        toast({
+          title: exportResult.success ? "Exportación completada" : "Error en exportación",
+          description: exportResult.message,
+          variant: exportResult.success ? "default" : "destructive",
+        });
+      }, (exportResult.details?.split('\n').length || 0) * 100);
       
-      toast({
-        title: exportResult.success ? "Exportación completada" : "Error en exportación",
-        description: exportResult.message,
-        variant: exportResult.success ? "default" : "destructive",
-      });
+      // Don't show toast immediately if we have details to process
 
     } catch (error) {
       addExportProgressMessage("❌ Error durante la exportación a SFTP");
