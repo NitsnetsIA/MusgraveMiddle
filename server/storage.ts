@@ -2760,12 +2760,18 @@ export class DatabaseStorage implements IStorage {
             
             if (existingUser.length > 0) {
               const existing = existingUser[0];
+              console.log(`📊 Comparing user ${record.email}:`);
+              console.log(`   Existing: name="${existing.name}", store="${existing.store_id}", active=${existing.is_active}`);
+              console.log(`   New data: name="${userData.name}", store="${userData.store_id}", active=${userData.is_active}`);
+              
               const hasChanges = (
                 existing.name !== userData.name ||
                 existing.password_hash !== userData.password_hash ||
                 existing.store_id !== userData.store_id ||
                 existing.is_active !== userData.is_active
               );
+              
+              console.log(`   Has changes: ${hasChanges}`);
               
               if (hasChanges) {
                 await db.update(users)
