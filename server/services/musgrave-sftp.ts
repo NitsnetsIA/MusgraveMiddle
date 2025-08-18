@@ -1445,6 +1445,50 @@ export class MusgraveSftpService {
   }
 
   /**
+   * Mueve un archivo a la carpeta /processed/entityType después de una importación exitosa
+   */
+  public async moveFileToProcessed(filePath: string, entityType: string): Promise<void> {
+    try {
+      console.log(`📁 Moviendo archivo importado ${filePath} a /processed/${entityType}...`);
+      
+      await this.connect();
+      
+      // Obtener solo el nombre del archivo
+      const fileName = path.basename(filePath);
+      
+      // Crear la carpeta de processed si no existe
+      const processedDir = `/processed/${entityType}`;
+      try {
+        await this.sftp.mkdir(processedDir, true);
+        console.log(`📂 Carpeta ${processedDir} creada/verificada`);
+      } catch (error) {
+        // La carpeta ya existe, continuar
+        console.log(`📂 Carpeta ${processedDir} ya existe`);
+      }
+      
+      // Construir la ruta de destino
+      const destinationPath = `${processedDir}/${fileName}`;
+      
+      // Verificar si el archivo origen existe
+      const fileExists = await this.sftp.exists(filePath);
+      if (!fileExists) {
+        console.warn(`⚠️ El archivo ${filePath} no existe en SFTP`);
+        return;
+      }
+      
+      // Mover el archivo (rename funciona como move en SFTP)
+      await this.sftp.rename(filePath, destinationPath);
+      console.log(`✅ Archivo movido exitosamente de ${filePath} a ${destinationPath}`);
+      
+    } catch (error: any) {
+      console.error(`✗ Error moviendo archivo ${filePath} a /processed/${entityType}:`, error);
+      throw new Error(`Failed to move file to processed: ${error?.message || error}`);
+    } finally {
+      await this.disconnect();
+    }
+  }
+
+  /**
    * Genera todos los CSV de forma masiva
    */
   public async generateAllCSVsBulk(): Promise<void> {

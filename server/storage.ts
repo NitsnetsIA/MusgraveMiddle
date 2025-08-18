@@ -2469,6 +2469,20 @@ export class DatabaseStorage implements IStorage {
         const importMessage = `✅ ${imported} ${entityType}${statusMessage} importados del fichero ${file.name}`;
         console.log(importMessage);
         importDetails += importMessage + '\n';
+        
+        // Si la importación fue exitosa, mover el archivo a /processed
+        if (imported > 0) {
+          try {
+            await sftp.moveFileToProcessed(filePath, entityType);
+            const moveMessage = `📁 Archivo ${file.name} movido a /processed/${entityType}/`;
+            console.log(moveMessage);
+            importDetails += moveMessage + '\n';
+          } catch (moveError: any) {
+            const warningMessage = `⚠️ Advertencia: No se pudo mover ${file.name} a processed: ${moveError.message}`;
+            console.warn(warningMessage);
+            importDetails += warningMessage + '\n';
+          }
+        }
       }
       
       console.log(`✅ ${entityType} import completed: ${totalImported} records`);
