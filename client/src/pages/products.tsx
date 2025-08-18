@@ -2119,56 +2119,81 @@ export default function Products() {
       addProgressMessage("🚀 Iniciando importación masiva desde SFTP...");
       toast({ title: "Importación iniciada", description: "Importando todos los datos desde SFTP Musgrave..." });
       
-      const response = await fetch(GRAPHQL_ENDPOINT, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Apollo-Require-Preflight": "true",
-        },
-        body: JSON.stringify({
-          query: `
-            mutation ImportAllDataFromSFTP {
-              importAllDataFromSFTP {
-                success
-                message
-                details
-              }
-            }
-          `
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
+      // Import entities sequentially with progress updates
+      const importOrder = ['taxes', 'deliveryCenters', 'stores', 'users', 'products'];
+      let totalRecordsImported = 0;
       
-      if (result.errors) {
-        throw new Error(result.errors[0]?.message || "GraphQL error");
-      }
-
-      const importResult = result.data.importAllDataFromSFTP;
-      addProgressMessage(importResult.details || importResult.message);
-      
-      if (importResult.success) {
-        addProgressMessage("🎉 ¡Importación masiva completada exitosamente!");
-        toast({
-          title: "¡Importación completada!",
-          description: "Todos los datos han sido importados desde SFTP.",
-        });
+      for (const entityType of importOrder) {
+        addProgressMessage(`\n📦 Importando ${entityType}...`);
         
-        // Invalidate all queries to refresh data
-        queryClient.invalidateQueries({ queryKey: ["products"] });
-        queryClient.invalidateQueries({ queryKey: ["delivery-centers"] });
-        queryClient.invalidateQueries({ queryKey: ["stores"] });
-        queryClient.invalidateQueries({ queryKey: ["users"] });
-        queryClient.invalidateQueries({ queryKey: ["taxes"] });
-        queryClient.invalidateQueries({ queryKey: ["purchase-orders"] });
-        queryClient.invalidateQueries({ queryKey: ["orders"] });
-      } else {
-        throw new Error(importResult.message);
+        const response = await fetch(GRAPHQL_ENDPOINT, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Apollo-Require-Preflight": "true",
+          },
+          body: JSON.stringify({
+            query: `
+              mutation ImportEntityFromSFTP($entityType: String!) {
+                importEntityFromSFTP(entityType: $entityType) {
+                  success
+                  message
+                  details
+                  importedCount
+                }
+              }
+            `,
+            variables: { entityType }
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        
+        if (result.errors) {
+          throw new Error(result.errors[0]?.message || "GraphQL error");
+        }
+
+        const importResult = result.data.importEntityFromSFTP;
+        
+        // Add detailed progress messages from backend
+        if (importResult.details) {
+          const detailLines = importResult.details.split('\n').filter(line => line.trim());
+          detailLines.forEach(line => {
+            if (line.trim()) {
+              addProgressMessage(line.trim());
+            }
+          });
+        } else {
+          addProgressMessage(importResult.message);
+        }
+        
+        if (!importResult.success) {
+          throw new Error(`Error importando ${entityType}: ${importResult.message}`);
+        }
+        
+        totalRecordsImported += importResult.importedCount || 0;
       }
+      
+      addProgressMessage(`\n🎉 ¡Importación masiva completada exitosamente!`);
+      addProgressMessage(`📊 Total de registros importados: ${totalRecordsImported}`);
+      
+      toast({
+        title: "¡Importación completada!",
+        description: `Todos los datos han sido importados desde SFTP. Total: ${totalRecordsImported} registros.`,
+      });
+      
+      // Invalidate all queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["delivery-centers"] });
+      queryClient.invalidateQueries({ queryKey: ["stores"] });
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: ["taxes"] });
+      queryClient.invalidateQueries({ queryKey: ["purchase-orders"] });
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
 
     } catch (error) {
       addProgressMessage("❌ Error durante la importación de datos");
