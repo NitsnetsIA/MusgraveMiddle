@@ -1,5 +1,8 @@
 import { nanoid } from "nanoid";
 
+// Global counter for EAN uniqueness
+let eanCounter = 0;
+
 export interface ProductCategory {
   name: string;
   brands: string[];
@@ -304,15 +307,14 @@ export function generateRandomProduct(timestampOffset: string): {
   const price = Number((Math.random() * (category.priceRange.max - category.priceRange.min) + category.priceRange.min).toFixed(2));
   
   // Generate EAN-13 code with maximum uniqueness (starts with 8414 for Spanish products)
-  // Structure: 8414 + 7 digits + 1 check digit = 13 total
+  // Structure: 8414 + 8 digits + 1 check digit = 13 total
+  eanCounter = (eanCounter + 1) % 10000; // Reset after 9999 to prevent overflow (4 digits max)
   const now = Date.now();
-  const microseconds = Math.floor((performance.now() * 1000) % 1000); // 0-999
-  const timestampPart = (now % 100000).toString().padStart(5, '0'); // Last 5 digits of timestamp
-  const microPart = microseconds.toString().padStart(3, '0').slice(-2); // Last 2 digits of microseconds
+  const timestampPart = (now % 10000).toString().padStart(4, '0'); // Last 4 digits of timestamp (4 digits)
+  const counterPart = eanCounter.toString().padStart(4, '0'); // 4-digit counter
   
-  // Build 12-digit base: 8414 (4) + timestampPart (5) + microPart (2) + random (1) = 12 digits
-  const randomDigit = Math.floor(Math.random() * 10); // Single random digit
-  const eanWithoutCheck = `8414${timestampPart}${microPart}${randomDigit}`;
+  // Build 12-digit base: 8414 (4) + timestampPart (4) + counterPart (4) = 12 digits
+  const eanWithoutCheck = `8414${timestampPart}${counterPart}`;
   
   // Validate we have exactly 12 digits before checksum
   if (eanWithoutCheck.length !== 12) {

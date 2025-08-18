@@ -256,12 +256,28 @@ export class DatabaseStorage implements IStorage {
         };
       }
 
-      // Generate random products (simplified approach)
+      // Generate random products with guaranteed uniqueness (check against DB too)
       const randomProducts = [];
+      const generatedEANs = new Set<string>();
       
-      for (let i = 0; i < count; i++) {
+      // Get existing EANs from database to avoid conflicts
+      const existingProducts = await db.select({ ean: products.ean }).from(products);
+      const existingEANs = new Set(existingProducts.map(p => p.ean));
+      
+      let successfulGenerations = 0;
+      let attempts = 0;
+      const maxTotalAttempts = count * 5; // Allow more attempts overall
+      
+      while (successfulGenerations < count && attempts < maxTotalAttempts) {
         const product = generateRandomProduct(finalTimestamp);
-        randomProducts.push(product);
+        attempts++;
+        
+        // Check if EAN is unique (both in this batch and in database)
+        if (!generatedEANs.has(product.ean) && !existingEANs.has(product.ean)) {
+          generatedEANs.add(product.ean);
+          randomProducts.push(product);
+          successfulGenerations++;
+        }
       }
 
       if (randomProducts.length === 0) {
@@ -273,7 +289,7 @@ export class DatabaseStorage implements IStorage {
         };
       }
       
-      // Insert into database with conflict handling
+      // Insert into database - should not have conflicts now
       let insertedProducts: Product[] = [];
       try {
         insertedProducts = await db
@@ -281,7 +297,7 @@ export class DatabaseStorage implements IStorage {
           .values(randomProducts)
           .returning();
       } catch (error: any) {
-        // If there are EAN conflicts, try inserting one by one and skip duplicates
+        // Fallback: try inserting one by one if there are still conflicts
         if (error.code === '23505') {
           for (const product of randomProducts) {
             try {
