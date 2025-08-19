@@ -22,6 +22,7 @@ The backend is an **Express.js** server hosting an **Apollo Server v5** GraphQL 
 - Robust EAN-13 generation with proper checksums and uniqueness guarantees.
 - Client synchronization support via `server_sent_at` field in purchase orders, allowing frontend-controlled timestamps for `created_at`, `updated_at`, and `server_sent_at`.
 - Real-time progress feedback for CSV generation processes in the frontend.
+- Product nutrition label URLs with EAN-specific image parameters for individual product identification.
 
 ### Feature Specifications
 The system supports:
