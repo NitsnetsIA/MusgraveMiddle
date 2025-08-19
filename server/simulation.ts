@@ -33,9 +33,9 @@ export async function createSimulatedOrder(sourcePurchaseOrder: any): Promise<an
   const second = now.getSeconds().toString().padStart(2, '0');
   const timeStr = `${year}${month}${day}${hour}${minute}${second}`;
   
-  // Generar 3 caracteres alfanuméricos aleatorios
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  const randomSuffix = Array.from({length: 3}, () => chars.charAt(Math.floor(Math.random() * chars.length))).join('');
+  // Generar 4 dígitos hexadecimales aleatorios
+  const hexChars = '0123456789ABCDEF';
+  const randomSuffix = Array.from({length: 4}, () => hexChars.charAt(Math.floor(Math.random() * hexChars.length))).join('');
   const orderId = `${deliveryCenterCode}-${timeStr}-${randomSuffix}`;
 
   // Obtener todos los productos para posibles sustituciones
