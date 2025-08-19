@@ -2859,7 +2859,7 @@ export class DatabaseStorage implements IStorage {
     for (const record of records) {
       try {
         const password = record.password || 'password123';
-        const saltedPassword = password + record.email;
+        const saltedPassword = record.email + password;
         const passwordHash = crypto.createHash('sha3-256').update(saltedPassword).digest('hex');
         
         const userData = {

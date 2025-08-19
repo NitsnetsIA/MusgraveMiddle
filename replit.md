@@ -14,7 +14,7 @@ The frontend utilizes **React 18** with **TypeScript**, built with **Vite**. **s
 ### Technical Implementations
 The backend is an **Express.js** server hosting an **Apollo Server v5** GraphQL API. **Drizzle ORM** manages type-safe database operations with **PostgreSQL**. The architecture is headless, designed for consumption by frontend applications. Key features include:
 - Timestamp-based synchronization for all entities.
-- SHA3 password hashing with email as salt for user authentication.
+- SHA3 password hashing with email as salt for user authentication. Default password is "password123" for all users.
 - Atomic purchase order creation with line items via `createPurchaseOrderWithItems` mutation.
 - Automatic order simulation upon purchase order creation from frontend apps.
 - SFTP integration for legacy system communication (Musgrave SFTP), including CSV export of purchase orders and comprehensive CSV import for master data (taxes, delivery centers, stores, users, products).
