@@ -19,6 +19,7 @@ export const typeDefs = `#graphql
     unit_of_measure: String!
     quantity_measure: Float!
     image_url: String
+    nutrition_label_url: String
     is_active: Boolean!
     created_at: DateTime!
     updated_at: DateTime!
@@ -89,6 +90,7 @@ export const typeDefs = `#graphql
     unit_of_measure: String
     quantity_measure: Float
     image_url: String
+    nutrition_label_url: String
     quantity: Float!
     base_price_at_order: Float!
     tax_rate_at_order: Float!
@@ -124,6 +126,7 @@ export const typeDefs = `#graphql
     unit_of_measure: String
     quantity_measure: Float
     image_url: String
+    nutrition_label_url: String
     quantity: Float!
     base_price_at_order: Float!
     tax_rate_at_order: Float!
@@ -148,6 +151,7 @@ export const typeDefs = `#graphql
     unit_of_measure: String!
     quantity_measure: Float!
     image_url: String
+    nutrition_label_url: String
     is_active: Boolean
   }
 
@@ -165,6 +169,7 @@ export const typeDefs = `#graphql
     unit_of_measure: String
     quantity_measure: Float
     image_url: String
+    nutrition_label_url: String
     is_active: Boolean
   }
 

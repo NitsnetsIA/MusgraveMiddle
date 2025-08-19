@@ -1319,6 +1319,7 @@ export class MusgraveSftpService {
         unit_of_measure: product.unit_of_measure,
         quantity_measure: product.quantity_measure,
         image_url: product.image_url || '',
+        nutrition_label_url: product.nutrition_label_url || '',
         is_active: product.is_active
       }));
 
@@ -1336,6 +1337,7 @@ export class MusgraveSftpService {
           { id: 'unit_of_measure', title: 'unit_of_measure' },
           { id: 'quantity_measure', title: 'quantity_measure' },
           { id: 'image_url', title: 'image_url' },
+          { id: 'nutrition_label_url', title: 'nutrition_label_url' },
           { id: 'is_active', title: 'is_active' }
         ]
       });

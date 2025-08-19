@@ -290,6 +290,7 @@ export function generateRandomProduct(timestampOffset: string): {
   unit_of_measure: string;
   quantity_measure: number;
   image_url: string;
+  nutrition_label_url: string;
   is_active: boolean;
   created_at: Date;
   updated_at: Date;
@@ -357,6 +358,9 @@ export function generateRandomProduct(timestampOffset: string): {
   // Use real category image URL with EAN as query string to prevent client caching
   const imageUrl = `${category.imageUrl}?ean=${ean}`;
   
+  // Generate nutrition label URL with EAN
+  const nutritionLabelUrl = `https://image.tuasaude.com/media/article/en/vt/etiqueta-nutricional_36306.jpg?width=600&height=300&ean=${ean}`;
+  
   // Calculate timestamps
   const offsetDate = new Date(timestampOffset);
   const created_at = new Date(offsetDate);
@@ -372,6 +376,7 @@ export function generateRandomProduct(timestampOffset: string): {
     unit_of_measure: unitType.measure,
     quantity_measure: quantity,
     image_url: imageUrl,
+    nutrition_label_url: nutritionLabelUrl,
     is_active: Math.random() > 0.1, // 90% active products
     created_at,
     updated_at

@@ -24,6 +24,7 @@ interface Product {
   unit_of_measure: string;
   quantity_measure: number;
   image_url: string | null;
+  nutrition_label_url: string | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -204,6 +205,7 @@ async function fetchProductsPaginated(page: number, pageSize: number): Promise<P
           unit_of_measure
           quantity_measure
           image_url
+          nutrition_label_url
           is_active
           created_at
           updated_at

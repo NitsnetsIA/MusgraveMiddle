@@ -1094,6 +1094,7 @@ export class DatabaseStorage implements IStorage {
           unit_of_measure: item.unit_of_measure,
           quantity_measure: item.quantity_measure,
           image_url: item.image_url,
+          nutrition_label_url: item.nutrition_label_url,
           quantity: item.quantity,
           base_price_at_order: item.base_price_at_order,
           tax_rate_at_order: item.tax_rate_at_order,
@@ -2628,7 +2629,8 @@ export class DatabaseStorage implements IStorage {
         unit_of_measure: record.unit_of_measure || 'unidad',
         quantity_measure: parseFloat(record.quantity_measure) || 1,
         is_active: record.is_active === 'true' || record.is_active === '1' || record.is_active === true,
-        image_url: record.image_url || `https://placehold.co/300x300/e5e7eb/6b7280?text=${encodeURIComponent((record.name || record.title) || 'Producto')}`
+        image_url: record.image_url || `https://placehold.co/300x300/e5e7eb/6b7280?text=${encodeURIComponent((record.name || record.title) || 'Producto')}`,
+        nutrition_label_url: record.nutrition_label_url || `https://image.tuasaude.com/media/article/en/vt/etiqueta-nutricional_36306.jpg?width=600&height=300&ean=${record.ean}`
       }));
       
       try {
@@ -2662,7 +2664,8 @@ export class DatabaseStorage implements IStorage {
           unit_of_measure: record.unit_of_measure || 'unidad',
           quantity_measure: parseFloat(record.quantity_measure) || 1,
           is_active: record.is_active === 'true' || record.is_active === '1' || record.is_active === true,
-          image_url: record.image_url || `https://placehold.co/300x300/e5e7eb/6b7280?text=${encodeURIComponent((record.name || record.title) || 'Producto')}`
+          image_url: record.image_url || `https://placehold.co/300x300/e5e7eb/6b7280?text=${encodeURIComponent((record.name || record.title) || 'Producto')}`,
+          nutrition_label_url: record.nutrition_label_url || `https://image.tuasaude.com/media/article/en/vt/etiqueta-nutricional_36306.jpg?width=600&height=300&ean=${record.ean}`
         };
 
         try {
@@ -2693,7 +2696,8 @@ export class DatabaseStorage implements IStorage {
                 existing.unit_of_measure !== productData.unit_of_measure ||
                 normalizeNumber(existing.quantity_measure) !== normalizeNumber(productData.quantity_measure) ||
                 Boolean(existing.is_active) !== Boolean(productData.is_active) ||
-                existing.image_url !== productData.image_url
+                existing.image_url !== productData.image_url ||
+                existing.nutrition_label_url !== productData.nutrition_label_url
               );
               
               if (imported === 0 || imported % 500 === 0) {
@@ -2712,6 +2716,7 @@ export class DatabaseStorage implements IStorage {
                     quantity_measure: productData.quantity_measure,
                     is_active: productData.is_active,
                     image_url: productData.image_url,
+                    nutrition_label_url: productData.nutrition_label_url,
                     updated_at: new Date()
                   })
                   .where(eq(products.ean, productData.ean));

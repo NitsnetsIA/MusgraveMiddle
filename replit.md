@@ -1,7 +1,7 @@
 # Grocery PIM System
 
 ## Overview
-This project provides a headless GraphQL microservice for managing grocery products and Spanish VAT taxes. It serves as a backend for frontend applications, offering a complete CRUD API for product and tax data synchronization. The system utilizes PostgreSQL for persistence, features timezone-aware timestamps for efficient data synchronization, and includes functionality for automatic order simulation and SFTP integration with legacy systems. The business vision is to provide a robust, scalable backend solution for grocery product information management, enabling seamless data flow between various client applications and legacy systems.
+This project provides a headless GraphQL microservice for managing grocery products and Spanish VAT taxes. It serves as a backend for frontend applications, offering a complete CRUD API for product and tax data synchronization. The system utilizes PostgreSQL for persistence, features timezone-aware timestamps for efficient data synchronization, and includes functionality for automatic order simulation and SFTP integration with legacy systems. Products now include nutrition label URLs with EAN-specific parameters for individual product identification. The business vision is to provide a robust, scalable backend solution for grocery product information management, enabling seamless data flow between various client applications and legacy systems.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.

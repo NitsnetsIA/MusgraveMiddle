@@ -21,6 +21,7 @@ export const products = pgTable("products", {
   unit_of_measure: text("unit_of_measure").notNull(),
   quantity_measure: real("quantity_measure").notNull(),
   image_url: text("image_url"),
+  nutrition_label_url: text("nutrition_label_url"),
   is_active: boolean("is_active").notNull().default(true),
   created_at: timestamp("created_at", { withTimezone: true }).notNull().default(sql`CURRENT_TIMESTAMP`),
   updated_at: timestamp("updated_at", { withTimezone: true }).notNull().default(sql`CURRENT_TIMESTAMP`)
@@ -90,6 +91,7 @@ export const purchaseOrderItems = pgTable("purchase_order_items", {
   unit_of_measure: text("unit_of_measure"),
   quantity_measure: real("quantity_measure"),
   image_url: text("image_url"),
+  nutrition_label_url: text("nutrition_label_url"),
   quantity: real("quantity").notNull(),
   base_price_at_order: real("base_price_at_order").notNull(),
   tax_rate_at_order: real("tax_rate_at_order").notNull(),
@@ -122,6 +124,7 @@ export const orderItems = pgTable("order_items", {
   unit_of_measure: text("unit_of_measure"),
   quantity_measure: real("quantity_measure"),
   image_url: text("image_url"),
+  nutrition_label_url: text("nutrition_label_url"),
   quantity: real("quantity").notNull(),
   base_price_at_order: real("base_price_at_order").notNull(),
   tax_rate_at_order: real("tax_rate_at_order").notNull(),

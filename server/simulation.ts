@@ -58,6 +58,7 @@ export async function createSimulatedOrder(sourcePurchaseOrder: any): Promise<an
         unit_of_measure: item.unit_of_measure,
         quantity_measure: item.quantity_measure,
         image_url: item.image_url,
+        nutrition_label_url: item.nutrition_label_url,
         quantity: item.quantity,
         base_price_at_order: item.base_price_at_order,
         tax_rate_at_order: item.tax_rate_at_order,
@@ -77,6 +78,7 @@ export async function createSimulatedOrder(sourcePurchaseOrder: any): Promise<an
           unit_of_measure: item.unit_of_measure,
           quantity_measure: item.quantity_measure,
           image_url: item.image_url,
+          nutrition_label_url: item.nutrition_label_url,
           quantity: newQuantity,
           base_price_at_order: item.base_price_at_order,
           tax_rate_at_order: item.tax_rate_at_order,
@@ -95,6 +97,7 @@ export async function createSimulatedOrder(sourcePurchaseOrder: any): Promise<an
           unit_of_measure: substituteProduct.unit_of_measure,
           quantity_measure: substituteProduct.quantity_measure,
           image_url: substituteProduct.image_url,
+          nutrition_label_url: substituteProduct.nutrition_label_url,
           quantity: item.quantity, // Cantidad original
           base_price_at_order: substituteProduct.base_price,
           tax_rate_at_order: substituteProduct.tax_code === 'GEN' ? 0.21 : 
