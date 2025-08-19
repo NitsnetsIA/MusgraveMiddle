@@ -440,6 +440,11 @@ export const resolvers = {
       return await storage.exportAllDataToSFTP();
     },
 
+    // Generate orders from SFTP purchase orders
+    generateOrdersFromSFTP: async () => {
+      return await storage.generateOrdersFromSFTP();
+    },
+
     // Delete all data
     deleteAllData: async () => {
       return await storage.deleteAllData();

@@ -479,6 +479,9 @@ export const typeDefs = `#graphql
     # Bulk export current DB data to SFTP
     exportAllDataToSFTP: ExportDataResult!
     
+    # Generate orders from SFTP purchase orders
+    generateOrdersFromSFTP: GenerateOrdersFromSFTPResult!
+    
     # Delete all data
     deleteAllData: DeleteAllDataResult!
   }
@@ -564,5 +567,12 @@ export const typeDefs = `#graphql
     entityType: String!
     createdCount: Int!
     message: String!
+  }
+
+  type GenerateOrdersFromSFTPResult {
+    success: Boolean!
+    message: String!
+    details: String
+    processedCount: Int
   }
 `;

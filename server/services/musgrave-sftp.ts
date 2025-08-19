@@ -1491,6 +1491,93 @@ export class MusgraveSftpService {
   }
 
   /**
+   * Move a file from one location to another on SFTP
+   */
+  public async moveFile(sourcePath: string, destinationPath: string): Promise<void> {
+    try {
+      console.log(`📁 Moving file from ${sourcePath} to ${destinationPath}...`);
+      
+      await this.connect();
+      
+      // Create destination directory if it doesn't exist
+      const destDir = path.dirname(destinationPath);
+      try {
+        await this.sftp.mkdir(destDir, true);
+        console.log(`📂 Directory ${destDir} created/verified`);
+      } catch (error) {
+        console.log(`📂 Directory ${destDir} already exists`);
+      }
+      
+      // Check if source file exists
+      const fileExists = await this.sftp.exists(sourcePath);
+      if (!fileExists) {
+        console.warn(`⚠️ Source file ${sourcePath} does not exist`);
+        return;
+      }
+      
+      // Move the file (rename works as move in SFTP)
+      await this.sftp.rename(sourcePath, destinationPath);
+      console.log(`✅ File moved successfully from ${sourcePath} to ${destinationPath}`);
+      
+    } catch (error: any) {
+      console.error(`✗ Error moving file from ${sourcePath} to ${destinationPath}:`, error);
+      throw new Error(`Failed to move file: ${error?.message || error}`);
+    } finally {
+      await this.disconnect();
+    }
+  }
+
+  /**
+   * Upload content to a file on SFTP
+   */
+  public async uploadFile(remotePath: string, content: string): Promise<void> {
+    let tempFilePath: string | null = null;
+    
+    try {
+      console.log(`📤 Uploading content to ${remotePath}...`);
+      
+      await this.connect();
+      
+      // Create a temporary file
+      const os = await import('os');
+      const fs = await import('fs/promises');
+      const path = await import('path');
+      
+      tempFilePath = path.join(os.tmpdir(), `upload_${Date.now()}.csv`);
+      
+      // Write content to temporary file
+      await fs.writeFile(tempFilePath, content, 'utf-8');
+      
+      // Create remote directory if it doesn't exist
+      const remoteDir = path.dirname(remotePath);
+      try {
+        await this.sftp.mkdir(remoteDir, true);
+        console.log(`📂 Remote directory ${remoteDir} created/verified`);
+      } catch (error) {
+        console.log(`📂 Remote directory ${remoteDir} already exists`);
+      }
+      
+      // Upload the file
+      await this.sftp.put(tempFilePath, remotePath);
+      console.log(`✅ File uploaded successfully to ${remotePath}`);
+      
+    } catch (error: any) {
+      console.error(`✗ Error uploading file to ${remotePath}:`, error);
+      throw new Error(`Failed to upload file: ${error?.message || error}`);
+    } finally {
+      if (tempFilePath) {
+        try {
+          const fs = await import('fs/promises');
+          await fs.unlink(tempFilePath);
+        } catch (cleanupError) {
+          console.warn(`⚠️ Error removing temporary file`);
+        }
+      }
+      await this.disconnect();
+    }
+  }
+
+  /**
    * Genera todos los CSV de forma masiva
    */
   public async generateAllCSVsBulk(): Promise<void> {

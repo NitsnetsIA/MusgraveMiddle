@@ -1145,6 +1145,10 @@ export default function Products() {
   const [isExportingAllData, setIsExportingAllData] = useState(false);
   const [exportProgressMessages, setExportProgressMessages] = useState<string[]>([]);
   
+  // Generate orders from SFTP states
+  const [isGeneratingOrders, setIsGeneratingOrders] = useState(false);
+  const [progressMessages, setProgressMessages] = useState<string[]>([]);
+  
   // Pagination states
   const [currentPage, setCurrentPage] = useState(0);
   const pageSize = 20;
@@ -1615,7 +1619,6 @@ export default function Products() {
 
   // Bulk data generation
   const [isGeneratingBulkData, setIsGeneratingBulkData] = useState(false);
-  const [progressMessages, setProgressMessages] = useState<string[]>([]);
 
   // Delete mutations for all entities
   const deleteProductMutation = useMutation({
@@ -2208,6 +2211,87 @@ export default function Products() {
       });
     } finally {
       setIsImportingAllData(false);
+    }
+  };
+
+  // Generate orders from SFTP
+  const generateOrdersFromSFTP = async () => {
+    setIsGeneratingOrders(true);
+    setProgressMessages([]);
+    
+    const addProgressMessage = (message: string) => {
+      setProgressMessages(prev => [...prev, message]);
+    };
+    
+    try {
+      addProgressMessage("🚀 Iniciando generación de pedidos desde SFTP...");
+      toast({ title: "Generación iniciada", description: "Procesando órdenes de compra desde SFTP..." });
+      
+      const response = await fetch(GRAPHQL_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Apollo-Require-Preflight": "true",
+        },
+        body: JSON.stringify({
+          query: `
+            mutation GenerateOrdersFromSFTP {
+              generateOrdersFromSFTP {
+                success
+                message
+                details
+                processedCount
+              }
+            }
+          `,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      if (result.errors) {
+        throw new Error(result.errors[0]?.message || "GraphQL error");
+      }
+
+      const generateResult = result.data.generateOrdersFromSFTP;
+      
+      // Add detailed progress messages from backend
+      if (generateResult.details) {
+        const detailLines = generateResult.details.split('\n').filter((line: string) => line.trim());
+        detailLines.forEach((line: string) => {
+          if (line.trim()) {
+            addProgressMessage(line.trim());
+          }
+        });
+      }
+      
+      if (generateResult.success) {
+        addProgressMessage(`✅ Pedidos generados exitosamente (${generateResult.processedCount || 0} órdenes procesadas)`);
+        toast({
+          title: "Generación completada",
+          description: `${generateResult.processedCount || 0} pedidos generados y archivos movidos a /processed/`,
+        });
+      } else {
+        throw new Error(generateResult.message || "Error desconocido");
+      }
+
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+      queryClient.invalidateQueries({ queryKey: ["purchase-orders"] });
+
+    } catch (error) {
+      addProgressMessage("❌ Error durante la generación de pedidos");
+      toast({
+        title: "Error en generación",
+        description: error instanceof Error ? error.message : "Error durante la generación de pedidos",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingOrders(false);
     }
   };
 
@@ -3246,6 +3330,58 @@ export default function Products() {
                   <div className="mt-4 space-y-2">
                     <p className="text-center text-sm text-muted-foreground">
                       Procesando archivos CSV desde el servidor SFTP...
+                    </p>
+                    {progressMessages.length > 0 && (
+                      <div className="bg-muted rounded-lg p-3 max-h-32 overflow-y-auto">
+                        <div className="space-y-1 text-sm">
+                          {progressMessages.map((message, index) => (
+                            <div key={index} className="font-mono">
+                              {message}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Generate Orders from SFTP */}
+            <Card className="border-2 border-purple-500/20">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-purple-600">
+                  <Receipt className="h-6 w-6" />
+                  Generar Pedidos desde SFTP
+                </CardTitle>
+                <CardDescription>
+                  Procesa las órdenes de compra desde /in/purchase_orders, genera archivos CSV de pedidos en /out/orders y mueve los archivos procesados a /processed/purchase_orders.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button
+                  onClick={generateOrdersFromSFTP}
+                  disabled={isGeneratingOrders}
+                  size="lg"
+                  className="w-full bg-purple-600 hover:bg-purple-700"
+                  data-testid="button-generate-orders-sftp"
+                >
+                  {isGeneratingOrders ? (
+                    <>
+                      <RefreshCw className="h-5 w-5 mr-2 animate-spin" />
+                      Generando pedidos...
+                    </>
+                  ) : (
+                    <>
+                      <Receipt className="h-5 w-5 mr-2" />
+                      Generar Pedidos en SFTP
+                    </>
+                  )}
+                </Button>
+                {isGeneratingOrders && (
+                  <div className="mt-4 space-y-2">
+                    <p className="text-center text-sm text-muted-foreground">
+                      Procesando órdenes de compra desde SFTP...
                     </p>
                     {progressMessages.length > 0 && (
                       <div className="bg-muted rounded-lg p-3 max-h-32 overflow-y-auto">

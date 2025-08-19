@@ -115,6 +115,12 @@ export interface IStorage {
 
   // Sync info method
   getSyncInfo(): Promise<{ entities: Array<{ entity_name: string; last_updated: Date | null; total_records: number }>; generated_at: Date }>;
+  
+  // SFTP methods
+  importAllDataFromSFTP(): Promise<{ success: boolean; message: string; details?: string }>;
+  importEntityFromSFTP(entityType: string): Promise<{ success: boolean; message: string; details?: string; importedCount?: number }>;
+  exportAllDataToSFTP(): Promise<{ success: boolean; message: string; details?: string; exportedEntities: string[] }>;
+  generateOrdersFromSFTP(): Promise<{ success: boolean; message: string; details?: string; processedCount?: number }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -3128,6 +3134,223 @@ export class DatabaseStorage implements IStorage {
     }
     
     return imported;
+  }
+
+  // Generate orders from SFTP purchase orders
+  async generateOrdersFromSFTP(): Promise<{ success: boolean; message: string; details?: string; processedCount?: number }> {
+    try {
+      console.log("🚀 Starting order generation from SFTP purchase orders...");
+      
+      let details = "🚀 Iniciando generación de pedidos desde órdenes de compra SFTP...\n";
+      
+      // Import SFTP service
+      const { MusgraveSftpService } = await import('./services/musgrave-sftp');
+      const sftp = new MusgraveSftpService();
+      
+      // List purchase order CSV files in /in/purchase_orders
+      details += "📋 Listando archivos de órdenes de compra en /in/purchase_orders...\n";
+      const purchaseOrderFiles = await sftp.listCSVFiles('/in/purchase_orders/');
+      
+      if (purchaseOrderFiles.length === 0) {
+        details += "⚠️ No se encontraron archivos de órdenes de compra en /in/purchase_orders\n";
+        return {
+          success: true,
+          message: "No se encontraron archivos de órdenes de compra para procesar",
+          details,
+          processedCount: 0
+        };
+      }
+      
+      details += `📄 Encontrados ${purchaseOrderFiles.length} archivos de órdenes de compra\n`;
+      
+      let processedCount = 0;
+      
+      // Process each purchase order file
+      for (const file of purchaseOrderFiles) {
+        try {
+          const filePath = `/in/purchase_orders/${file.name}`;
+          details += `\n📤 Procesando ${file.name}...\n`;
+          
+          // Download and parse the purchase order CSV
+          const csvContent = await sftp.downloadFile(filePath);
+          const records = this.parseCSV(csvContent);
+          
+          if (records.length === 0) {
+            details += `⚠️ ${file.name} no contiene registros válidos\n`;
+            continue;
+          }
+          
+          // Group records by purchase_order_id to recreate purchase orders with items
+          const orderGroups: { [key: string]: any[] } = {};
+          for (const record of records) {
+            const orderId = record.purchase_order_id || record.order_id;
+            if (!orderId) continue;
+            
+            if (!orderGroups[orderId]) {
+              orderGroups[orderId] = [];
+            }
+            orderGroups[orderId].push(record);
+          }
+          
+          details += `🔄 Generando pedidos para ${Object.keys(orderGroups).length} órdenes de compra...\n`;
+          
+          // Generate orders for each purchase order group
+          for (const [purchaseOrderId, orderItems] of Object.entries(orderGroups)) {
+            try {
+              // Get purchase order header data from first item
+              const headerData = orderItems[0];
+              
+              // Import order simulation function
+              const { createSimulatedOrder } = await import('./simulation.js');
+              
+              // Create a mock purchase order object for simulation
+              const mockPurchaseOrder = {
+                purchase_order_id: purchaseOrderId,
+                user_email: headerData.user_email,
+                store_id: headerData.store_id,
+                status: headerData.status || 'pending',
+                subtotal: parseFloat(headerData.subtotal) || 0,
+                tax_total: parseFloat(headerData.tax_total) || 0,
+                final_total: parseFloat(headerData.final_total) || 0,
+                server_sent_at: headerData.server_sent_at ? new Date(headerData.server_sent_at) : new Date(),
+                created_at: headerData.created_at ? new Date(headerData.created_at) : new Date(),
+                updated_at: headerData.updated_at ? new Date(headerData.updated_at) : new Date()
+              };
+              
+              // Create simulated order
+              const simulatedOrder = await createSimulatedOrder(mockPurchaseOrder);
+              
+              if (simulatedOrder) {
+                // Generate order CSV file in /out/orders
+                const timestamp = new Date().toISOString().replace(/[-:T]/g, '').split('.')[0];
+                const orderFileName = `orders_${timestamp}_${simulatedOrder.order_id}.csv`;
+                
+                // Prepare order CSV data
+                const orderCsvData = await this.generateOrderCSVContent(simulatedOrder.order_id);
+                
+                // Upload order CSV to /out/orders
+                await sftp.uploadFile(`/out/orders/${orderFileName}`, orderCsvData);
+                details += `✅ Pedido generado: ${orderFileName}\n`;
+                
+                processedCount++;
+              }
+            } catch (orderError) {
+              details += `❌ Error generando pedido para ${purchaseOrderId}: ${orderError instanceof Error ? orderError.message : String(orderError)}\n`;
+              console.error(`Error generating order for ${purchaseOrderId}:`, orderError);
+            }
+          }
+          
+          // Move processed file to /processed/purchase_orders
+          const processedFileName = `processed_${new Date().toISOString().replace(/[-:T]/g, '').split('.')[0]}_${file.name}`;
+          await sftp.moveFile(filePath, `/processed/purchase_orders/${processedFileName}`);
+          details += `📁 Archivo movido a: /processed/purchase_orders/${processedFileName}\n`;
+          
+        } catch (fileError) {
+          details += `❌ Error procesando archivo ${file.name}: ${fileError instanceof Error ? fileError.message : String(fileError)}\n`;
+          console.error(`Error processing file ${file.name}:`, fileError);
+        }
+      }
+      
+      details += `\n✅ Procesamiento completado. ${processedCount} pedidos generados.`;
+      
+      return {
+        success: true,
+        message: `Generación de pedidos completada. ${processedCount} pedidos creados y archivos movidos a /processed/`,
+        details,
+        processedCount
+      };
+      
+    } catch (error) {
+      console.error('Error generating orders from SFTP:', error);
+      return {
+        success: false,
+        message: `Error durante la generación de pedidos: ${error instanceof Error ? error.message : String(error)}`,
+        details: `❌ Error crítico durante la generación: ${error instanceof Error ? error.message : String(error)}`,
+        processedCount: 0
+      };
+    }
+  }
+
+  // Helper method to generate order CSV content
+  private async generateOrderCSVContent(orderId: string): Promise<string> {
+    // Get order with items and related data
+    const orderData = await db
+      .select({
+        order_id: orders.order_id,
+        source_purchase_order_id: orders.source_purchase_order_id,
+        user_email: orders.user_email,
+        store_id: orders.store_id,
+        observations: orders.observations,
+        subtotal: orders.subtotal,
+        tax_total: orders.tax_total,
+        final_total: orders.final_total,
+        created_at: orders.created_at,
+        updated_at: orders.updated_at,
+        item_ean: orderItems.item_ean,
+        item_ref: orderItems.item_ref,
+        item_title: orderItems.item_title,
+        item_description: orderItems.item_description,
+        unit_of_measure: orderItems.unit_of_measure,
+        quantity_measure: orderItems.quantity_measure,
+        image_url: orderItems.image_url,
+        quantity: orderItems.quantity,
+        base_price_at_order: orderItems.base_price_at_order,
+        tax_rate_at_order: orderItems.tax_rate_at_order
+      })
+      .from(orders)
+      .leftJoin(orderItems, eq(orders.order_id, orderItems.order_id))
+      .where(eq(orders.order_id, orderId));
+    
+    if (orderData.length === 0) {
+      throw new Error(`Order ${orderId} not found`);
+    }
+    
+    // Generate CSV header
+    const headers = [
+      'order_id', 'source_purchase_order_id', 'user_email', 'store_id', 'observations',
+      'subtotal', 'tax_total', 'final_total', 'created_at', 'updated_at',
+      'item_ean', 'item_ref', 'item_title', 'item_description', 'unit_of_measure',
+      'quantity_measure', 'image_url', 'quantity', 'base_price_at_order', 'tax_rate_at_order'
+    ];
+    
+    let csvContent = headers.join(',') + '\n';
+    
+    // Add data rows
+    for (const row of orderData) {
+      const csvRow = [
+        row.order_id || '',
+        row.source_purchase_order_id || '',
+        row.user_email || '',
+        row.store_id || '',
+        row.observations || '',
+        row.subtotal || 0,
+        row.tax_total || 0,
+        row.final_total || 0,
+        row.created_at?.toISOString() || '',
+        row.updated_at?.toISOString() || '',
+        row.item_ean || '',
+        row.item_ref || '',
+        row.item_title || '',
+        row.item_description || '',
+        row.unit_of_measure || '',
+        row.quantity_measure || 0,
+        row.image_url || '',
+        row.quantity || 0,
+        row.base_price_at_order || 0,
+        row.tax_rate_at_order || 0
+      ].map(value => {
+        // Escape CSV values properly
+        const stringValue = String(value);
+        if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
+          return `"${stringValue.replace(/"/g, '""')}"`;
+        }
+        return stringValue;
+      });
+      
+      csvContent += csvRow.join(',') + '\n';
+    }
+    
+    return csvContent;
   }
 }
 
