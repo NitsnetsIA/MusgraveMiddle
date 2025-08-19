@@ -2858,9 +2858,20 @@ export class DatabaseStorage implements IStorage {
     let skipped = 0;
     for (const record of records) {
       try {
-        const password = record.password || 'password123';
-        const saltedPassword = record.email + password;
-        const passwordHash = crypto.createHash('sha3-256').update(saltedPassword).digest('hex');
+        // Si viene password_hash en el CSV, usarlo directamente (ya está hasheado)
+        // Si no, hashear la password (o password123 por defecto)
+        let passwordHash;
+        if (record.password_hash && record.password_hash.length === 64) {
+          // Es un hash SHA3-256 válido (64 caracteres hex), usarlo tal cual
+          passwordHash = record.password_hash;
+          console.log(`🔐 Using existing hash for ${record.email}`);
+        } else {
+          // Hashear la password normalmente
+          const password = record.password || 'password123';
+          const saltedPassword = record.email + password;
+          passwordHash = crypto.createHash('sha3-256').update(saltedPassword).digest('hex');
+          console.log(`🔐 Generated new hash for ${record.email} with password: ${password}`);
+        }
         
         const userData = {
           email: record.email,
