@@ -124,6 +124,28 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
+  // Helper method to parse timestamp offsets like "-7d", "-2h", "-30m"
+  private parseTimestamp(timestampOffset: string): number {
+    if (!timestampOffset || timestampOffset.trim() === '') {
+      return 0;
+    }
+    
+    const match = timestampOffset.match(/^-?(\d+)([dhm])$/);
+    if (!match) {
+      console.warn(`Invalid timestamp offset format: ${timestampOffset}. Expected format: -7d, -2h, -30m`);
+      return 0;
+    }
+    
+    const [, amount, unit] = match;
+    const value = parseInt(amount, 10);
+    
+    switch (unit) {
+      case 'd': return value * 24 * 60 * 60 * 1000; // days to milliseconds
+      case 'h': return value * 60 * 60 * 1000; // hours to milliseconds  
+      case 'm': return value * 60 * 1000; // minutes to milliseconds
+      default: return 0;
+    }
+  }
   async getProducts(timestamp?: string, limit: number = 100, offset: number = 0): Promise<ProductConnection> {
     let whereClause;
     if (timestamp) {
@@ -1947,8 +1969,8 @@ export class DatabaseStorage implements IStorage {
             quantity,
             base_price_at_order: unitPrice,
             tax_rate_at_order: productTaxRate,
-            created_at: timestampOffset ? new Date(Date.now() - this.parseTimestampOffset(timestampOffset)) : new Date(),
-            updated_at: timestampOffset ? new Date(Date.now() - this.parseTimestampOffset(timestampOffset)) : new Date()
+            created_at: timestampOffset ? new Date(Date.now() - this.parseTimestamp(timestampOffset)) : new Date(),
+            updated_at: timestampOffset ? new Date(Date.now() - this.parseTimestamp(timestampOffset)) : new Date()
           });
         }
         
@@ -1962,8 +1984,8 @@ export class DatabaseStorage implements IStorage {
           subtotal: Math.round(subtotal * 100) / 100,
           tax_total: Math.round(taxTotal * 100) / 100,
           final_total: finalTotal,
-          created_at: timestampOffset ? new Date(Date.now() - this.parseTimestampOffset(timestampOffset)) : new Date(),
-          updated_at: timestampOffset ? new Date(Date.now() - this.parseTimestampOffset(timestampOffset)) : new Date()
+          created_at: timestampOffset ? new Date(Date.now() - this.parseTimestamp(timestampOffset)) : new Date(),
+          updated_at: timestampOffset ? new Date(Date.now() - this.parseTimestamp(timestampOffset)) : new Date()
         });
       }
 
@@ -2109,8 +2131,8 @@ export class DatabaseStorage implements IStorage {
             quantity,
             base_price_at_order: unitPrice,
             tax_rate_at_order: productTaxRate,
-            created_at: timestampOffset ? new Date(Date.now() - this.parseTimestampOffset(timestampOffset)) : new Date(),
-            updated_at: timestampOffset ? new Date(Date.now() - this.parseTimestampOffset(timestampOffset)) : new Date()
+            created_at: timestampOffset ? new Date(Date.now() - this.parseTimestamp(timestampOffset)) : new Date(),
+            updated_at: timestampOffset ? new Date(Date.now() - this.parseTimestamp(timestampOffset)) : new Date()
           });
         }
         
@@ -2125,8 +2147,8 @@ export class DatabaseStorage implements IStorage {
           subtotal: Math.round(subtotal * 100) / 100,
           tax_total: Math.round(taxTotal * 100) / 100,
           final_total: finalTotal,
-          created_at: timestampOffset ? new Date(Date.now() - this.parseTimestampOffset(timestampOffset)) : new Date(),
-          updated_at: timestampOffset ? new Date(Date.now() - this.parseTimestampOffset(timestampOffset)) : new Date()
+          created_at: timestampOffset ? new Date(Date.now() - this.parseTimestamp(timestampOffset)) : new Date(),
+          updated_at: timestampOffset ? new Date(Date.now() - this.parseTimestamp(timestampOffset)) : new Date()
         });
       }
 
@@ -3221,9 +3243,8 @@ export class DatabaseStorage implements IStorage {
               const simulatedOrder = await createSimulatedOrder(mockPurchaseOrder);
               
               if (simulatedOrder) {
-                // Generate order CSV file in /out/orders
-                const timestamp = new Date().toISOString().replace(/[-:T]/g, '').split('.')[0];
-                const orderFileName = `orders_${timestamp}_${simulatedOrder.order_id}.csv`;
+                // Generate order CSV file in /out/orders with exact order ID as filename
+                const orderFileName = `${simulatedOrder.order_id}.csv`;
                 
                 // Prepare order CSV data
                 const orderCsvData = await this.generateOrderCSVContent(simulatedOrder.order_id);
@@ -3240,10 +3261,9 @@ export class DatabaseStorage implements IStorage {
             }
           }
           
-          // Move processed file to /processed/purchase_orders
-          const processedFileName = `processed_${new Date().toISOString().replace(/[-:T]/g, '').split('.')[0]}_${file.name}`;
-          await sftp.moveFile(filePath, `/processed/purchase_orders/${processedFileName}`);
-          details += `📁 Archivo movido a: /processed/purchase_orders/${processedFileName}\n`;
+          // Move processed file to /processed/purchase_orders (keep original filename)
+          await sftp.moveFile(filePath, `/processed/purchase_orders/${file.name}`);
+          details += `📁 Archivo movido a: /processed/purchase_orders/${file.name}\n`;
           
         } catch (fileError) {
           details += `❌ Error procesando archivo ${file.name}: ${fileError instanceof Error ? fileError.message : String(fileError)}\n`;

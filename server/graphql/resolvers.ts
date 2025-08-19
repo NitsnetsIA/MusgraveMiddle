@@ -289,16 +289,10 @@ export const resolvers = {
         let simulatedOrder = null;
         let message = 'Purchase order created successfully';
 
-        // Si simulateOrder es true, crear el pedido simulado
+        // NOTE: Auto-simulation removed - orders are now only generated via SFTP workflow
+        // simulateOrder parameter is kept for backward compatibility but does nothing
         if (simulateOrder) {
-          try {
-            const { createSimulatedOrder: createSimulated } = await import('../simulation.js');
-            simulatedOrder = await createSimulated(createdPurchaseOrder);
-            message = 'Purchase order created and order simulated successfully';
-          } catch (error) {
-            console.error('Error creating simulated order:', error);
-            message = 'Purchase order created but order simulation failed';
-          }
+          message = 'Purchase order created. Use "Generate Orders from SFTP" to create orders.';
         }
 
         return {
@@ -395,25 +389,8 @@ export const resolvers = {
     generatePurchaseOrders: async (_: any, { count, clearExisting, timestampOffset, autoSimulate }: { count: number; clearExisting?: boolean; timestampOffset?: string; autoSimulate?: boolean }) => {
       const result = await storage.generatePurchaseOrders(count, clearExisting || false, timestampOffset);
       
-      // Si autoSimulate está activado, generar orders automáticamente para cada purchase order creada
-      if (autoSimulate && result.success) {
-        try {
-          console.log(`Auto-simulating orders for ${count} purchase orders...`);
-          const ordersResult = await storage.generateOrders(count, false, timestampOffset);
-          if (ordersResult.success) {
-            return {
-              ...result,
-              message: `${result.message} + ${ordersResult.message} (simulación automática activada)`
-            };
-          }
-        } catch (error) {
-          console.error('Error in auto-simulation:', error);
-          return {
-            ...result,
-            message: `${result.message} (simulación automática falló: ${error instanceof Error ? error.message : 'Unknown error'})`
-          };
-        }
-      }
+      // NOTE: Auto-simulation removed - orders are now only generated via SFTP workflow
+      // Users must manually trigger "Generate Orders from SFTP" to create orders
       
       return result;
     },

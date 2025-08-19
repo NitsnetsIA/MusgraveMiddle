@@ -1133,8 +1133,7 @@ export default function Products() {
   const [purchaseOrdersCount, setPurchaseOrdersCount] = useState(10);
   const [ordersCount, setOrdersCount] = useState(10);
   
-  // Simulación automática de pedidos
-  const [autoSimulateOrders, setAutoSimulateOrders] = useState(true);
+  // NOTE: Auto-simulation removed - orders are now only generated via SFTP workflow
   
   // Import data states
   const [isImportingAllData, setIsImportingAllData] = useState(false);
@@ -1288,18 +1287,16 @@ export default function Products() {
 
   const generatePurchaseOrdersMutation = useMutation({
     mutationFn: ({ count, clearExisting, timestampOffset }: { count: number; clearExisting?: boolean; timestampOffset?: string }) => 
-      generatePurchaseOrders(count, clearExisting, timestampOffset, autoSimulateOrders),
+      generatePurchaseOrders(count, clearExisting, timestampOffset, false),
     onSuccess: (result) => {
       toast({
         title: result.success ? "Órdenes de compra creadas" : "Error", 
-        description: result.message + (autoSimulateOrders ? " (simulación automática activada)" : ""),
+        description: result.message + " (use 'Generate Orders from SFTP' to create orders)",
         variant: result.success ? "default" : "destructive",
       });
       queryClient.invalidateQueries({ queryKey: ["purchase-orders"] });
       // Si la simulación está activada también invalidar orders
-      if (autoSimulateOrders) {
-        queryClient.invalidateQueries({ queryKey: ["orders"] });
-      }
+      // NOTE: Orders are now only generated via SFTP workflow
     },
     onError: (error) => {
       toast({
@@ -3711,20 +3708,14 @@ export default function Products() {
                     </p>
                   </div>
                   
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="auto-simulate-orders"
-                      checked={autoSimulateOrders}
-                      onCheckedChange={(checked) => setAutoSimulateOrders(checked === true)}
-                      data-testid="checkbox-auto-simulate-orders"
-                    />
-                    <Label htmlFor="auto-simulate-orders" className="text-sm font-medium">
-                      Simular pedido al recibir orden de compra
-                    </Label>
+                  <div className="p-3 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg">
+                    <p className="text-sm text-blue-800 dark:text-blue-200 font-medium">
+                      ℹ️ Información sobre pedidos
+                    </p>
+                    <p className="text-xs text-blue-600 dark:text-blue-300 mt-1">
+                      Los pedidos ahora se generan únicamente desde SFTP usando "Generar Pedidos desde SFTP"
+                    </p>
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    Cuando está activo, al crear una orden de compra se generará automáticamente un pedido procesado con variaciones realistas en las cantidades
-                  </p>
                 </div>
               </CardContent>
             </Card>
