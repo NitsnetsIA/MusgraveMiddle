@@ -72,6 +72,7 @@ export const typeDefs = `#graphql
     tax_total: Float!
     final_total: Float!
     server_sent_at: DateTime
+    ftp_sent_at: DateTime
     created_at: DateTime!
     updated_at: DateTime!
     user: User
@@ -241,6 +242,7 @@ export const typeDefs = `#graphql
     tax_total: Float
     final_total: Float
     server_sent_at: DateTime
+    ftp_sent_at: DateTime
     created_at: DateTime
     updated_at: DateTime
   }
@@ -481,6 +483,9 @@ export const typeDefs = `#graphql
     
     # Generate orders from SFTP purchase orders
     generateOrdersFromSFTP: GenerateOrdersFromSFTPResult!
+    
+    # Send purchase order to SFTP
+    sendPurchaseOrderToSFTP(purchaseOrderId: String!): PurchaseOrder!
     
     # Delete all data
     deleteAllData: DeleteAllDataResult!

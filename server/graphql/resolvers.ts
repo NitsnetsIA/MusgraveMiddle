@@ -422,6 +422,31 @@ export const resolvers = {
       return await storage.generateOrdersFromSFTP();
     },
 
+    // Send purchase order to SFTP (for testing ftp_sent_at functionality)
+    sendPurchaseOrderToSFTP: async (_: any, { purchaseOrderId }: { purchaseOrderId: string }) => {
+      try {
+        // Obtener la orden de compra
+        const purchaseOrder = await storage.getPurchaseOrder(purchaseOrderId);
+        if (!purchaseOrder) {
+          throw new Error(`Purchase order ${purchaseOrderId} not found`);
+        }
+
+        console.log(`📤 Enviando purchase order ${purchaseOrderId} a Musgrave SFTP...`);
+        const { musgraveSftpService } = await import('../services/musgrave-sftp.js');
+        
+        // Enviar al SFTP (esto actualizará automáticamente el ftp_sent_at)
+        await musgraveSftpService.sendPurchaseOrderToMusgrave(purchaseOrder);
+        
+        console.log(`✓ Purchase order ${purchaseOrderId} enviada exitosamente a Musgrave SFTP`);
+        
+        // Devolver la orden actualizada
+        return await storage.getPurchaseOrder(purchaseOrderId);
+      } catch (error: any) {
+        console.error(`Error enviando purchase order ${purchaseOrderId} a SFTP:`, error);
+        throw new Error(`Failed to send purchase order to SFTP: ${error?.message || error}`);
+      }
+    },
+
     // Delete all data
     deleteAllData: async () => {
       return await storage.deleteAllData();

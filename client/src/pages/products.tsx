@@ -85,6 +85,7 @@ interface PurchaseOrder {
   status: string;
   final_total: number;
   server_sent_at?: string;
+  ftp_sent_at?: string;
   created_at: string;
   updated_at: string;
   user?: {
@@ -419,6 +420,7 @@ async function fetchPurchaseOrdersPaginated(offset: number, limit: number): Prom
           status
           final_total
           server_sent_at
+          ftp_sent_at
           created_at
           updated_at
           user {
@@ -1612,6 +1614,56 @@ export default function Products() {
         queryClient.invalidateQueries({ queryKey: ["orders"] });
       }
     }
+  });
+
+  // Send purchase order to SFTP mutation
+  const sendPurchaseOrderToSFTPMutation = useMutation({
+    mutationFn: async (purchaseOrderId: string) => {
+      const query = `
+        mutation SendPurchaseOrderToSFTP($purchaseOrderId: String!) {
+          sendPurchaseOrderToSFTP(purchaseOrderId: $purchaseOrderId) {
+            purchase_order_id
+            user_email
+            store_id
+            status
+            final_total
+            server_sent_at
+            ftp_sent_at
+            created_at
+            updated_at
+          }
+        }
+      `;
+      const response = await fetch(GRAPHQL_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Apollo-Require-Preflight": "true",
+        },
+        body: JSON.stringify({ query, variables: { purchaseOrderId } }),
+      });
+
+      const result = await response.json();
+      if (result.errors) {
+        throw new Error(result.errors[0]?.message || "Error al enviar al SFTP");
+      }
+      return result.data.sendPurchaseOrderToSFTP;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Orden enviada al SFTP",
+        description: "La orden de compra ha sido enviada exitosamente al SFTP de Musgrave",
+        variant: "default",
+      });
+      queryClient.invalidateQueries({ queryKey: ["purchase-orders"] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Error al enviar al SFTP",
+        variant: "destructive",
+      });
+    },
   });
 
   // Bulk data generation
@@ -3081,6 +3133,7 @@ export default function Products() {
                             <TableHead>Estado</TableHead>
                             <TableHead>Total</TableHead>
                             <TableHead>Enviado al Servidor</TableHead>
+                            <TableHead>Enviado a FTP</TableHead>
                             <TableHead>Creado</TableHead>
                             <TableHead>Actualizado</TableHead>
                             <TableHead className="w-24">Acciones</TableHead>
@@ -3107,6 +3160,9 @@ export default function Products() {
                               {order.server_sent_at ? new Date(order.server_sent_at).toLocaleString('es-ES') : 'N/A'}
                             </TableCell>
                             <TableCell className="text-sm text-muted-foreground">
+                              {order.ftp_sent_at ? new Date(order.ftp_sent_at).toLocaleString('es-ES') : 'N/A'}
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
                               {new Date(order.created_at).toLocaleString('es-ES')}
                             </TableCell>
                             <TableCell className="text-sm text-muted-foreground">
@@ -3126,6 +3182,17 @@ export default function Products() {
                                   data-testid={`view-purchase-order-${order.purchase_order_id}`}
                                 >
                                   <Eye className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => sendPurchaseOrderToSFTPMutation.mutate(order.purchase_order_id)}
+                                  className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700"
+                                  disabled={sendPurchaseOrderToSFTPMutation.isPending}
+                                  data-testid={`send-sftp-purchase-order-${order.purchase_order_id}`}
+                                  title="Enviar al SFTP"
+                                >
+                                  <Upload className="h-4 w-4" />
                                 </Button>
                                 <Button
                                   variant="ghost"

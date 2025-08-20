@@ -76,6 +76,7 @@ export const purchaseOrders = pgTable("purchase_orders", {
   tax_total: real("tax_total").notNull(),
   final_total: real("final_total").notNull(),
   server_sent_at: timestamp("server_sent_at", { withTimezone: true }),
+  ftp_sent_at: timestamp("ftp_sent_at", { withTimezone: true }),
   created_at: timestamp("created_at", { withTimezone: true }).notNull().default(sql`CURRENT_TIMESTAMP`),
   updated_at: timestamp("updated_at", { withTimezone: true }).notNull().default(sql`CURRENT_TIMESTAMP`)
 });

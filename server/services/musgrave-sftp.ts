@@ -1,4 +1,4 @@
-import { PurchaseOrder, purchaseOrderItems, DeliveryCenter, User, Store, Tax } from '../../shared/schema.js';
+import { PurchaseOrder, purchaseOrders, purchaseOrderItems, DeliveryCenter, User, Store, Tax } from '../../shared/schema.js';
 import { eq } from 'drizzle-orm';
 import { promises as fs } from 'fs';
 import path from 'path';
@@ -237,6 +237,17 @@ export class MusgraveSftpService {
       // Subir el archivo
       await this.sftp.put(tempFilePath, remoteFilePath);
       console.log(`✓ Purchase order ${purchaseOrder.purchase_order_id} enviada exitosamente a Musgrave SFTP: ${remoteFilePath}`);
+
+      // Actualizar el timestamp ftp_sent_at en la base de datos
+      const ftpSentAt = new Date();
+      await db.update(purchaseOrders)
+        .set({ 
+          ftp_sent_at: ftpSentAt,
+          updated_at: ftpSentAt
+        })
+        .where(eq(purchaseOrders.purchase_order_id, purchaseOrder.purchase_order_id));
+      
+      console.log(`✓ Timestamp ftp_sent_at actualizado para purchase order ${purchaseOrder.purchase_order_id}`);
 
     } catch (error: any) {
       console.error(`✗ Error enviando purchase order ${purchaseOrder.purchase_order_id} a Musgrave:`, error);
