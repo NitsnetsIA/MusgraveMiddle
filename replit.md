@@ -1,7 +1,7 @@
 # Grocery PIM System
 
 ## Overview
-This project provides a headless GraphQL microservice for managing grocery products and Spanish VAT taxes. It serves as a backend for frontend applications, offering a complete CRUD API for product and tax data synchronization. The system utilizes PostgreSQL for persistence, features timezone-aware timestamps for efficient data synchronization, and includes functionality for automatic order simulation and SFTP integration with legacy systems. Products now include nutrition label URLs with EAN-specific parameters for individual product identification. The business vision is to provide a robust, scalable backend solution for grocery product information management, enabling seamless data flow between various client applications and legacy systems.
+This project provides a headless GraphQL microservice for managing grocery products and Spanish VAT taxes. It serves as a backend for frontend applications, offering a complete CRUD API for product and tax data synchronization. The system utilizes PostgreSQL for persistence, features timezone-aware timestamps for efficient data synchronization, and includes SFTP integration with legacy systems for comprehensive workflow management. Purchase orders are processed via SFTP workflows to generate CSV files without automatic database insertion. Products now include nutrition label URLs with EAN-specific parameters for individual product identification. The business vision is to provide a robust, scalable backend solution for grocery product information management, enabling seamless data flow between various client applications and legacy systems.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -16,7 +16,7 @@ The backend is an **Express.js** server hosting an **Apollo Server v5** GraphQL 
 - Timestamp-based synchronization for all entities.
 - SHA3 password hashing with email as salt for user authentication. Default password is "password123" for all users. CSV import supports both direct hash import and password-based hashing.
 - Atomic purchase order creation with line items via `createPurchaseOrderWithItems` mutation.
-- Automatic order simulation upon purchase order creation from frontend apps.
+- Manual order generation via SFTP workflow processing (automatic simulation completely removed).
 - SFTP integration for legacy system communication (Musgrave SFTP), including CSV export of purchase orders and comprehensive CSV import for master data (taxes, delivery centers, stores, users, products).
 - Intelligent CSV import optimization with smart data comparison to update records only when data actually differs.
 - Robust EAN-13 generation with proper checksums and uniqueness guarantees.
@@ -39,7 +39,7 @@ The system supports:
 - **PostgreSQL with Drizzle ORM**: For robust, type-safe, and scalable data persistence.
 - **Timezone-aware timestamps**: For accurate global data synchronization.
 - **Security**: SHA3-256 hashing with individual email salt for user passwords.
-- **Automated workflows**: Order simulation and SFTP data exchange are automated.
+- **Automated workflows**: SFTP data exchange is automated. Order generation requires manual triggering via SFTP workflow.
 
 ## External Dependencies
 

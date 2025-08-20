@@ -915,127 +915,13 @@ export class DatabaseStorage implements IStorage {
       .values(insertData)
       .returning();
 
-    // Verificar si la simulación automática está activada
-    try {
-      const [config] = await db
-        .select()
-        .from(systemConfig)
-        .where(eq(systemConfig.key, 'auto_simulate_orders_on_purchase'));
-
-      if (config && config.value === 'true') {
-        console.log('Auto-simulation enabled, creating order from purchase order:', created.purchase_order_id);
-        
-        // Generar order automáticamente usando la función de simulación
-        const { createSimulatedOrder } = await import('./simulation.js');
-        await createSimulatedOrder(created);
-      }
-    } catch (error) {
-      console.error('Error checking auto-simulation config or creating order:', error);
-      // No lanzar error para no interrumpir la creación de la purchase order
-    }
+    // NOTE: Auto-simulation completely removed - orders are only generated via SFTP workflow
+    // Purchase orders are created independently and do not trigger automatic order generation
 
     return created;
   }
 
-  // Función para simular un pedido procesado a partir de una purchase order
-  private async simulateOrderFromPurchaseOrder(purchaseOrder: PurchaseOrder): Promise<void> {
-    try {
-      // Obtener los items de la purchase order
-      const items = await db
-        .select()
-        .from(purchaseOrderItems)
-        .where(eq(purchaseOrderItems.purchase_order_id, purchaseOrder.purchase_order_id));
-
-      if (items.length === 0) {
-        console.log('No items found for purchase order:', purchaseOrder.purchase_order_id);
-        return;
-      }
-
-      // Obtener el store para conseguir el delivery center
-      const [store] = await db
-        .select()
-        .from(stores)
-        .where(eq(stores.code, purchaseOrder.store_id));
-
-      if (!store) {
-        console.error('Store not found for purchase order:', purchaseOrder.purchase_order_id);
-        return;
-      }
-
-      // Generar ID del pedido procesado
-      const timestamp = Date.now();
-      const randomSuffix = nanoid(3).toUpperCase();
-      const orderId = `${store.delivery_center_code}-${timestamp.toString().slice(-12)}-${randomSuffix}`;
-
-      // Aplicar la lógica de simulación (80% sin cambios, 20% reducción)
-      let newSubtotal = 0;
-      let newTaxTotal = 0;
-      const simulatedItems: any[] = [];
-
-      for (const item of items) {
-        let newQuantity = item.quantity;
-        
-        // 20% de posibilidades de reducir cantidad
-        if (Math.random() < 0.2) {
-          // Reducir cantidad entre 10% y 50%
-          const reduction = 0.1 + Math.random() * 0.4;
-          newQuantity = Math.max(1, Math.floor(item.quantity * (1 - reduction)));
-        }
-
-        const itemSubtotal = newQuantity * item.base_price_at_order;
-        const itemTax = itemSubtotal * item.tax_rate_at_order;
-
-        newSubtotal += itemSubtotal;
-        newTaxTotal += itemTax;
-
-        simulatedItems.push({
-          order_id: orderId,
-          item_ean: item.item_ean,
-          item_title: item.item_title || null,
-          item_description: item.item_description || null,
-          unit_of_measure: item.unit_of_measure || null,
-          quantity_measure: item.quantity_measure || null,
-          image_url: item.image_url || null,
-          quantity: newQuantity,
-          base_price_at_order: item.base_price_at_order,
-          tax_rate_at_order: item.tax_rate_at_order
-        });
-      }
-
-      const newFinalTotal = newSubtotal + newTaxTotal;
-
-      // Crear el pedido procesado
-      const orderData = {
-        order_id: orderId,
-        source_purchase_order_id: purchaseOrder.purchase_order_id,
-        user_email: purchaseOrder.user_email,
-        store_id: purchaseOrder.store_id,
-        observations: 'Pedido generado automáticamente mediante simulación',
-        subtotal: Math.round(newSubtotal * 100) / 100,
-        tax_total: Math.round(newTaxTotal * 100) / 100,
-        final_total: Math.round(newFinalTotal * 100) / 100
-      };
-
-      // Insertar el pedido procesado
-      const [createdOrder] = await db
-        .insert(orders)
-        .values(orderData)
-        .returning();
-
-      // Insertar los items del pedido procesado
-      if (simulatedItems.length > 0) {
-        await db
-          .insert(orderItems)
-          .values(simulatedItems);
-      }
-
-      console.log(`Simulated order created: ${orderId} from purchase order: ${purchaseOrder.purchase_order_id}`);
-      
-    } catch (error) {
-      console.error('Error simulating order from purchase order:', error);
-      throw error;
-    }
-  }
+  // NOTE: simulateOrderFromPurchaseOrder function removed - orders are only generated via SFTP workflow
 
   async updatePurchaseOrder(purchase_order_id: string, order: Partial<InsertPurchaseOrder & { created_at?: Date | string; updated_at?: Date | string }>): Promise<PurchaseOrder> {
     const now = new Date();
@@ -1145,24 +1031,7 @@ export class DatabaseStorage implements IStorage {
       await db.insert(purchaseOrderItems).values(itemsToInsert);
     }
 
-    // Verificar si la simulación automática está activada
-    try {
-      const [config] = await db
-        .select()
-        .from(systemConfig)
-        .where(eq(systemConfig.key, 'auto_simulate_orders_on_purchase'));
-
-      if (config && config.value === 'true') {
-        console.log('Auto-simulation enabled, creating order from purchase order:', created.purchase_order_id);
-        
-        // Generar order automáticamente usando la función de simulación
-        const { createSimulatedOrder } = await import('./simulation.js');
-        await createSimulatedOrder(created);
-      }
-    } catch (error) {
-      console.error('Error checking auto-simulation config or creating order:', error);
-      // No lanzar error para no interrumpir la creación de la purchase order
-    }
+    // NOTE: Auto-simulation completely removed - orders are only generated via SFTP workflow
 
     return created;
   }
@@ -1246,40 +1115,7 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
 
-    // Verificar si la simulación automática está activada y si esta purchase order no tiene ya un pedido procesado
-    try {
-      const [config] = await db
-        .select()
-        .from(systemConfig)
-        .where(eq(systemConfig.key, 'auto_simulate_orders_on_purchase'));
-
-      if (config && config.value === 'true') {
-        // Verificar si ya existe un pedido procesado para esta purchase order
-        const [existingOrder] = await db
-          .select()
-          .from(orders)
-          .where(eq(orders.source_purchase_order_id, item.purchase_order_id));
-
-        if (!existingOrder) {
-          console.log('Auto-simulation enabled and no existing order found. Checking if purchase order has items now...');
-          
-          // Obtener la purchase order para disparar la simulación
-          const [purchaseOrder] = await db
-            .select()
-            .from(purchaseOrders)
-            .where(eq(purchaseOrders.purchase_order_id, item.purchase_order_id));
-
-          if (purchaseOrder) {
-            console.log('Purchase order found, triggering auto-simulation for:', purchaseOrder.purchase_order_id);
-            const { createSimulatedOrder } = await import('./simulation.js');
-            await createSimulatedOrder(purchaseOrder);
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Error checking auto-simulation config when adding item:', error);
-      // No lanzar error para no interrumpir la creación del item
-    }
+    // NOTE: Auto-simulation completely removed - orders are only generated via SFTP workflow
 
     return created;
   }
