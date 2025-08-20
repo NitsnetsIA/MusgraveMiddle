@@ -1239,6 +1239,26 @@ export class DatabaseStorage implements IStorage {
         updated_at: new Date(),
       })
       .returning();
+
+    // Update associated purchase order status to "Completado" if exists
+    if (order.source_purchase_order_id) {
+      try {
+        const updateResult = await db.update(purchaseOrders)
+          .set({ 
+            status: 'Completado',
+            updated_at: new Date()
+          })
+          .where(eq(purchaseOrders.purchase_order_id, order.source_purchase_order_id))
+          .returning({ purchase_order_id: purchaseOrders.purchase_order_id });
+        
+        if (updateResult.length > 0) {
+          console.log(`📋 Purchase order ${order.source_purchase_order_id} marked as Completado`);
+        }
+      } catch (error) {
+        console.error(`Error updating purchase order ${order.source_purchase_order_id} status:`, error);
+      }
+    }
+
     return created;
   }
 
@@ -3055,6 +3075,26 @@ export class DatabaseStorage implements IStorage {
               .where(eq(orders.order_id, orderData.order_id));
             console.log(`✅ Order ${record.order_id} updated - data changed`);
             updated++;
+            
+            // Update associated purchase order status if source_purchase_order_id changed
+            if (orderData.source_purchase_order_id && 
+                existingOrder.source_purchase_order_id !== orderData.source_purchase_order_id) {
+              try {
+                const updateResult = await db.update(purchaseOrders)
+                  .set({ 
+                    status: 'Completado',
+                    updated_at: new Date()
+                  })
+                  .where(eq(purchaseOrders.purchase_order_id, orderData.source_purchase_order_id))
+                  .returning({ purchase_order_id: purchaseOrders.purchase_order_id });
+                
+                if (updateResult.length > 0) {
+                  console.log(`📋 Purchase order ${orderData.source_purchase_order_id} marked as Completado (updated association)`);
+                }
+              } catch (error) {
+                console.error(`Error updating purchase order ${orderData.source_purchase_order_id} status:`, error);
+              }
+            }
           } else {
             console.log(`ℹ️ Order ${record.order_id} skipped - no changes detected`);
             skipped++;
@@ -3063,6 +3103,25 @@ export class DatabaseStorage implements IStorage {
           // Insert new order
           await db.insert(orders).values(orderData);
           console.log(`✅ Order ${record.order_id} created`);
+        }
+        
+        // Update associated purchase order status to "Completado" if exists
+        if (orderData.source_purchase_order_id) {
+          try {
+            const updateResult = await db.update(purchaseOrders)
+              .set({ 
+                status: 'Completado',
+                updated_at: new Date()
+              })
+              .where(eq(purchaseOrders.purchase_order_id, orderData.source_purchase_order_id))
+              .returning({ purchase_order_id: purchaseOrders.purchase_order_id });
+            
+            if (updateResult.length > 0) {
+              console.log(`📋 Purchase order ${orderData.source_purchase_order_id} marked as Completado`);
+            }
+          } catch (error) {
+            console.error(`Error updating purchase order ${orderData.source_purchase_order_id} status:`, error);
+          }
         }
         
         imported++;

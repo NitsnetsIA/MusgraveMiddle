@@ -17,7 +17,8 @@ The backend is an **Express.js** server hosting an **Apollo Server v5** GraphQL 
 - SHA3 password hashing with email as salt for user authentication. Default password is "password123" for all users. CSV import supports both direct hash import and password-based hashing.
 - Atomic purchase order creation with line items via `createPurchaseOrderWithItems` mutation.
 - Manual order generation via SFTP workflow processing (automatic simulation completely removed).
-- SFTP integration for legacy system communication (Musgrave SFTP), including CSV export of purchase orders and comprehensive CSV import for master data (taxes, delivery centers, stores, users, products).
+- SFTP integration for legacy system communication (Musgrave SFTP), including CSV export of purchase orders and comprehensive CSV import for master data (taxes, delivery centers, stores, users, products, orders).
+- Automatic purchase order status update: When a processed order (pedido) is imported or created with an associated purchase order, the system automatically updates the purchase order status to "Completado".
 - Intelligent CSV import optimization with smart data comparison to update records only when data actually differs.
 - Robust EAN-13 generation with proper checksums and uniqueness guarantees.
 - Client synchronization support via `server_sent_at` field in purchase orders, allowing frontend-controlled timestamps for `created_at`, `updated_at`, and `server_sent_at`.
