@@ -64,10 +64,10 @@ export const USER_ROLES = [
 ];
 
 export const PURCHASE_ORDER_STATUSES = [
-  "PENDIENTE",
-  "EN_PROCESO", 
-  "COMPLETADO",
-  "CANCELADO"
+  "Pendiente",
+  "En Proceso", 
+  "Completado",
+  "Cancelado"
 ];
 
 // Generadores de datos coherentes
