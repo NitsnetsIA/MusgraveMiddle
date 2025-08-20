@@ -1,5 +1,5 @@
 import { db } from './db.js';
-import { purchaseOrderItems, purchaseOrders, stores, products, orders, orderItems } from '../shared/schema.js';
+import { purchaseOrderItems, purchaseOrders, stores, products, ordersSimulated, orderItemsSimulated } from '../shared/schema.js';
 import { eq } from 'drizzle-orm';
 
 // Función para crear un pedido simulado basado en una purchase order
@@ -121,34 +121,47 @@ export async function createSimulatedOrder(sourcePurchaseOrder: any): Promise<an
 
   const finalTotal = subtotal + taxTotal;
 
-  // Crear el pedido procesado
+  // Crear el pedido simulado temporal (NO en la tabla real)
   const [createdOrder] = await db
-    .insert(orders)
+    .insert(ordersSimulated)
     .values({
       order_id: orderId,
       source_purchase_order_id: sourcePurchaseOrder.purchase_order_id,
       user_email: sourcePurchaseOrder.user_email,
       store_id: sourcePurchaseOrder.store_id,
-      observations: 'Pedido generado automáticamente mediante simulación',
+      observations: 'Pedido temporal para generación de CSV',
       subtotal,
       tax_total: taxTotal,
       final_total: finalTotal,
     })
     .returning();
 
-  // Crear los items del pedido
+  // Crear los items del pedido temporal
   if (simulatedItems.length > 0) {
-    await db.insert(orderItems).values(simulatedItems);
+    await db.insert(orderItemsSimulated).values(simulatedItems);
   }
 
-  // Actualizar el estado de la purchase order a "COMPLETADO"
-  await db
-    .update(purchaseOrders)
-    .set({
-      status: 'COMPLETADO',
-      updated_at: new Date()
-    })
-    .where(eq(purchaseOrders.purchase_order_id, sourcePurchaseOrder.purchase_order_id));
-
+  console.log(`✅ Pedido simulado temporal creado: ${orderId} (NO persistente en base de datos real)`);
   return createdOrder;
+}
+
+// Función para limpiar pedidos simulados temporales
+export async function cleanupSimulatedOrder(orderId: string): Promise<void> {
+  try {
+    // Los items se eliminan automáticamente por CASCADE
+    await db.delete(ordersSimulated).where(eq(ordersSimulated.order_id, orderId));
+    console.log(`🗑️ Pedido simulado temporal limpiado: ${orderId}`);
+  } catch (error) {
+    console.error(`Error limpiando pedido simulado temporal ${orderId}:`, error);
+  }
+}
+
+// Función para limpiar todos los pedidos simulados (útil para mantenimiento)
+export async function cleanupAllSimulatedOrders(): Promise<void> {
+  try {
+    const result = await db.delete(ordersSimulated);
+    console.log(`🗑️ Todos los pedidos simulados temporales limpiados`);
+  } catch (error) {
+    console.error('Error limpiando pedidos simulados temporales:', error);
+  }
 }

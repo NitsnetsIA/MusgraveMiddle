@@ -1,5 +1,6 @@
 import { 
   products, taxes, deliveryCenters, stores, users, purchaseOrders, purchaseOrderItems, orders, orderItems, systemConfig,
+  ordersSimulated, orderItemsSimulated,
   type Product, type InsertProduct, type Tax, type InsertTax,
   type DeliveryCenter, type InsertDeliveryCenter, type Store, type InsertStore,
   type User, type InsertUser, type PurchaseOrder, type InsertPurchaseOrder,
@@ -3075,19 +3076,24 @@ export class DatabaseStorage implements IStorage {
                 updated_at: headerData.updated_at ? new Date(headerData.updated_at) : new Date()
               };
               
-              // Create simulated order
+              // Create simulated order (temporary)
               const simulatedOrder = await createSimulatedOrder(mockPurchaseOrder);
               
               if (simulatedOrder) {
                 // Generate order CSV file in /out/orders with exact order ID as filename
                 const orderFileName = `${simulatedOrder.order_id}.csv`;
                 
-                // Prepare order CSV data
+                // Prepare order CSV data from temporary tables
                 const orderCsvData = await this.generateOrderCSVContent(simulatedOrder.order_id);
                 
                 // Upload order CSV to /out/orders
                 await sftp.uploadFile(`/out/orders/${orderFileName}`, orderCsvData);
                 details += `✅ Pedido generado: ${orderFileName}\n`;
+                
+                // Clean up temporary simulated order after CSV generation
+                const { cleanupSimulatedOrder } = await import('./simulation.js');
+                await cleanupSimulatedOrder(simulatedOrder.order_id);
+                details += `🗑️ Pedido temporal limpiado: ${simulatedOrder.order_id}\n`;
                 
                 processedCount++;
               }
@@ -3127,35 +3133,35 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  // Helper method to generate order CSV content
+  // Helper method to generate order CSV content from simulated tables
   private async generateOrderCSVContent(orderId: string): Promise<string> {
-    // Get order with items and related data
+    // Get order with items from simulated (temporary) tables
     const orderData = await db
       .select({
-        order_id: orders.order_id,
-        source_purchase_order_id: orders.source_purchase_order_id,
-        user_email: orders.user_email,
-        store_id: orders.store_id,
-        observations: orders.observations,
-        subtotal: orders.subtotal,
-        tax_total: orders.tax_total,
-        final_total: orders.final_total,
-        created_at: orders.created_at,
-        updated_at: orders.updated_at,
-        item_ean: orderItems.item_ean,
-        item_ref: orderItems.item_ref,
-        item_title: orderItems.item_title,
-        item_description: orderItems.item_description,
-        unit_of_measure: orderItems.unit_of_measure,
-        quantity_measure: orderItems.quantity_measure,
-        image_url: orderItems.image_url,
-        quantity: orderItems.quantity,
-        base_price_at_order: orderItems.base_price_at_order,
-        tax_rate_at_order: orderItems.tax_rate_at_order
+        order_id: ordersSimulated.order_id,
+        source_purchase_order_id: ordersSimulated.source_purchase_order_id,
+        user_email: ordersSimulated.user_email,
+        store_id: ordersSimulated.store_id,
+        observations: ordersSimulated.observations,
+        subtotal: ordersSimulated.subtotal,
+        tax_total: ordersSimulated.tax_total,
+        final_total: ordersSimulated.final_total,
+        created_at: ordersSimulated.created_at,
+        updated_at: ordersSimulated.updated_at,
+        item_ean: orderItemsSimulated.item_ean,
+        item_ref: orderItemsSimulated.item_ref,
+        item_title: orderItemsSimulated.item_title,
+        item_description: orderItemsSimulated.item_description,
+        unit_of_measure: orderItemsSimulated.unit_of_measure,
+        quantity_measure: orderItemsSimulated.quantity_measure,
+        image_url: orderItemsSimulated.image_url,
+        quantity: orderItemsSimulated.quantity,
+        base_price_at_order: orderItemsSimulated.base_price_at_order,
+        tax_rate_at_order: orderItemsSimulated.tax_rate_at_order
       })
-      .from(orders)
-      .leftJoin(orderItems, eq(orders.order_id, orderItems.order_id))
-      .where(eq(orders.order_id, orderId));
+      .from(ordersSimulated)
+      .leftJoin(orderItemsSimulated, eq(ordersSimulated.order_id, orderItemsSimulated.order_id))
+      .where(eq(ordersSimulated.order_id, orderId));
     
     if (orderData.length === 0) {
       throw new Error(`Order ${orderId} not found`);

@@ -141,6 +141,38 @@ export const systemConfig = pgTable("system_config", {
   updated_at: timestamp("updated_at", { withTimezone: true }).notNull().default(sql`CURRENT_TIMESTAMP`)
 });
 
+// Tablas temporales para pedidos simulados (solo para generación de CSV, no persistentes)
+export const ordersSimulated = pgTable("orders_simulated", {
+  order_id: text("order_id").primaryKey(),
+  source_purchase_order_id: text("source_purchase_order_id").notNull(),
+  user_email: text("user_email").notNull(),
+  store_id: text("store_id").notNull(),
+  observations: text("observations"),
+  subtotal: real("subtotal").notNull(),
+  tax_total: real("tax_total").notNull(),
+  final_total: real("final_total").notNull(),
+  created_at: timestamp("created_at", { withTimezone: true }).notNull().default(sql`CURRENT_TIMESTAMP`),
+  updated_at: timestamp("updated_at", { withTimezone: true }).notNull().default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const orderItemsSimulated = pgTable("order_items_simulated", {
+  id: serial("id").primaryKey(),
+  order_id: text("order_id").notNull().references(() => ordersSimulated.order_id, { onDelete: "cascade" }),
+  item_ean: text("item_ean").notNull(),
+  item_ref: text("item_ref"),
+  item_title: text("item_title"),
+  item_description: text("item_description"),
+  unit_of_measure: text("unit_of_measure"),
+  quantity_measure: real("quantity_measure"),
+  image_url: text("image_url"),
+  nutrition_label_url: text("nutrition_label_url"),
+  quantity: real("quantity").notNull(),
+  base_price_at_order: real("base_price_at_order").notNull(),
+  tax_rate_at_order: real("tax_rate_at_order").notNull(),
+  created_at: timestamp("created_at", { withTimezone: true }).notNull().default(sql`CURRENT_TIMESTAMP`),
+  updated_at: timestamp("updated_at", { withTimezone: true }).notNull().default(sql`CURRENT_TIMESTAMP`),
+});
+
 // Relations
 export const deliveryCentersRelations = relations(deliveryCenters, ({ many }) => ({
   stores: many(stores),
@@ -211,6 +243,17 @@ export const orderItemsRelations = relations(orderItems, ({ one }) => ({
   }),
 }));
 
+export const ordersSimulatedRelations = relations(ordersSimulated, ({ many }) => ({
+  items: many(orderItemsSimulated),
+}));
+
+export const orderItemsSimulatedRelations = relations(orderItemsSimulated, ({ one }) => ({
+  order: one(ordersSimulated, {
+    fields: [orderItemsSimulated.order_id],
+    references: [ordersSimulated.order_id],
+  }),
+}));
+
 export const taxesRelations = relations(taxes, ({ many }) => ({
   products: many(products),
 }));
@@ -266,6 +309,17 @@ export const insertSystemConfigSchema = createInsertSchema(systemConfig).omit({
   updated_at: true,
 });
 
+export const insertOrderSimulatedSchema = createInsertSchema(ordersSimulated).omit({
+  created_at: true,
+  updated_at: true,
+});
+
+export const insertOrderItemSimulatedSchema = createInsertSchema(orderItemsSimulated).omit({
+  id: true,
+  created_at: true,
+  updated_at: true,
+});
+
 // Types
 export type InsertTax = z.infer<typeof insertTaxSchema>;
 export type Tax = typeof taxes.$inferSelect;
@@ -291,6 +345,11 @@ export type OrderItem = typeof orderItems.$inferSelect;
 
 export type InsertSystemConfig = z.infer<typeof insertSystemConfigSchema>;
 export type SystemConfig = typeof systemConfig.$inferSelect;
+
+export type InsertOrderSimulated = z.infer<typeof insertOrderSimulatedSchema>;
+export type OrderSimulated = typeof ordersSimulated.$inferSelect;
+export type InsertOrderItemSimulated = z.infer<typeof insertOrderItemSimulatedSchema>;
+export type OrderItemSimulated = typeof orderItemsSimulated.$inferSelect;
 
 // Connection types for pagination
 export type ProductConnection = {
