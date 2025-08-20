@@ -1616,9 +1616,13 @@ export default function Products() {
     }
   });
 
+  // Estado para rastrear qué orden se está enviando
+  const [sendingToSFTP, setSendingToSFTP] = useState<string | null>(null);
+
   // Send purchase order to SFTP mutation
   const sendPurchaseOrderToSFTPMutation = useMutation({
     mutationFn: async (purchaseOrderId: string) => {
+      setSendingToSFTP(purchaseOrderId);
       const query = `
         mutation SendPurchaseOrderToSFTP($purchaseOrderId: String!) {
           sendPurchaseOrderToSFTP(purchaseOrderId: $purchaseOrderId) {
@@ -1650,6 +1654,7 @@ export default function Products() {
       return result.data.sendPurchaseOrderToSFTP;
     },
     onSuccess: () => {
+      setSendingToSFTP(null);
       toast({
         title: "Orden enviada al SFTP",
         description: "La orden de compra ha sido enviada exitosamente al SFTP de Musgrave",
@@ -1658,6 +1663,7 @@ export default function Products() {
       queryClient.invalidateQueries({ queryKey: ["purchase-orders"] });
     },
     onError: (error) => {
+      setSendingToSFTP(null);
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Error al enviar al SFTP",
@@ -3189,11 +3195,11 @@ export default function Products() {
                                     size="sm"
                                     onClick={() => sendPurchaseOrderToSFTPMutation.mutate(order.purchase_order_id)}
                                     className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700"
-                                    disabled={sendPurchaseOrderToSFTPMutation.isPending}
+                                    disabled={sendingToSFTP === order.purchase_order_id}
                                     data-testid={`send-sftp-purchase-order-${order.purchase_order_id}`}
                                     title="Enviar al SFTP"
                                   >
-                                    {sendPurchaseOrderToSFTPMutation.isPending ? (
+                                    {sendingToSFTP === order.purchase_order_id ? (
                                       <Loader2 className="h-4 w-4 animate-spin" />
                                     ) : (
                                       <Upload className="h-4 w-4" />
