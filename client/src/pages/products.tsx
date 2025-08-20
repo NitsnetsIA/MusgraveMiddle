@@ -2559,13 +2559,27 @@ export default function Products() {
             <TabsContent value="products" className="mt-6">
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Package className="h-5 w-5" />
-                    Productos ({productsData?.total || 0})
-                  </CardTitle>
-                  <CardDescription>
-                    Catálogo completo de productos de alimentación con información de precios e IVA
-                  </CardDescription>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        <Package className="h-5 w-5" />
+                        Productos ({productsData?.total || 0})
+                      </CardTitle>
+                      <CardDescription>
+                        Catálogo completo de productos de alimentación con información de precios e IVA
+                      </CardDescription>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => queryClient.invalidateQueries({ queryKey: ["products"] })}
+                      className="flex items-center gap-2"
+                      data-testid="refresh-products"
+                    >
+                      <RefreshCw className="h-4 w-4" />
+                      Refrescar
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   {productsLoading ? (
@@ -2687,13 +2701,27 @@ export default function Products() {
             <TabsContent value="delivery-centers" className="mt-6">
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Building2 className="h-5 w-5" />
-                    Centros de Distribución ({centersData?.total || 0})
-                  </CardTitle>
-                  <CardDescription>
-                    Centros de distribución para gestión logística
-                  </CardDescription>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        <Building2 className="h-5 w-5" />
+                        Centros de Distribución ({centersData?.total || 0})
+                      </CardTitle>
+                      <CardDescription>
+                        Centros de distribución para gestión logística
+                      </CardDescription>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => queryClient.invalidateQueries({ queryKey: ["delivery-centers"] })}
+                      className="flex items-center gap-2"
+                      data-testid="refresh-delivery-centers"
+                    >
+                      <RefreshCw className="h-4 w-4" />
+                      Refrescar
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   {centersLoading ? (
@@ -2781,13 +2809,27 @@ export default function Products() {
             <TabsContent value="stores" className="mt-6">
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Store className="h-5 w-5" />
-                    Tiendas ({storesData?.total || 0})
-                  </CardTitle>
-                  <CardDescription>
-                    Tiendas vinculadas a centros de distribución
-                  </CardDescription>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        <Store className="h-5 w-5" />
+                        Tiendas ({storesData?.total || 0})
+                      </CardTitle>
+                      <CardDescription>
+                        Tiendas vinculadas a centros de distribución
+                      </CardDescription>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => queryClient.invalidateQueries({ queryKey: ["stores"] })}
+                      className="flex items-center gap-2"
+                      data-testid="refresh-stores"
+                    >
+                      <RefreshCw className="h-4 w-4" />
+                      Refrescar
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   {storesLoading ? (
@@ -2884,13 +2926,27 @@ export default function Products() {
             <TabsContent value="users" className="mt-6">
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Users className="h-5 w-5" />
-                    Usuarios ({usersData?.total || 0})
-                  </CardTitle>
-                  <CardDescription>
-                    Personal de tiendas con acceso al sistema
-                  </CardDescription>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        <Users className="h-5 w-5" />
+                        Usuarios ({usersData?.total || 0})
+                      </CardTitle>
+                      <CardDescription>
+                        Personal de tiendas con acceso al sistema
+                      </CardDescription>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => queryClient.invalidateQueries({ queryKey: ["users"] })}
+                      className="flex items-center gap-2"
+                      data-testid="refresh-users"
+                    >
+                      <RefreshCw className="h-4 w-4" />
+                      Refrescar
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   {usersLoading ? (
@@ -2985,13 +3041,27 @@ export default function Products() {
             <TabsContent value="purchase-orders" className="mt-6">
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <FileText className="h-5 w-5" />
-                    Órdenes de Compra ({purchaseOrdersData?.total || 0})
-                  </CardTitle>
-                  <CardDescription>
-                    Órdenes de compra en proceso de los clientes
-                  </CardDescription>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        <FileText className="h-5 w-5" />
+                        Órdenes de Compra ({purchaseOrdersData?.total || 0})
+                      </CardTitle>
+                      <CardDescription>
+                        Órdenes de compra en proceso de los clientes
+                      </CardDescription>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => queryClient.invalidateQueries({ queryKey: ["purchase-orders"] })}
+                      className="flex items-center gap-2"
+                      data-testid="refresh-purchase-orders"
+                    >
+                      <RefreshCw className="h-4 w-4" />
+                      Refrescar
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   {purchaseOrdersLoading ? (
@@ -3019,7 +3089,7 @@ export default function Products() {
                       <TableBody>
                         {purchaseOrdersData.data.map((order) => (
                           <TableRow key={order.purchase_order_id}>
-                            <TableCell className="font-mono">{order.purchase_order_id.slice(-8)}</TableCell>
+                            <TableCell className="font-mono text-xs">{order.purchase_order_id}</TableCell>
                             <TableCell>
                               <div>
                                 <div className="font-medium">{order.user?.name}</div>
@@ -3099,13 +3169,27 @@ export default function Products() {
             <TabsContent value="orders" className="mt-6">
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Receipt className="h-5 w-5" />
-                    Pedidos ({ordersData?.total || 0})
-                  </CardTitle>
-                  <CardDescription>
-                    Pedidos procesados y finalizados
-                  </CardDescription>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        <Receipt className="h-5 w-5" />
+                        Pedidos ({ordersData?.total || 0})
+                      </CardTitle>
+                      <CardDescription>
+                        Pedidos procesados y finalizados
+                      </CardDescription>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => queryClient.invalidateQueries({ queryKey: ["orders"] })}
+                      className="flex items-center gap-2"
+                      data-testid="refresh-orders"
+                    >
+                      <RefreshCw className="h-4 w-4" />
+                      Refrescar
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   {ordersLoading ? (
@@ -3133,7 +3217,7 @@ export default function Products() {
                       <TableBody>
                         {ordersData.data.map((order) => (
                           <TableRow key={order.order_id}>
-                            <TableCell className="font-mono">{order.order_id.slice(-8)}</TableCell>
+                            <TableCell className="font-mono text-xs">{order.order_id}</TableCell>
                             <TableCell>
                               <div>
                                 <div className="font-medium">{order.user?.name}</div>
@@ -3207,13 +3291,27 @@ export default function Products() {
             <TabsContent value="taxes" className="mt-6">
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Receipt className="h-5 w-5" />
-                    Impuestos ({taxesData?.total || 0})
-                  </CardTitle>
-                  <CardDescription>
-                    Tipos de IVA aplicables en España
-                  </CardDescription>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        <Receipt className="h-5 w-5" />
+                        Impuestos ({taxesData?.total || 0})
+                      </CardTitle>
+                      <CardDescription>
+                        Tipos de IVA aplicables en España
+                      </CardDescription>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => queryClient.invalidateQueries({ queryKey: ["taxes"] })}
+                      className="flex items-center gap-2"
+                      data-testid="refresh-taxes"
+                    >
+                      <RefreshCw className="h-4 w-4" />
+                      Refrescar
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   {taxesLoading ? (

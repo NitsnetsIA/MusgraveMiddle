@@ -859,7 +859,7 @@ export class DatabaseStorage implements IStorage {
       const purchaseOrdersList = await query
         .limit(limit)
         .offset(offset)
-        .orderBy(purchaseOrders.purchase_order_id);
+        .orderBy(desc(purchaseOrders.updated_at));
 
       return {
         purchaseOrders: purchaseOrdersList,
@@ -1211,7 +1211,7 @@ export class DatabaseStorage implements IStorage {
       const ordersList = await query
         .limit(limit)
         .offset(offset)
-        .orderBy(orders.order_id);
+        .orderBy(desc(orders.updated_at));
 
       return {
         orders: ordersList,
