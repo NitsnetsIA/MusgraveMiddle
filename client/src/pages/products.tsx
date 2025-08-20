@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { ShoppingCart, Package, Trash2, Plus, RefreshCw, Building2, Store, Users, FileText, Receipt, ChevronLeft, ChevronRight, Eye, Settings, Upload } from "lucide-react";
+import { ShoppingCart, Package, Trash2, Plus, RefreshCw, Building2, Store, Users, FileText, Receipt, ChevronLeft, ChevronRight, Eye, Settings, Upload, Loader2 } from "lucide-react";
 import React, { useState } from "react";
 
 interface Product {
@@ -3183,17 +3183,23 @@ export default function Products() {
                                 >
                                   <Eye className="h-4 w-4" />
                                 </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => sendPurchaseOrderToSFTPMutation.mutate(order.purchase_order_id)}
-                                  className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700"
-                                  disabled={sendPurchaseOrderToSFTPMutation.isPending}
-                                  data-testid={`send-sftp-purchase-order-${order.purchase_order_id}`}
-                                  title="Enviar al SFTP"
-                                >
-                                  <Upload className="h-4 w-4" />
-                                </Button>
+                                {!order.ftp_sent_at && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => sendPurchaseOrderToSFTPMutation.mutate(order.purchase_order_id)}
+                                    className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700"
+                                    disabled={sendPurchaseOrderToSFTPMutation.isPending}
+                                    data-testid={`send-sftp-purchase-order-${order.purchase_order_id}`}
+                                    title="Enviar al SFTP"
+                                  >
+                                    {sendPurchaseOrderToSFTPMutation.isPending ? (
+                                      <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                      <Upload className="h-4 w-4" />
+                                    )}
+                                  </Button>
+                                )}
                                 <Button
                                   variant="ghost"
                                   size="sm"
