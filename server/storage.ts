@@ -2200,7 +2200,7 @@ export class DatabaseStorage implements IStorage {
       let importDetails = "🚀 Iniciando importación completa desde SFTP...\n";
       
       // Import in dependency order
-      const importOrder = ['taxes', 'deliveryCenters', 'stores', 'users', 'products'];
+      const importOrder = ['taxes', 'deliveryCenters', 'stores', 'users', 'products', 'orders'];
       let totalRecordsImported = 0;
       
       for (const entityType of importOrder) {
@@ -2256,7 +2256,8 @@ export class DatabaseStorage implements IStorage {
         'delivery-centers': '/out/deliveryCenters/',
         'deliveryCenters': '/out/deliveryCenters/',
         'stores': '/out/stores/',
-        'users': '/out/users/'
+        'users': '/out/users/',
+        'orders': '/out/orders/'
       };
       
       const directory = directoryMap[entityType];
@@ -2317,6 +2318,9 @@ export class DatabaseStorage implements IStorage {
             break;
           case 'users':
             imported = await this.importUsersFromCSVSimple(records);
+            break;
+          case 'orders':
+            imported = await this.importOrdersFromCSV(records);
             break;
           default:
             throw new Error(`Importación no implementada para ${entityType}`);
@@ -2992,6 +2996,82 @@ export class DatabaseStorage implements IStorage {
       }
     }
     
+    return imported;
+  }
+
+  // Import orders from CSV records
+  private async importOrdersFromCSV(records: any[]): Promise<number> {
+    let imported = 0;
+    let updated = 0;
+    let skipped = 0;
+    
+    console.log(`🔄 Processing ${records.length} order records...`);
+    
+    for (const record of records) {
+      if (!record.order_id || !record.user_email || !record.store_id) continue;
+      
+      try {
+        // Check if order already exists
+        const existing = await db.select().from(orders).where(eq(orders.order_id, record.order_id)).limit(1);
+        
+        const orderData = {
+          order_id: record.order_id,
+          source_purchase_order_id: record.source_purchase_order_id || null,
+          user_email: record.user_email,
+          store_id: record.store_id,
+          observations: record.observations || null,
+          subtotal: parseFloat(record.subtotal) || 0,
+          tax_total: parseFloat(record.tax_total) || 0,
+          final_total: parseFloat(record.final_total) || 0,
+          created_at: this.parseTimestamp(record.created_at) || new Date(),
+          updated_at: this.parseTimestamp(record.updated_at) || new Date()
+        };
+        
+        if (existing.length > 0) {
+          // Check if data actually differs to avoid unnecessary updates
+          const existingOrder = existing[0];
+          const hasChanges = (
+            existingOrder.source_purchase_order_id !== orderData.source_purchase_order_id ||
+            existingOrder.user_email !== orderData.user_email ||
+            existingOrder.store_id !== orderData.store_id ||
+            existingOrder.observations !== orderData.observations ||
+            existingOrder.subtotal !== orderData.subtotal ||
+            existingOrder.tax_total !== orderData.tax_total ||
+            existingOrder.final_total !== orderData.final_total
+          );
+          
+          if (hasChanges) {
+            await db.update(orders)
+              .set({
+                source_purchase_order_id: orderData.source_purchase_order_id,
+                user_email: orderData.user_email,
+                store_id: orderData.store_id,
+                observations: orderData.observations,
+                subtotal: orderData.subtotal,
+                tax_total: orderData.tax_total,
+                final_total: orderData.final_total,
+                updated_at: new Date()
+              })
+              .where(eq(orders.order_id, orderData.order_id));
+            console.log(`✅ Order ${record.order_id} updated - data changed`);
+            updated++;
+          } else {
+            console.log(`ℹ️ Order ${record.order_id} skipped - no changes detected`);
+            skipped++;
+          }
+        } else {
+          // Insert new order
+          await db.insert(orders).values(orderData);
+          console.log(`✅ Order ${record.order_id} created`);
+        }
+        
+        imported++;
+      } catch (error) {
+        console.error(`Error importing order ${record.order_id}:`, error);
+      }
+    }
+    
+    console.log(`📦 Order import summary: ${imported} total, ${updated} updated, ${skipped} skipped`);
     return imported;
   }
 

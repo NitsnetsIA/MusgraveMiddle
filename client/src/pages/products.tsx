@@ -2125,7 +2125,7 @@ export default function Products() {
       toast({ title: "Importación iniciada", description: "Importando todos los datos desde SFTP Musgrave..." });
       
       // Import entities sequentially with progress updates
-      const importOrder = ['taxes', 'deliveryCenters', 'stores', 'users', 'products'];
+      const importOrder = ['taxes', 'deliveryCenters', 'stores', 'users', 'products', 'orders'];
       let totalRecordsImported = 0;
       
       for (const entityType of importOrder) {
@@ -2307,7 +2307,7 @@ export default function Products() {
       
       // Simulate real-time progress messages during the actual request
       const simulateProgressMessages = () => {
-        const entities = ['taxes', 'delivery centers', 'stores', 'users', 'products'];
+        const entities = ['taxes', 'delivery centers', 'stores', 'users', 'products', 'orders'];
         let currentEntityIndex = 0;
         
         const showProgress = () => {
@@ -2466,6 +2466,8 @@ export default function Products() {
           queryClient.invalidateQueries({ queryKey: ["users"] });
         } else if (entityType === 'taxes') {
           queryClient.invalidateQueries({ queryKey: ["taxes"] });
+        } else if (entityType === 'orders') {
+          queryClient.invalidateQueries({ queryKey: ["orders"] });
         }
       } else {
         throw new Error(importResult.message);
@@ -3576,6 +3578,30 @@ export default function Products() {
                         <>
                           <Package className="h-4 w-4 mr-2" />
                           Importar Productos
+                        </>
+                      )}
+                    </Button>
+                  </div>
+
+                  {/* Orders Import */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Pedidos</Label>
+                    <Button
+                      onClick={() => importEntityFromSFTP('orders')}
+                      disabled={isImportingEntity === 'orders'}
+                      variant="outline"
+                      className="w-full"
+                      data-testid="button-import-orders"
+                    >
+                      {isImportingEntity === 'orders' ? (
+                        <>
+                          <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                          Importando...
+                        </>
+                      ) : (
+                        <>
+                          <ShoppingCart className="h-4 w-4 mr-2" />
+                          Importar Pedidos
                         </>
                       )}
                     </Button>
