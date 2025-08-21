@@ -121,14 +121,14 @@ NODE_ENV=development
 
 ```bash
 # Generar y aplicar migraciones
-npm run db:generate
-npm run db:push
+npx drizzle-kit generate
+npx drizzle-kit push
 ```
 
 #### Verificar Conexión
 
 ```bash
-npm run db:studio
+npx drizzle-kit studio
 ```
 
 Esto abrirá Drizzle Studio en tu navegador para verificar que las tablas se crearon correctamente.
@@ -218,18 +218,18 @@ grocery-pim-system/
 
 ```bash
 # Desarrollo
-npm run dev              # Iniciar en modo desarrollo
-npm run build           # Construir para producción
-npm start              # Ejecutar versión de producción
+npm run dev                    # Iniciar en modo desarrollo
+npm run build                 # Construir para producción
+npm start                    # Ejecutar versión de producción
 
 # Base de Datos
-npm run db:generate     # Generar migraciones
-npm run db:push        # Aplicar cambios a BD
-npm run db:push --force # Forzar cambios (¡cuidado en producción!)
-npm run db:studio      # Abrir Drizzle Studio
+npx drizzle-kit generate     # Generar migraciones
+npx drizzle-kit push        # Aplicar cambios a BD
+npx drizzle-kit push --force # Forzar cambios (¡cuidado en producción!)
+npx drizzle-kit studio      # Abrir Drizzle Studio
 
 # Utilidades
-npm run type-check     # Verificar tipos TypeScript
+npm run check              # Verificar tipos TypeScript
 ```
 
 ## Configuración de Desarrollo
