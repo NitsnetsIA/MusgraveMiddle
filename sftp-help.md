@@ -2,12 +2,6 @@
 
 ## 🌐 Información de Conexión
 
-### **Servidor SFTP**
-- **Host:** `musgraveapp.blob.core.windows.net`
-- **Puerto:** `22`
-- **Usuario:** `musgraveapp.musgraveapp`
-- **Contraseña:** `fMPatTqKM9KKTrPLosMigiDC9MdNMtUT`
-
 ### **Protocolo**
 - **Tipo:** SFTP (SSH File Transfer Protocol)
 - **Autenticación:** Usuario/Contraseña
