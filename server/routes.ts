@@ -52,10 +52,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
 
     // Start the standalone Apollo Server with GraphQL Playground enabled
-    let graphqlUrl = "http://localhost:4000/";
+    const apolloPort = parseInt(process.env.APOLLO_PORT || '4000', 10);
+    let graphqlUrl = `http://localhost:${apolloPort}/`;
     try {
       const { url } = await startStandaloneServer(apolloServer, {
-        listen: { port: 4000, host: "127.0.0.1" },
+        listen: { port: apolloPort, host: "127.0.0.1" },
         context: async ({ req }) => {
           return {};
         },
