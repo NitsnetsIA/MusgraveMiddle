@@ -22,7 +22,7 @@ Sistema completo de gestión de información de productos (PIM) para supermercad
 ### Software Requerido
 
 #### Base de Datos
-- **PostgreSQL 14+** (se recomienda Neon PostgreSQL para desarrollo)
+- **PostgreSQL 14+** 
 - Extensiones necesarias: ninguna adicional
 
 #### Runtime
