@@ -1,0 +1,81 @@
+
+> rest-express@1.0.0 dev
+> NODE_ENV=development tsx server/index.ts
+
+Starting server initialization...
+Checking database connection and existing data...
+Database connection successful
+Database already seeded, skipping...
+🚀 GraphQL Server ready at http://127.0.0.1:4000/ (internal only)
+🌐 Network connectivity test endpoint registered at /api/sftp/network-test
+🔌 SFTP test endpoint registered at /api/sftp/test
+🔍 System info endpoint registered at /api/system/info
+🚀 Headless GraphQL API ready at /graphql
+Server routes registered successfully
+Environment: development
+Routes registered:
+  [0] middleware: expressInit
+  [1] middleware: jsonParser
+  [2] middleware: urlencodedParser
+  [3] middleware: <anonymous>
+  [4] get /api/health
+  [5] get /api/sftp/network-test
+  [6] get /api/sftp/test
+  [7] get /api/system/info
+  [8] acl,bind,checkout,connect,copy,delete,get,head,link,lock,m-search,merge,mkactivity,mkcalendar,mkcol,move,notify,options,patch,post,propfind,proppatch,purge,put,query,rebind,report,search,source,subscribe,trace,unbind,unlink,unlock,unsubscribe /graphql
+  [9] options /graphql
+  [10] middleware: query
+12:22:51 AM [express] serving on port 3000
+Browserslist: browsers data (caniuse-lite) is 10 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+POST request to /graphql received from 127.0.0.1:3000 - User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36
+Direct GraphQL request to internal Apollo: {"query":"\n    query GetProducts($limit: Int, $offset: Int) {\n      products(limit: $limit, offset: $offset) {\n        products {\n          ean\n          ref\n          title\n          description\n          base_price\n          tax_code\n          unit_of_measure\n          quantity_measure\n          image_url\n          nutrition_label_url\n          is_active\n          created_at\n          updated_at\n          tax {\n            name\n            tax_rate\n          }\n        }\n        total\n        limit\n        offset\n      }\n    }\n  ","variables":{"limit":20,"offset":0}}
+POST request to /graphql received from 127.0.0.1:3000 - User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36
+Direct GraphQL request to internal Apollo: {"query":"\n    query GetDeliveryCenters($limit: Int, $offset: Int) {\n      deliveryCenters(limit: $limit, offset: $offset) {\n        deliveryCenters {\n          code\n          name\n          is_active\n          created_at\n          updated_at\n        }\n        total\n        limit\n        offset\n      }\n    }\n  ","variables":{"limit":20,"offset":0}}
+POST request to /graphql received from 127.0.0.1:3000 - User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36
+Direct GraphQL request to internal Apollo: {"query":"\n    query GetStores($limit: Int, $offset: Int) {\n      stores(limit: $limit, offset: $offset) {\n        stores {\n          code\n          name\n          delivery_center_code\n          responsible_email\n          is_active\n          created_at\n          updated_at\n          deliveryCenter {\n            code\n            name\n          }\n        }\n        total\n        limit\n        offset\n      }\n    }\n  ","variables":{"limit":20,"offset":0}}
+POST request to /graphql received from 127.0.0.1:3000 - User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36
+Direct GraphQL request to internal Apollo: {"query":"\n    query GetUsers($limit: Int, $offset: Int) {\n      users(limit: $limit, offset: $offset) {\n        users {\n          email\n          store_id\n          name\n          is_active\n          created_at\n          updated_at\n          store {\n            code\n            name\n          }\n        }\n        total\n        limit\n        offset\n      }\n    }\n  ","variables":{"limit":20,"offset":0}}
+POST request to /graphql received from 127.0.0.1:3000 - User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36
+Direct GraphQL request to internal Apollo: {"query":"\n    query GetPurchaseOrders($limit: Int, $offset: Int) {\n      purchaseOrders(limit: $limit, offset: $offset) {\n        purchaseOrders {\n          purchase_order_id\n          user_email\n          store_id\n          status\n          final_total\n          server_sent_at\n          ftp_sent_at\n          created_at\n          updated_at\n          user {\n            name\n            email\n            store {\n              name\n            }\n          }\n        }\n        total\n        limit\n        offset\n      }\n    }\n  ","variables":{"limit":20,"offset":0}}
+POST request to /graphql received from 127.0.0.1:3000 - User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36
+Direct GraphQL request to internal Apollo: {"query":"\n    query GetOrders($limit: Int, $offset: Int) {\n      orders(limit: $limit, offset: $offset) {\n        orders {\n          order_id\n          source_purchase_order_id\n          user_email\n          store_id\n          observations\n          subtotal\n          tax_total\n          final_total\n          created_at\n          updated_at\n          user {\n            name\n            email\n            store {\n              name\n            }\n          }\n          sourcePurchaseOrder {\n            purchase_order_id\n            status\n          }\n        }\n        total\n        limit\n        offset\n      }\n    }\n  ","variables":{"limit":20,"offset":0}}
+GraphQL response success
+GraphQL response success
+GraphQL response success
+GraphQL response success
+POST request to /graphql received from 127.0.0.1:3000 - User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36
+Direct GraphQL request to internal Apollo: {"query":"\n    query GetTaxes($limit: Int, $offset: Int) {\n      taxes(limit: $limit, offset: $offset) {\n        taxes {\n          code\n          name\n          tax_rate\n          created_at\n          updated_at\n        }\n        total\n        limit\n        offset\n      }\n    }\n  ","variables":{"limit":20,"offset":0}}
+GraphQL response success
+GraphQL response success
+GraphQL response success
+🔍 Probando conexión SFTP con Musgrave...
+📋 Request headers: {
+  host: '127.0.0.1:3000',
+  connection: 'keep-alive',
+  'sec-ch-ua-platform': '"Windows"',
+  'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36',
+  'sec-ch-ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"',
+  dnt: '1',
+  'content-type': 'application/json',
+  'sec-ch-ua-mobile': '?0',
+  accept: '*/*',
+  'sec-fetch-site': 'same-origin',
+  'sec-fetch-mode': 'cors',
+  'sec-fetch-dest': 'empty',
+  referer: 'http://127.0.0.1:3000/',
+  'accept-encoding': 'gzip, deflate, br, zstd',
+  'accept-language': 'es-ES,es;q=0.9,en;q=0.8,ca;q=0.7,gl;q=0.6,fr;q=0.5'
+}
+📋 Request method: GET
+📋 Request URL: /api/sftp/test
+🔍 Iniciando test de conexión SFTP...
+📋 Configuración SFTP: {
+  host: 'musgraveapp.blob.core.windows.net',
+  port: 22,
+  username: 'musgraveapp.musgraveapp',
+  password: '***'
+}
+🔌 Intentando conexión SFTP...
+🔌 Intentando conectar al SFTP de Musgrave...

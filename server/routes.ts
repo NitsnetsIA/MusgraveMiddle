@@ -6,6 +6,7 @@ import { startStandaloneServer } from "@apollo/server/standalone";
 import { typeDefs } from "./graphql/schema";
 import { resolvers } from "./graphql/resolvers";
 import { seedDatabase } from "./seed.js";
+import { testSftpConnection, testNetworkConnectivity, getSystemInfo } from "./routes/sftp-test.js";
 // Note: GraphQL Playground will use custom implementation due to ES module compatibility
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -76,6 +77,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         timestamp: new Date().toISOString()
       });
     });
+
+    // Network connectivity test endpoint
+    app.get("/api/sftp/network-test", testNetworkConnectivity);
+    console.log("🌐 Network connectivity test endpoint registered at /api/sftp/network-test");
+    
+    // SFTP test endpoint
+    app.get("/api/sftp/test", testSftpConnection);
+    console.log("🔌 SFTP test endpoint registered at /api/sftp/test");
+    
+    // System info endpoint
+    app.get("/api/system/info", getSystemInfo);
+    console.log("🔍 System info endpoint registered at /api/system/info");
 
     // Direct GraphQL endpoint using Apollo server resolvers (no proxy)
     app.all("/graphql", async (req, res) => {

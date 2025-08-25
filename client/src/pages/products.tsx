@@ -11,7 +11,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { ShoppingCart, Package, Trash2, Plus, RefreshCw, Building2, Store, Users, FileText, Receipt, ChevronLeft, ChevronRight, Eye, Settings, Upload, Loader2 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { ShoppingCart, Package, Trash2, Plus, RefreshCw, Building2, Store, Users, FileText, Receipt, ChevronLeft, ChevronRight, Eye, Settings, Upload, Loader2, LogOut } from "lucide-react";
 import React, { useState } from "react";
 
 interface Product {
@@ -1150,6 +1151,10 @@ export default function Products() {
   const [isGeneratingOrders, setIsGeneratingOrders] = useState(false);
   const [progressMessages, setProgressMessages] = useState<string[]>([]);
   
+
+  
+
+  
   // Pagination states
   const [currentPage, setCurrentPage] = useState(0);
   const pageSize = 20;
@@ -1169,6 +1174,7 @@ export default function Products() {
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { logout } = useAuth();
 
   // Data queries for all entities with pagination
   const { data: productsData, isLoading: productsLoading } = useQuery({
@@ -2169,6 +2175,10 @@ export default function Products() {
     }
   };
 
+
+
+
+
   // Import all data from SFTP
   const importAllDataFromSFTP = async () => {
     setIsImportingAllData(true);
@@ -2546,7 +2556,18 @@ export default function Products() {
   return (
     <div className="container mx-auto p-6 space-y-8">
       {/* Header */}
-      <div className="text-center space-y-4">
+      <div className="text-center space-y-4 relative">
+        <div className="absolute top-0 right-0">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={logout}
+            className="flex items-center gap-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+          >
+            <LogOut className="h-4 w-4" />
+            Cerrar Sesión
+          </Button>
+        </div>
         <h1 className="text-4xl font-bold tracking-tight">
           Sistema PIM Alimentación
         </h1>
@@ -3471,6 +3492,7 @@ export default function Products() {
         {/* Import Data Tab */}
         <TabsContent value="import-data" className="mt-6">
           <div className="space-y-6">
+
             {/* Bulk Data Import */}
             <Card className="border-2 border-blue-500/20">
               <CardHeader>
@@ -4325,6 +4347,8 @@ export default function Products() {
                 </div>
               </CardContent>
             </Card>
+
+
           </div>
         </TabsContent>
       </Tabs>
