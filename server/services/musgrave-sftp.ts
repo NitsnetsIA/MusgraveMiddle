@@ -4,12 +4,8 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import os from 'os';
 
-// Importar db directamente desde drizzle
-import { drizzle } from 'drizzle-orm/neon-http';
-import { neon } from '@neondatabase/serverless';
-
-const sql = neon(process.env.DATABASE_URL!);
-const db = drizzle(sql);
+// Importar db desde la configuración local de PostgreSQL
+import { db } from '../db.js';
 
 interface MusgraveSftpConfig {
   host: string;
@@ -99,64 +95,15 @@ export class MusgraveSftpService {
    */
   private async connect(): Promise<void> {
     try {
-      console.log('🔌 Intentando conectar al SFTP de Musgrave...');
-      
       // Importar SftpClient dinámicamente
       const SftpClient = (await import('ssh2-sftp-client')).default;
-      console.log('📦 SftpClient importado correctamente');
-      
       this.sftp = new SftpClient();
-      console.log('🔧 Instancia SftpClient creada');
       
-      console.log('🌐 Conectando con configuración:', {
-        host: MUSGRAVE_CONFIG.host,
-        port: MUSGRAVE_CONFIG.port,
-        username: MUSGRAVE_CONFIG.username
-      });
-      
-      // Agregar timeout y opciones de conexión
-      const connectionOptions = {
-        ...MUSGRAVE_CONFIG,
-        readyTimeout: 20000, // 20 segundos de timeout
-        retries: 3,
-        retry_factor: 2,
-        retry_minTimeout: 2000
-      };
-      
-      console.log('⏱️ Opciones de conexión:', connectionOptions);
-      
-      await this.sftp.connect(connectionOptions);
+      await this.sftp.connect(MUSGRAVE_CONFIG);
       console.log('✓ Conexión SFTP establecida con Musgrave');
     } catch (error: any) {
       console.error('✗ Error conectando al SFTP de Musgrave:', error);
-      console.error('📋 Detalles del error de conexión:', {
-        name: error.name,
-        message: error.message,
-        code: error.code,
-        level: error.level,
-        description: error.description,
-        stack: error.stack,
-        cause: error.cause
-      });
-      
-      // Crear un mensaje de error más descriptivo
-      let errorMessage = 'Error de conexión SFTP';
-      
-      if (error.code === 'ECONNREFUSED') {
-        errorMessage = `Conexión rechazada al puerto ${MUSGRAVE_CONFIG.port} en ${MUSGRAVE_CONFIG.host}`;
-      } else if (error.code === 'ETIMEDOUT') {
-        errorMessage = `Timeout de conexión a ${MUSGRAVE_CONFIG.host}:${MUSGRAVE_CONFIG.port}`;
-      } else if (error.code === 'ENOTFOUND') {
-        errorMessage = `Host no encontrado: ${MUSGRAVE_CONFIG.host}`;
-      } else if (error.message?.includes('authentication')) {
-        errorMessage = 'Error de autenticación - Verificar usuario y contraseña';
-      } else if (error.message?.includes('permission')) {
-        errorMessage = 'Error de permisos - El usuario no tiene acceso';
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-      
-      throw new Error(errorMessage);
+      throw new Error(`Failed to connect to Musgrave SFTP: ${error?.message || error}`);
     }
   }
 
@@ -1052,22 +999,10 @@ export class MusgraveSftpService {
    */
   public async testConnection(): Promise<boolean> {
     try {
-      console.log('🔍 Iniciando test de conexión SFTP...');
-      console.log('📋 Configuración SFTP:', {
-        host: MUSGRAVE_CONFIG.host,
-        port: MUSGRAVE_CONFIG.port,
-        username: MUSGRAVE_CONFIG.username,
-        password: MUSGRAVE_CONFIG.password ? '***' : 'undefined'
-      });
-      
-      console.log('🔌 Intentando conexión SFTP...');
       await this.connect();
-      console.log('✅ Conexión SFTP establecida exitosamente');
       
       // Verificar que existe la carpeta de destino
       const remotePath = '/in/purchase_orders';
-      console.log(`🔍 Verificando existencia de carpeta: ${remotePath}`);
-      
       const exists = await this.sftp.exists(remotePath);
       
       if (exists) {
@@ -1077,44 +1012,9 @@ export class MusgraveSftpService {
       }
 
       await this.disconnect();
-      console.log('✅ Test de conexión SFTP completado exitosamente');
       return true;
     } catch (error: any) {
       console.error('✗ Test de conexión SFTP fallido:', error);
-      console.error('📋 Detalles del error:', {
-        name: error.name,
-        message: error.message,
-        code: error.code,
-        level: error.level,
-        description: error.description,
-        stack: error.stack,
-        cause: error.cause
-      });
-      
-      // Análisis específico del error SFTP
-      if (error.message?.includes('authentication')) {
-        console.error('🔐 Error de autenticación detectado');
-        console.error('💡 Posibles soluciones:');
-        console.error('   - Verificar usuario y contraseña');
-        console.error('   - El servidor puede requerir autenticación por clave SSH');
-        console.error('   - Verificar permisos del usuario en el servidor');
-      } else if (error.message?.includes('permission')) {
-        console.error('🚫 Error de permisos detectado');
-        console.error('💡 Posibles soluciones:');
-        console.error('   - El usuario no tiene permisos de acceso SFTP');
-        console.error('   - Verificar configuración de permisos en el servidor');
-      } else if (error.message?.includes('protocol')) {
-        console.error('📡 Error de protocolo detectado');
-        console.error('💡 Posibles soluciones:');
-        console.error('   - El servidor puede no soportar SFTP');
-        console.error('   - Verificar si el servidor usa SCP o FTP');
-      } else if (error.message?.includes('timeout')) {
-        console.error('⏱️ Error de timeout detectado');
-        console.error('💡 Posibles soluciones:');
-        console.error('   - El servidor puede estar sobrecargado');
-        console.error('   - Verificar configuración de timeout');
-      }
-      
       return false;
     }
   }
