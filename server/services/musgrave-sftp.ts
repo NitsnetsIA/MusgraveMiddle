@@ -15,9 +15,9 @@ interface MusgraveSftpConfig {
 }
 
 const MUSGRAVE_CONFIG: MusgraveSftpConfig = {
-  host: 'musgraveapp.blob.core.windows.net',
-  port: 22,
-  username: 'musgraveapp.musgraveapp',
+  host: 'develop.nitsnets.com',
+  port: 23023,
+  username: 'musgrave',
   password: 'fMPatTqKM9KKTrPLosMigiDC9MdNMtUT'
 };
 
@@ -226,7 +226,7 @@ export class MusgraveSftpService {
       tempFilePath = await this.convertPurchaseOrderToCSV(purchaseOrder);
 
       // Verificar que existe la carpeta de destino
-      const remotePath = '/in/purchase_orders';
+      const remotePath = '/musgrave/in/purchase_orders';
       const remoteFileName = `${purchaseOrder.purchase_order_id}.csv`;
       const remoteFilePath = `${remotePath}/${remoteFileName}`;
 
@@ -277,7 +277,7 @@ export class MusgraveSftpService {
       await this.connect();
 
       // Ruta del archivo remoto consolidado
-      const remotePath = '/out/deliveryCenters/deliveryCenters.csv';
+      const remotePath = '/musgrave/out/deliveryCenters/deliveryCenters.csv';
       
       // Descargar archivo existente o crear uno nuevo
       tempFilePath = path.join(os.tmpdir(), `deliveryCenters_temp_${Date.now()}.csv`);
@@ -435,7 +435,7 @@ export class MusgraveSftpService {
       await csvWriter.writeRecords([csvData]);
 
       // Subir archivo a SFTP
-      const remotePath = '/out/deliveryCenters';
+      const remotePath = '/musgrave/out/deliveryCenters';
       const remoteFileName = `${deliveryCenter.code}.csv`;
       const remoteFilePath = `${remotePath}/${remoteFileName}`;
 
@@ -471,7 +471,7 @@ export class MusgraveSftpService {
       await this.connect();
 
       // Ruta del archivo remoto consolidado
-      const remotePath = '/out/users/users.csv';
+      const remotePath = '/musgrave/out/users/users.csv';
       
       // Descargar archivo existente o crear uno nuevo
       tempFilePath = path.join(os.tmpdir(), `users_temp_${Date.now()}.csv`);
@@ -617,7 +617,7 @@ export class MusgraveSftpService {
       await csvWriter.writeRecords([csvData]);
 
       // Subir archivo a SFTP
-      const remotePath = '/out/users';
+      const remotePath = '/musgrave/out/users';
       const remoteFileName = `${user.email}.csv`;
       const remoteFilePath = `${remotePath}/${remoteFileName}`;
 
@@ -653,7 +653,7 @@ export class MusgraveSftpService {
       await this.connect();
 
       // Ruta del archivo remoto consolidado
-      const remotePath = '/out/stores/stores.csv';
+      const remotePath = '/musgrave/out/stores/stores.csv';
       
       // Descargar archivo existente o crear uno nuevo
       tempFilePath = path.join(os.tmpdir(), `stores_temp_${Date.now()}.csv`);
@@ -774,7 +774,7 @@ export class MusgraveSftpService {
       await this.connect();
 
       // Ruta del archivo remoto consolidado
-      const remotePath = '/out/taxes/taxes.csv';
+      const remotePath = '/musgrave/out/taxes/taxes.csv';
       
       // Descargar archivo existente o crear uno nuevo
       tempFilePath = path.join(os.tmpdir(), `taxes_temp_${Date.now()}.csv`);
@@ -913,7 +913,7 @@ export class MusgraveSftpService {
       await csvWriter.writeRecords([csvData]);
 
       // Subir archivo a SFTP
-      const remotePath = '/out/stores';
+      const remotePath = '/musgrave/out/stores';
       const remoteFileName = `${store.code}.csv`;
       const remoteFilePath = `${remotePath}/${remoteFileName}`;
 
@@ -971,7 +971,7 @@ export class MusgraveSftpService {
       await csvWriter.writeRecords([csvData]);
 
       // Subir archivo a SFTP
-      const remotePath = '/out/taxes';
+      const remotePath = '/musgrave/out/taxes';
       const remoteFileName = `${tax.code}.csv`;
       const remoteFilePath = `${remotePath}/${remoteFileName}`;
 
@@ -1002,7 +1002,7 @@ export class MusgraveSftpService {
       await this.connect();
       
       // Verificar que existe la carpeta de destino
-      const remotePath = '/in/purchase_orders';
+      const remotePath = '/musgrave/in/purchase_orders';
       const exists = await this.sftp.exists(remotePath);
       
       if (exists) {
@@ -1067,7 +1067,7 @@ export class MusgraveSftpService {
 
       // Subir archivo completo de una vez con timestamp
       const timestamp = getTimestamp();
-      const remotePath = `/out/deliveryCenters/deliveryCenters_${timestamp}.csv`;
+      const remotePath = `/musgrave/out/deliveryCenters/deliveryCenters_${timestamp}.csv`;
       await this.sftp.put(tempFilePath, remotePath);
       console.log(`✅ CSV masivo de delivery centers generado: ${remotePath} (${centers.length} registros)`);
 
@@ -1136,7 +1136,7 @@ export class MusgraveSftpService {
 
       // Subir archivo completo de una vez con timestamp
       const timestamp = getTimestamp();
-      const remotePath = `/out/stores/stores_${timestamp}.csv`;
+      const remotePath = `/musgrave/out/stores/stores_${timestamp}.csv`;
       await this.sftp.put(tempFilePath, remotePath);
       console.log(`✅ CSV masivo de stores generado: ${remotePath} (${storesList.length} registros)`);
 
@@ -1203,7 +1203,7 @@ export class MusgraveSftpService {
 
       // Subir archivo completo de una vez con timestamp
       const timestamp = getTimestamp();
-      const remotePath = `/out/users/users_${timestamp}.csv`;
+      const remotePath = `/musgrave/out/users/users_${timestamp}.csv`;
       await this.sftp.put(tempFilePath, remotePath);
       console.log(`✅ CSV masivo de users generado: ${remotePath} (${usersList.length} registros)`);
 
@@ -1268,7 +1268,7 @@ export class MusgraveSftpService {
 
       // Subir archivo completo de una vez con timestamp
       const timestamp = getTimestamp();
-      const remotePath = `/out/taxes/taxes_${timestamp}.csv`;
+      const remotePath = `/musgrave/out/taxes/taxes_${timestamp}.csv`;
       await this.sftp.put(tempFilePath, remotePath);
       console.log(`✅ CSV masivo de taxes generado: ${remotePath} (${taxesList.length} registros)`);
 
@@ -1305,9 +1305,9 @@ export class MusgraveSftpService {
       // Conectar al SFTP
       await this.connect();
 
-      // Asegurar que el directorio /out/products/ existe
+      // Asegurar que el directorio /musgrave/out/products/ existe
       try {
-        await this.sftp.mkdir('/out/products/', true);
+        await this.sftp.mkdir('/musgrave/out/products/', true);
       } catch (error) {
         // Directorio ya existe o no se puede crear, continuar
       }
@@ -1353,7 +1353,7 @@ export class MusgraveSftpService {
 
       // Subir archivo completo de una vez con timestamp
       const timestamp = getTimestamp();
-      const remotePath = `/out/products/products_${timestamp}.csv`;
+      const remotePath = `/musgrave/out/products/products_${timestamp}.csv`;
       await this.sftp.put(tempFilePath, remotePath);
       console.log(`✅ CSV masivo de products generado: ${remotePath} (${productsList.length} registros)`);
 
@@ -1458,7 +1458,7 @@ export class MusgraveSftpService {
    */
   public async moveFileToProcessed(filePath: string, entityType: string): Promise<void> {
     try {
-      console.log(`📁 Moviendo archivo importado ${filePath} a /processed/${entityType}...`);
+      console.log(`📁 Moviendo archivo importado ${filePath} a /musgrave/processed/${entityType}...`);
       
       await this.connect();
       
@@ -1466,7 +1466,7 @@ export class MusgraveSftpService {
       const fileName = path.basename(filePath);
       
       // Crear la carpeta de processed si no existe
-      const processedDir = `/processed/${entityType}`;
+      const processedDir = `/musgrave/processed/${entityType}`;
       try {
         await this.sftp.mkdir(processedDir, true);
         console.log(`📂 Carpeta ${processedDir} creada/verificada`);
@@ -1490,7 +1490,7 @@ export class MusgraveSftpService {
       console.log(`✅ Archivo movido exitosamente de ${filePath} a ${destinationPath}`);
       
     } catch (error: any) {
-      console.error(`✗ Error moviendo archivo ${filePath} a /processed/${entityType}:`, error);
+      console.error(`✗ Error moviendo archivo ${filePath} a /musgrave/processed/${entityType}:`, error);
       throw new Error(`Failed to move file to processed: ${error?.message || error}`);
     } finally {
       await this.disconnect();

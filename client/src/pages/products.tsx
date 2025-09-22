@@ -2338,7 +2338,7 @@ export default function Products() {
         addProgressMessage(`✅ Pedidos generados exitosamente (${generateResult.processedCount || 0} órdenes procesadas)`);
         toast({
           title: "Generación completada",
-          description: `${generateResult.processedCount || 0} pedidos generados y archivos movidos a /processed/`,
+          description: `${generateResult.processedCount || 0} pedidos generados y archivos movidos a /musgrave/processed/`,
         });
       } else {
         throw new Error(generateResult.message || "Error desconocido");
@@ -3553,7 +3553,7 @@ export default function Products() {
                   Generar Pedidos desde SFTP
                 </CardTitle>
                 <CardDescription>
-                  Procesa las órdenes de compra desde /in/purchase_orders, genera archivos CSV de pedidos en /out/orders y mueve los archivos procesados a /processed/purchase_orders.
+                  Procesa las órdenes de compra desde /musgrave/in/purchase_orders, genera archivos CSV de pedidos en /musgrave/out/orders y mueve los archivos procesados a /musgrave/processed/purchase_orders.
                 </CardDescription>
               </CardHeader>
               <CardContent>

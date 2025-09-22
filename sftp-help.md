@@ -11,54 +11,54 @@
 
 ## 📂 Estructura de Carpetas del Servidor SFTP
 
-### **📥 `/in/` - Carpeta de Entrada (Incoming)**
+### **📥 `/musgrave/in/` - Carpeta de Entrada (Incoming)**
 Carpeta donde se reciben archivos CSV para ser procesados por el sistema.
 
-#### **`/in/purchase_orders/`**
+#### **`/musgrave/in/purchase_orders/`**
 - **Propósito:** Almacena órdenes de compra pendientes de procesar
 - **Formato:** Archivos CSV con órdenes de compra
 - **Procesamiento:** Se procesan para generar pedidos automáticamente
-- **Estado:** Los archivos se mueven a `/processed/` después del procesamiento
+- **Estado:** Los archivos se mueven a `/musgrave/processed/` después del procesamiento
 
-### **📤 `/out/` - Carpeta de Salida (Outgoing)**
+### **📤 `/musgrave/out/` - Carpeta de Salida (Outgoing)**
 Carpeta donde se generan y almacenan archivos CSV para ser descargados por otros sistemas.
 
-#### **`/out/deliveryCenters/`**
+#### **`/musgrave/out/deliveryCenters/`**
 - **Archivo:** `deliveryCenters_YYYYMMDDHHMMSS.csv`
 - **Contenido:** Centros de distribución exportados
 - **Formato:** CSV con campos: `code`, `name`, `is_active`
 
-#### **`/out/stores/`**
+#### **`/musgrave/out/stores/`**
 - **Archivo:** `stores_YYYYMMDDHHMMSS.csv`
 - **Contenido:** Tiendas exportadas
 - **Formato:** CSV con campos: `code`, `name`, `delivery_center_code`, `responsible_email`, `is_active`
 
-#### **`/out/users/`**
+#### **`/musgrave/out/users/`**
 - **Archivo:** `users_YYYYMMDDHHMMSS.csv`
 - **Contenido:** Usuarios exportados
 - **Formato:** CSV con campos: `email`, `name`, `store_id`, `is_active`
 
-#### **`/out/products/`**
+#### **`/musgrave/out/products/`**
 - **Archivo:** `products_YYYYMMDDHHMMSS.csv`
 - **Contenido:** Productos exportados
 - **Formato:** CSV con campos: `ean`, `ref`, `title`, `description`, `base_price`, `tax_code`, `unit_of_measure`, `quantity_measure`, `image_url`, `nutrition_label_url`, `is_active`
 
-#### **`/out/taxes/`**
+#### **`/musgrave/out/taxes/`**
 - **Archivo:** `taxes_YYYYMMDDHHMMSS.csv`
 - **Contenido:** Impuestos IVA exportados
 - **Formato:** CSV con campos: `code`, `name`, `tax_rate`
 
-#### **`/out/orders/`**
+#### **`/musgrave/out/orders/`**
 - **Archivo:** `orders_YYYYMMDDHHMMSS.csv`
 - **Contenido:** Pedidos generados desde órdenes de compra
 - **Formato:** CSV con campos: `order_id`, `source_purchase_order_id`, `user_email`, `store_id`, `observations`, `subtotal`, `tax_total`, `final_total`
 
-### **🔄 `/processed/` - Carpetas de Archivos Procesados**
+### **🔄 `/musgrave/processed/` - Carpetas de Archivos Procesados**
 Carpetas donde se almacenan archivos que ya han sido procesados por el sistema.
 
-#### **`/processed/purchase_orders/`**
+#### **`/musgrave/processed/purchase_orders/`**
 - **Propósito:** Almacena órdenes de compra ya procesadas
-- **Origen:** Archivos movidos desde `/in/purchase_orders/`
+- **Origen:** Archivos movidos desde `/musgrave/in/purchase_orders/`
 - **Estado:** Procesados y convertidos en pedidos
 
 ---

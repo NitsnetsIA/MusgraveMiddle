@@ -2271,13 +2271,13 @@ export class DatabaseStorage implements IStorage {
       
       // Map entity types to SFTP directories
       const directoryMap: { [key: string]: string } = {
-        'taxes': '/out/taxes/',
-        'products': '/out/products/',
-        'delivery-centers': '/out/deliveryCenters/',
-        'deliveryCenters': '/out/deliveryCenters/',
-        'stores': '/out/stores/',
-        'users': '/out/users/',
-        'orders': '/out/orders/'
+        'taxes': '/musgrave/out/taxes/',
+        'products': '/musgrave/out/products/',
+        'delivery-centers': '/musgrave/out/deliveryCenters/',
+        'deliveryCenters': '/musgrave/out/deliveryCenters/',
+        'stores': '/musgrave/out/stores/',
+        'users': '/musgrave/out/users/',
+        'orders': '/musgrave/out/orders/'
       };
       
       const directory = directoryMap[entityType];
@@ -2364,7 +2364,7 @@ export class DatabaseStorage implements IStorage {
         if (imported > 0) {
           try {
             await sftp.moveFileToProcessed(filePath, entityType);
-            const moveMessage = `📁 Archivo ${file.name} movido a /processed/${entityType}/`;
+            const moveMessage = `📁 Archivo ${file.name} movido a /musgrave/processed/${entityType}/`;
             console.log(moveMessage);
             importDetails += moveMessage + '\n';
           } catch (moveError: any) {
@@ -3145,12 +3145,12 @@ export class DatabaseStorage implements IStorage {
       const { MusgraveSftpService } = await import('./services/musgrave-sftp');
       const sftp = new MusgraveSftpService();
       
-      // List purchase order CSV files in /in/purchase_orders
-      details += "📋 Listando archivos de órdenes de compra en /in/purchase_orders...\n";
-      const purchaseOrderFiles = await sftp.listCSVFiles('/in/purchase_orders/');
+      // List purchase order CSV files in /musgrave/in/purchase_orders
+      details += "📋 Listando archivos de órdenes de compra en /musgrave/in/purchase_orders...\n";
+      const purchaseOrderFiles = await sftp.listCSVFiles('/musgrave/in/purchase_orders/');
       
       if (purchaseOrderFiles.length === 0) {
-        details += "⚠️ No se encontraron archivos de órdenes de compra en /in/purchase_orders\n";
+        details += "⚠️ No se encontraron archivos de órdenes de compra en /musgrave/in/purchase_orders\n";
         return {
           success: true,
           message: "No se encontraron archivos de órdenes de compra para procesar",
@@ -3166,7 +3166,7 @@ export class DatabaseStorage implements IStorage {
       // Process each purchase order file
       for (const file of purchaseOrderFiles) {
         try {
-          const filePath = `/in/purchase_orders/${file.name}`;
+          const filePath = `/musgrave/in/purchase_orders/${file.name}`;
           details += `\n📤 Procesando ${file.name}...\n`;
           
           // Download and parse the purchase order CSV
@@ -3219,14 +3219,14 @@ export class DatabaseStorage implements IStorage {
               const simulatedOrder = await createSimulatedOrder(mockPurchaseOrder);
               
               if (simulatedOrder) {
-                // Generate order CSV file in /out/orders with exact order ID as filename
+                // Generate order CSV file in /musgrave/out/orders with exact order ID as filename
                 const orderFileName = `${simulatedOrder.order_id}.csv`;
                 
                 // Prepare order CSV data from temporary tables
                 const orderCsvData = await this.generateOrderCSVContent(simulatedOrder.order_id);
                 
-                // Upload order CSV to /out/orders
-                await sftp.uploadFile(`/out/orders/${orderFileName}`, orderCsvData);
+                // Upload order CSV to /musgrave/out/orders
+                await sftp.uploadFile(`/musgrave/out/orders/${orderFileName}`, orderCsvData);
                 details += `✅ Pedido generado: ${orderFileName}\n`;
                 
                 // Clean up temporary simulated order after CSV generation
@@ -3242,9 +3242,9 @@ export class DatabaseStorage implements IStorage {
             }
           }
           
-          // Move processed file to /processed/purchase_orders (keep original filename)
-          await sftp.moveFile(filePath, `/processed/purchase_orders/${file.name}`);
-          details += `📁 Archivo movido a: /processed/purchase_orders/${file.name}\n`;
+          // Move processed file to /musgrave/processed/purchase_orders (keep original filename)
+          await sftp.moveFile(filePath, `/musgrave/processed/purchase_orders/${file.name}`);
+          details += `📁 Archivo movido a: /musgrave/processed/purchase_orders/${file.name}\n`;
           
         } catch (fileError) {
           details += `❌ Error procesando archivo ${file.name}: ${fileError instanceof Error ? fileError.message : String(fileError)}\n`;
@@ -3256,7 +3256,7 @@ export class DatabaseStorage implements IStorage {
       
       return {
         success: true,
-        message: `Generación de pedidos completada. ${processedCount} pedidos creados y archivos movidos a /processed/`,
+        message: `Generación de pedidos completada. ${processedCount} pedidos creados y archivos movidos a /musgrave/processed/`,
         details,
         processedCount
       };

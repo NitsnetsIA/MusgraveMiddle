@@ -45,8 +45,8 @@ Sistema completo de gestión de información de productos (PIM) para supermercad
 - Credenciales de acceso configuradas
 - Estructura de carpetas:
   ```
-  /in/   - Para importación de archivos
-  /out/  - Para exportación de archivos
+  /musgrave/in/   - Para importación de archivos
+  /musgrave/out/  - Para exportación de archivos
   ```
 
 ## Instalación Paso a Paso
@@ -273,7 +273,7 @@ El proyecto viene preconfigurado con:
 ### Integración SFTP
 - Exportación automática de órdenes de compra
 - Importación de datos maestros desde CSV
-- Gestión de archivos en carpetas `/in/` y `/out/`
+- Gestión de archivos en carpetas `/musgrave/in/` y `/musgrave/out/`
 - Logs detallados de operaciones
 
 ### API GraphQL
