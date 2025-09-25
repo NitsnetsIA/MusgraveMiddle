@@ -1,6 +1,5 @@
 # Sistema PIM de Productos de Supermercado
 
-
 ## Descripción General
 
 Sistema completo de gestión de información de productos (PIM) para supermercados españoles, con API GraphQL headless, integración SFTP con sistemas legacy, gestión de órdenes de compra y pedidos procesados, autenticación de usuarios y sincronización de datos en tiempo real.
